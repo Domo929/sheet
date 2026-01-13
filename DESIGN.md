@@ -230,6 +230,11 @@ Race and class data will be loaded from external JSON files for easy expansion a
   - Visible sections customization
 
 ### Medium Priority
+- **Remote Data Source**: 
+  - Host race/class/spell/item data files remotely for space efficiency
+  - Single source of truth for multiple app instances
+  - Optional local caching with compression
+  - Fallback to bundled data if remote unavailable
 - **Multiclassing Support**: Handle multiple classes and their interactions
 - **Character Export**: Export to PDF or other formats
 - **Character Import**: Import from D&D Beyond or other sources
