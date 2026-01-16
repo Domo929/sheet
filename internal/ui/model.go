@@ -155,7 +155,13 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = c
 		}
 	case ViewMainSheet:
-		// Will be implemented in main sheet phase
+		// Handle keys for main sheet view (stub)
+		if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			switch keyMsg.String() {
+			case "q", "ctrl+c":
+				return m, tea.Quit
+			}
+		}
 	default:
 		// Other views not yet implemented
 	}
