@@ -501,24 +501,50 @@ func (m *CharacterCreationModel) adjustBackgroundBonus(increase bool) *Character
 			}
 		}
 	} else if m.focusedBonusField == 1 {
-		// Cycle +2 target
+		// Cycle +2 target (must be different from +1 target)
 		if increase {
-			m.backgroundBonus2Target = (m.backgroundBonus2Target + 1) % len(options)
-		} else {
-			m.backgroundBonus2Target--
-			if m.backgroundBonus2Target < 0 {
-				m.backgroundBonus2Target = len(options) - 1
+			newTarget := (m.backgroundBonus2Target + 1) % len(options)
+			// Skip if same as +1 target
+			if newTarget == m.backgroundBonus1Target && len(options) > 1 {
+				newTarget = (newTarget + 1) % len(options)
 			}
+			m.backgroundBonus2Target = newTarget
+		} else {
+			newTarget := m.backgroundBonus2Target - 1
+			if newTarget < 0 {
+				newTarget = len(options) - 1
+			}
+			// Skip if same as +1 target
+			if newTarget == m.backgroundBonus1Target && len(options) > 1 {
+				newTarget--
+				if newTarget < 0 {
+					newTarget = len(options) - 1
+				}
+			}
+			m.backgroundBonus2Target = newTarget
 		}
 	} else if m.focusedBonusField == 2 {
-		// Cycle +1 target
+		// Cycle +1 target (must be different from +2 target)
 		if increase {
-			m.backgroundBonus1Target = (m.backgroundBonus1Target + 1) % len(options)
-		} else {
-			m.backgroundBonus1Target--
-			if m.backgroundBonus1Target < 0 {
-				m.backgroundBonus1Target = len(options) - 1
+			newTarget := (m.backgroundBonus1Target + 1) % len(options)
+			// Skip if same as +2 target
+			if newTarget == m.backgroundBonus2Target && len(options) > 1 {
+				newTarget = (newTarget + 1) % len(options)
 			}
+			m.backgroundBonus1Target = newTarget
+		} else {
+			newTarget := m.backgroundBonus1Target - 1
+			if newTarget < 0 {
+				newTarget = len(options) - 1
+			}
+			// Skip if same as +2 target
+			if newTarget == m.backgroundBonus2Target && len(options) > 1 {
+				newTarget--
+				if newTarget < 0 {
+					newTarget = len(options) - 1
+				}
+			}
+			m.backgroundBonus1Target = newTarget
 		}
 	}
 	
