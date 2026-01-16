@@ -60,19 +60,21 @@ func (t TextInput) Render() string {
 	}
 
 	displayValue := t.Value
-	if displayValue == "" && t.Placeholder != "" {
-		placeholderStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240")).
-			Italic(true)
-		displayValue = placeholderStyle.Render(t.Placeholder)
-	}
 	
-	// Add cursor when focused
-	if t.Focused {
+	// Add cursor when focused and there's actual text (not just placeholder)
+	if t.Focused && t.Value != "" {
 		cursorStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("170")).
 			Bold(true)
 		displayValue += cursorStyle.Render("▌")
+	}
+	
+	// Show placeholder if empty
+	if t.Value == "" && t.Placeholder != "" {
+		placeholderStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("240")).
+			Italic(true)
+		displayValue = placeholderStyle.Render(t.Placeholder)
 	}
 
 	value := valueStyle.Render(displayValue)

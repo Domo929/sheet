@@ -38,9 +38,9 @@ func TestTextInputCursorWithEmptyValue(t *testing.T) {
 	
 	rendered := input.Render()
 	
-	// Should show cursor even with empty value
-	if !strings.Contains(rendered, "▌") {
-		t.Error("Focused input should show cursor even when empty")
+	// Should NOT show cursor when empty (only placeholder)
+	if strings.Contains(rendered, "▌") {
+		t.Error("Focused empty input should not show cursor, only placeholder")
 	}
 	
 	// Should show placeholder
