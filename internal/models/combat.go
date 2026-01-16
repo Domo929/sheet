@@ -2,9 +2,9 @@ package models
 
 // HitPoints tracks the character's hit points.
 type HitPoints struct {
-	Maximum         int `json:"maximum"`
-	Current         int `json:"current"`
-	Temporary       int `json:"temporary"`
+	Maximum          int `json:"maximum"`
+	Current          int `json:"current"`
+	Temporary        int `json:"temporary"`
 	TemporaryMaximum int `json:"temporaryMaximum,omitempty"` // From spells like Aid
 }
 

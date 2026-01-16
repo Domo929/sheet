@@ -3,9 +3,9 @@ package views
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func TestNewCharacterSelectionModel(t *testing.T) {
@@ -23,7 +23,7 @@ func TestNewCharacterSelectionModel(t *testing.T) {
 	if !model.loading {
 		t.Error("Model should start in loading state")
 	}
-	
+
 	if model.confirmingDelete {
 		t.Error("Model should not start in delete confirmation state")
 	}
@@ -207,7 +207,7 @@ func TestCharacterSelectionDeleteAction(t *testing.T) {
 	// Press 'y' to confirm
 	updatedModel, cmd = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
 	model = updatedModel
-	
+
 	if cmd == nil {
 		t.Fatal("Expected command to be returned for deleting character")
 	}

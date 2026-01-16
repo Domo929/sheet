@@ -202,7 +202,7 @@ func TestPointBuyCost(t *testing.T) {
 		{13, 5},
 		{14, 7},
 		{15, 9},
-		{7, 0},  // Below minimum
+		{7, 0},   // Below minimum
 		{16, 11}, // Above maximum (theoretical)
 	}
 
@@ -218,51 +218,51 @@ func TestPointBuyCost(t *testing.T) {
 
 func TestValidatePointBuy(t *testing.T) {
 	tests := []struct {
-		name         string
-		scores       AbilityScores
-		expectedPts  int
+		name          string
+		scores        AbilityScores
+		expectedPts   int
 		expectedValid bool
 	}{
 		{
-			name:         "standard valid allocation (27 points)",
-			scores:       NewAbilityScoresFromValues(15, 14, 13, 12, 10, 8),
-			expectedPts:  27,
+			name:          "standard valid allocation (27 points)",
+			scores:        NewAbilityScoresFromValues(15, 14, 13, 12, 10, 8),
+			expectedPts:   27,
 			expectedValid: true,
 		},
 		{
-			name:         "all 13s (30 points, invalid)",
-			scores:       NewAbilityScoresFromValues(13, 13, 13, 13, 13, 13),
-			expectedPts:  30,
+			name:          "all 13s (30 points, invalid)",
+			scores:        NewAbilityScoresFromValues(13, 13, 13, 13, 13, 13),
+			expectedPts:   30,
 			expectedValid: false,
 		},
 		{
-			name:         "balanced allocation (24 points)",
-			scores:       NewAbilityScoresFromValues(13, 13, 13, 12, 12, 12),
-			expectedPts:  27,
+			name:          "balanced allocation (24 points)",
+			scores:        NewAbilityScoresFromValues(13, 13, 13, 12, 12, 12),
+			expectedPts:   27,
 			expectedValid: true,
 		},
 		{
-			name:         "all 10s (12 points)",
-			scores:       NewAbilityScoresFromValues(10, 10, 10, 10, 10, 10),
-			expectedPts:  12,
+			name:          "all 10s (12 points)",
+			scores:        NewAbilityScoresFromValues(10, 10, 10, 10, 10, 10),
+			expectedPts:   12,
 			expectedValid: true,
 		},
 		{
-			name:         "invalid - score too low",
-			scores:       NewAbilityScoresFromValues(7, 13, 13, 13, 13, 13),
-			expectedPts:  0,
+			name:          "invalid - score too low",
+			scores:        NewAbilityScoresFromValues(7, 13, 13, 13, 13, 13),
+			expectedPts:   0,
 			expectedValid: false,
 		},
 		{
-			name:         "invalid - score too high",
-			scores:       NewAbilityScoresFromValues(16, 13, 13, 13, 13, 13),
-			expectedPts:  0,
+			name:          "invalid - score too high",
+			scores:        NewAbilityScoresFromValues(16, 13, 13, 13, 13, 13),
+			expectedPts:   0,
 			expectedValid: false,
 		},
 		{
-			name:         "min-max allocation",
-			scores:       NewAbilityScoresFromValues(15, 15, 15, 8, 8, 8),
-			expectedPts:  27,
+			name:          "min-max allocation",
+			scores:        NewAbilityScoresFromValues(15, 15, 15, 8, 8, 8),
+			expectedPts:   27,
 			expectedValid: true,
 		},
 	}
