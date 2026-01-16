@@ -2,14 +2,14 @@ package data
 
 // Race represents a playable race in D&D 5e.
 type Race struct {
-	Name         string     `json:"name"`
-	CreatureType string     `json:"creatureType"`
-	Size         string     `json:"size"`
-	Speed        int        `json:"speed"`
-	Traits       []Trait    `json:"traits"`
-	Languages    []string   `json:"languages"`
-	Spells       []Spell    `json:"spells,omitempty"`
-	Subtypes     []Subtype  `json:"subtypes,omitempty"`
+	Name         string    `json:"name"`
+	CreatureType string    `json:"creatureType"`
+	Size         string    `json:"size"`
+	Speed        int       `json:"speed"`
+	Traits       []Trait   `json:"traits"`
+	Languages    []string  `json:"languages"`
+	Spells       []Spell   `json:"spells,omitempty"`
+	Subtypes     []Subtype `json:"subtypes,omitempty"`
 }
 
 // Trait represents a racial or class trait.
@@ -33,34 +33,34 @@ type Subtype struct {
 
 // Class represents a playable class in D&D 5e.
 type Class struct {
-	Name                     string        `json:"name"`
-	HitDice                  string        `json:"hitDice"`
-	PrimaryAbility           []string      `json:"primaryAbility"`
-	SavingThrowProficiencies []string      `json:"savingThrowProficiencies"`
-	ArmorProficiencies       []string      `json:"armorProficiencies"`
-	WeaponProficiencies      []string      `json:"weaponProficiencies"`
-	ToolProficiencies        []string      `json:"toolProficiencies"`
-	SkillChoices             SkillChoices  `json:"skillChoices"`
-	StartingEquipment        []string      `json:"startingEquipment"`
-	Spellcaster              bool          `json:"spellcaster"`
-	SpellcastingAbility      string        `json:"spellcastingAbility,omitempty"`
-	SpellSlots               []SpellSlot   `json:"spellSlots,omitempty"`
-	Features                 []Feature     `json:"features"`
-	Subclasses               []Subclass    `json:"subclasses,omitempty"`
+	Name                     string       `json:"name"`
+	HitDice                  string       `json:"hitDice"`
+	PrimaryAbility           []string     `json:"primaryAbility"`
+	SavingThrowProficiencies []string     `json:"savingThrowProficiencies"`
+	ArmorProficiencies       []string     `json:"armorProficiencies"`
+	WeaponProficiencies      []string     `json:"weaponProficiencies"`
+	ToolProficiencies        []string     `json:"toolProficiencies"`
+	SkillChoices             SkillChoices `json:"skillChoices"`
+	StartingEquipment        []string     `json:"startingEquipment"`
+	Spellcaster              bool         `json:"spellcaster"`
+	SpellcastingAbility      string       `json:"spellcastingAbility,omitempty"`
+	SpellSlots               []SpellSlot  `json:"spellSlots,omitempty"`
+	Features                 []Feature    `json:"features"`
+	Subclasses               []Subclass   `json:"subclasses,omitempty"`
 }
 
 // SpellSlot represents spell slots available at a given level.
 type SpellSlot struct {
-	Level int `json:"level"`
-	First int `json:"1st"`
-	Second int `json:"2nd"`
-	Third int `json:"3rd"`
-	Fourth int `json:"4th"`
-	Fifth int `json:"5th"`
-	Sixth int `json:"6th"`
+	Level   int `json:"level"`
+	First   int `json:"1st"`
+	Second  int `json:"2nd"`
+	Third   int `json:"3rd"`
+	Fourth  int `json:"4th"`
+	Fifth   int `json:"5th"`
+	Sixth   int `json:"6th"`
 	Seventh int `json:"7th"`
-	Eighth int `json:"8th"`
-	Ninth int `json:"9th"`
+	Eighth  int `json:"8th"`
+	Ninth   int `json:"9th"`
 }
 
 // SkillChoices represents the skill proficiency selection for a class.

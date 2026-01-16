@@ -7,18 +7,18 @@
 // Basic usage:
 //
 //	loader := data.NewLoader("./data")
-//	
+//
 //	// Load all data at once
 //	if err := loader.LoadAll(); err != nil {
 //		log.Fatal(err)
 //	}
-//	
+//
 //	// Or load data on demand
 //	races, err := loader.GetRaces()
 //	if err != nil {
 //		log.Fatal(err)
 //	}
-//	
+//
 //	// Find specific items
 //	human, err := loader.FindRaceByName("Human")
 //	if err != nil {
@@ -321,13 +321,14 @@ func (l *Loader) ClearCache() {
 
 func (l *Loader) loadRacesUnsafe() error {
 	path := filepath.Join(l.dataDir, "races.json")
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
-		return fmt.Errorf("failed to read races.json: %w", err)
+		return fmt.Errorf("failed to open races.json: %w", err)
 	}
+	defer f.Close()
 
 	var races RaceData
-	if err := json.Unmarshal(data, &races); err != nil {
+	if err := json.NewDecoder(f).Decode(&races); err != nil {
 		return fmt.Errorf("failed to parse races.json: %w", err)
 	}
 
@@ -341,13 +342,14 @@ func (l *Loader) loadRacesUnsafe() error {
 
 func (l *Loader) loadClassesUnsafe() error {
 	path := filepath.Join(l.dataDir, "classes.json")
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
-		return fmt.Errorf("failed to read classes.json: %w", err)
+		return fmt.Errorf("failed to open classes.json: %w", err)
 	}
+	defer f.Close()
 
 	var classes ClassData
-	if err := json.Unmarshal(data, &classes); err != nil {
+	if err := json.NewDecoder(f).Decode(&classes); err != nil {
 		return fmt.Errorf("failed to parse classes.json: %w", err)
 	}
 
@@ -361,13 +363,14 @@ func (l *Loader) loadClassesUnsafe() error {
 
 func (l *Loader) loadSpellsUnsafe() error {
 	path := filepath.Join(l.dataDir, "spells.json")
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
-		return fmt.Errorf("failed to read spells.json: %w", err)
+		return fmt.Errorf("failed to open spells.json: %w", err)
 	}
+	defer f.Close()
 
 	var spells SpellDatabase
-	if err := json.Unmarshal(data, &spells); err != nil {
+	if err := json.NewDecoder(f).Decode(&spells); err != nil {
 		return fmt.Errorf("failed to parse spells.json: %w", err)
 	}
 
@@ -381,13 +384,14 @@ func (l *Loader) loadSpellsUnsafe() error {
 
 func (l *Loader) loadBackgroundsUnsafe() error {
 	path := filepath.Join(l.dataDir, "backgrounds.json")
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
-		return fmt.Errorf("failed to read backgrounds.json: %w", err)
+		return fmt.Errorf("failed to open backgrounds.json: %w", err)
 	}
+	defer f.Close()
 
 	var backgrounds BackgroundData
-	if err := json.Unmarshal(data, &backgrounds); err != nil {
+	if err := json.NewDecoder(f).Decode(&backgrounds); err != nil {
 		return fmt.Errorf("failed to parse backgrounds.json: %w", err)
 	}
 
@@ -401,13 +405,14 @@ func (l *Loader) loadBackgroundsUnsafe() error {
 
 func (l *Loader) loadConditionsUnsafe() error {
 	path := filepath.Join(l.dataDir, "conditions.json")
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
-		return fmt.Errorf("failed to read conditions.json: %w", err)
+		return fmt.Errorf("failed to open conditions.json: %w", err)
 	}
+	defer f.Close()
 
 	var conditions ConditionData
-	if err := json.Unmarshal(data, &conditions); err != nil {
+	if err := json.NewDecoder(f).Decode(&conditions); err != nil {
 		return fmt.Errorf("failed to parse conditions.json: %w", err)
 	}
 
