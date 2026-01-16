@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
+	"github.com/Domo929/sheet/internal/ui/views"
 )
 
 // ViewType represents the different views in the application.
@@ -29,8 +30,8 @@ type Model struct {
 	storage      *storage.CharacterStorage
 	err          error
 	
-	// View-specific models (will be implemented in future phases)
-	// characterSelectionModel interface{}
+	// View-specific models
+	characterSelectionModel *views.CharacterSelectionModel
 	// mainSheetModel interface{}
 	// inventoryModel interface{}
 	// etc.
@@ -44,14 +45,21 @@ func NewModel() (Model, error) {
 		return Model{}, err
 	}
 
+	// Initialize character selection model
+	charSelectionModel := views.NewCharacterSelectionModel(store)
+
 	return Model{
-		currentView: ViewCharacterSelection,
-		storage:     store,
+		currentView:             ViewCharacterSelection,
+		storage:                 store,
+		characterSelectionModel: charSelectionModel,
 	}, nil
 }
 
 // Init initializes the model (required by Bubble Tea).
 func (m Model) Init() tea.Cmd {
+	if m.characterSelectionModel != nil {
+		return m.characterSelectionModel.Init()
+	}
 	return nil
 }
 
@@ -61,13 +69,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		return m, nil
+		// Forward to current view
+		return m.updateCurrentView(msg)
 
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			return m, tea.Quit
+	case views.CharacterLoadedMsg:
+		// Load the character from storage
+		char, err := m.storage.LoadByPath(msg.Path)
+		if err != nil {
+			m.err = err
+			return m, nil
 		}
+		m.character = char
+		m.currentView = ViewMainSheet
+		return m, nil
 
 	case NavigateMsg:
 		m.currentView = msg.View
@@ -94,17 +108,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // updateCurrentView routes the message to the current view's update function.
 func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// This will be expanded as we add view-specific models
+	var cmd tea.Cmd
+	
 	switch m.currentView {
 	case ViewCharacterSelection:
-		// Will be implemented in character selection phase
-		return m, nil
+		if m.characterSelectionModel != nil {
+			updatedModel, c := m.characterSelectionModel.Update(msg)
+			m.characterSelectionModel = updatedModel
+			cmd = c
+		}
 	case ViewMainSheet:
 		// Will be implemented in main sheet phase
-		return m, nil
 	default:
-		return m, nil
+		// Other views not yet implemented
 	}
+	
+	return m, cmd
 }
 
 // View renders the current view (required by Bubble Tea).
@@ -138,6 +157,9 @@ func (m Model) View() string {
 
 // View rendering stubs (will be implemented in future phases)
 func (m Model) renderCharacterSelection() string {
+	if m.characterSelectionModel != nil {
+		return m.characterSelectionModel.View()
+	}
 	return "Character Selection View (TODO)\n\nPress q to quit."
 }
 
