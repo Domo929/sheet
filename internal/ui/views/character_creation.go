@@ -21,6 +21,7 @@ const (
 	StepClass
 	StepBackground
 	StepAbilities
+	StepEquipment
 	StepReview
 )
 
@@ -72,6 +73,10 @@ type CharacterCreationModel struct {
 	backgroundBonus1Target   int           // Which ability gets +1 (index in background options)
 	focusedBonusField        BonusField    // pattern, +2 target, or +1 target
 	backgroundBonusComplete  bool          // Whether background bonuses are fully allocated
+	
+	// Equipment step
+	startingGold         int    // Starting gold pieces for the character
+	equipmentConfirmed   bool   // Whether equipment has been reviewed and confirmed
 	
 	// Navigation
 	helpFooter components.HelpFooter
@@ -234,6 +239,10 @@ func (m *CharacterCreationModel) handleKey(msg tea.KeyMsg) (*CharacterCreationMo
 		return m.handleBackgroundKeys(msg)
 	case StepAbilities:
 		return m.handleAbilityKeys(msg)
+	case StepEquipment:
+		return m.handleEquipmentKeys(msg)
+	case StepReview:
+		return m.handleReviewKeys(msg)
 	default:
 		return m, nil
 	}
@@ -496,9 +505,9 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 				}
 			}
 		} else if m.focusedSection == SectionAbilityScores {
-			// Finalize character
+			// Move to equipment selection
 			if m.validateAbilityScores() {
-				return m.finalizeCharacter()
+				return m.moveToStep(StepEquipment)
 			}
 		}
 		return m, nil
@@ -506,6 +515,39 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 	case "esc":
 		// Go back to background selection
 		return m.moveToStep(StepBackground)
+	}
+	
+	return m, nil
+}
+
+// handleEquipmentKeys handles keys for the starting equipment step.
+func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		// Confirm equipment and move to review
+		m.equipmentConfirmed = true
+		// Set starting gold
+		m.startingGold = m.getStartingGold()
+		return m.moveToStep(StepReview)
+		
+	case "esc":
+		// Go back to abilities
+		return m.moveToStep(StepAbilities)
+	}
+	
+	return m, nil
+}
+
+// handleReviewKeys handles keys for the review step.
+func (m *CharacterCreationModel) handleReviewKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		// Save character
+		return m.finalizeCharacter()
+		
+	case "esc":
+		// Go back to equipment
+		return m.moveToStep(StepEquipment)
 	}
 	
 	return m, nil
@@ -1013,6 +1055,9 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 	m.character.AbilityScores.Wisdom.Base += bonuses[4]
 	m.character.AbilityScores.Charisma.Base += bonuses[5]
 	
+	// Add starting gold
+	m.character.Inventory.Currency.AddGold(m.startingGold)
+	
 	// Save character
 	path, err := m.storage.Save(m.character)
 	if err != nil {
@@ -1111,6 +1156,10 @@ func (m *CharacterCreationModel) View() string {
 		content.WriteString(m.renderBackgroundSelection())
 	case StepAbilities:
 		content.WriteString(m.renderAbilityScores())
+	case StepEquipment:
+		content.WriteString(m.renderEquipmentSelection())
+	case StepReview:
+		content.WriteString(m.renderReview())
 	}
 	
 	return content.String()
@@ -1123,7 +1172,7 @@ func (m *CharacterCreationModel) renderBasicInfo() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 1 of 4: Basic Information"))
+	content.WriteString(stepStyle.Render("Step 1 of 6: Basic Information"))
 	content.WriteString("\n\n")
 	
 	// Character name input
@@ -1160,7 +1209,7 @@ func (m *CharacterCreationModel) renderRaceSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 2 of 4: Race Selection"))
+	content.WriteString(stepStyle.Render("Step 2 of 6: Race Selection"))
 	content.WriteString("\n\n")
 	
 	// Render race list
@@ -1183,7 +1232,7 @@ func (m *CharacterCreationModel) renderClassSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 3 of 4: Class Selection"))
+	content.WriteString(stepStyle.Render("Step 3 of 6: Class Selection"))
 	content.WriteString("\n\n")
 	
 	// Render class list
@@ -1206,7 +1255,7 @@ func (m *CharacterCreationModel) renderBackgroundSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 4 of 5: Background Selection"))
+	content.WriteString(stepStyle.Render("Step 4 of 6: Background Selection"))
 	content.WriteString("\n\n")
 	
 	// Show background list
@@ -1331,7 +1380,7 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 5 of 5: Ability Score Assignment"))
+	content.WriteString(stepStyle.Render("Step 5 of 6: Ability Score Assignment"))
 	content.WriteString("\n\n")
 	
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
@@ -1469,4 +1518,159 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 	content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Adjust | m: Change mode | Enter: Confirm/Finish | Esc: Back"))
 	
 	return content.String()
+}
+
+// renderEquipmentSelection renders the starting equipment step.
+func (m *CharacterCreationModel) renderEquipmentSelection() string {
+	var content strings.Builder
+	
+	stepStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8")).
+		Italic(true)
+	content.WriteString(stepStyle.Render("Step 6 of 6: Starting Equipment"))
+	content.WriteString("\n\n")
+	
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	
+	content.WriteString(titleStyle.Render("Starting Equipment"))
+	content.WriteString("\n\n")
+	
+	// Display class starting equipment
+	if m.selectedClass != nil && len(m.selectedClass.StartingEquipment) > 0 {
+		content.WriteString(helpStyle.Render("Based on your class, you start with:"))
+		content.WriteString("\n\n")
+		
+		for _, equip := range m.selectedClass.StartingEquipment {
+			content.WriteString("  • ")
+			content.WriteString(equip)
+			content.WriteString("\n")
+		}
+	} else {
+		content.WriteString(helpStyle.Render("No starting equipment specified"))
+		content.WriteString("\n")
+	}
+	
+	content.WriteString("\n")
+	
+	// Starting gold
+	startingGold := m.getStartingGold()
+	content.WriteString(helpStyle.Render(fmt.Sprintf("Starting Gold: %d gp", startingGold)))
+	content.WriteString("\n\n")
+	
+	// Help text
+	content.WriteString(helpStyle.Render("Enter: Continue to Review | Esc: Back to Abilities"))
+	
+	return content.String()
+}
+
+// renderReview renders the final review step before saving.
+func (m *CharacterCreationModel) renderReview() string {
+	var content strings.Builder
+	
+	stepStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8")).
+		Italic(true)
+	content.WriteString(stepStyle.Render("Final Step: Review & Confirm"))
+	content.WriteString("\n\n")
+	
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	
+	content.WriteString(titleStyle.Render("Character Summary"))
+	content.WriteString("\n\n")
+	
+	// Basic info
+	content.WriteString(labelStyle.Render("Name: "))
+	content.WriteString(m.character.Info.Name)
+	content.WriteString("\n")
+	
+	content.WriteString(labelStyle.Render("Player: "))
+	content.WriteString(m.character.Info.PlayerName)
+	content.WriteString("\n")
+	
+	content.WriteString(labelStyle.Render("Progression: "))
+	if m.character.Info.ProgressionType == models.ProgressionXP {
+		content.WriteString("XP Tracking")
+	} else {
+		content.WriteString("Milestone")
+	}
+	content.WriteString("\n\n")
+	
+	// Race, Class, Background
+	if m.selectedRace != nil {
+		content.WriteString(labelStyle.Render("Race: "))
+		content.WriteString(m.selectedRace.Name)
+		if m.selectedSubtype >= 0 && m.selectedSubtype < len(m.selectedRace.Subtypes) {
+			content.WriteString(fmt.Sprintf(" (%s)", m.selectedRace.Subtypes[m.selectedSubtype].Name))
+		}
+		content.WriteString("\n")
+	}
+	
+	if m.selectedClass != nil {
+		content.WriteString(labelStyle.Render("Class: "))
+		content.WriteString(m.selectedClass.Name)
+		content.WriteString(" (Level 1)\n")
+	}
+	
+	if m.selectedBackground != nil {
+		content.WriteString(labelStyle.Render("Background: "))
+		content.WriteString(m.selectedBackground.Name)
+		content.WriteString("\n\n")
+	}
+	
+	// Ability Scores
+	content.WriteString(labelStyle.Render("Ability Scores:"))
+	content.WriteString("\n")
+	
+	abilityNames := []string{"STR", "DEX", "CON", "INT", "WIS", "CHA"}
+	backgroundBonuses := m.getBackgroundBonuses()
+	
+	for i := 0; i < 6; i++ {
+		base := m.abilityScores[i]
+		bonus := backgroundBonuses[i]
+		final := base + bonus
+		modifier := (final - 10) / 2
+		
+		content.WriteString(fmt.Sprintf("  %s: %d", abilityNames[i], final))
+		if bonus > 0 {
+			content.WriteString(fmt.Sprintf(" (%d + %d)", base, bonus))
+		}
+		content.WriteString(fmt.Sprintf(" [%+d]\n", modifier))
+	}
+	
+	content.WriteString("\n")
+	content.WriteString(helpStyle.Render("Enter: Save Character | Esc: Back to Equipment"))
+	
+	return content.String()
+}
+
+// getStartingGold returns the starting gold for the character's class.
+func (m *CharacterCreationModel) getStartingGold() int {
+	if m.selectedClass == nil {
+		return 0
+	}
+	
+	// Standard D&D 5e starting gold by class
+	startingGoldByClass := map[string]int{
+		"Barbarian": 50,  // 2d4 × 10 gp (average)
+		"Bard":      125, // 5d4 × 10 gp (average)
+		"Cleric":    125, // 5d4 × 10 gp (average)
+		"Druid":     50,  // 2d4 × 10 gp (average)
+		"Fighter":   125, // 5d4 × 10 gp (average)
+		"Monk":      13,  // 5d4 gp (average)
+		"Paladin":   125, // 5d4 × 10 gp (average)
+		"Ranger":    125, // 5d4 × 10 gp (average)
+		"Rogue":     100, // 4d4 × 10 gp (average)
+		"Sorcerer":  75,  // 3d4 × 10 gp (average)
+		"Warlock":   100, // 4d4 × 10 gp (average)
+		"Wizard":    100, // 4d4 × 10 gp (average)
+	}
+	
+	if gold, ok := startingGoldByClass[m.selectedClass.Name]; ok {
+		return gold
+	}
+	
+	return 100 // Default
 }
