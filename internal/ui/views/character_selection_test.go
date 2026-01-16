@@ -23,9 +23,9 @@ func TestNewCharacterSelectionModel(t *testing.T) {
 	if !model.loading {
 		t.Error("Model should start in loading state")
 	}
-
-	if len(model.buttons.Buttons) != 4 {
-		t.Errorf("Expected 4 buttons, got %d", len(model.buttons.Buttons))
+	
+	if model.confirmingDelete {
+		t.Error("Model should not start in delete confirmation state")
 	}
 }
 
@@ -126,22 +126,6 @@ func TestCharacterSelectionNavigation(t *testing.T) {
 	if model.list.SelectedIndex == prevSelection {
 		t.Error("Expected selection to move up")
 	}
-
-	// Test button navigation
-	initialButton := model.buttons.SelectedIndex
-
-	// Move right
-	model.Update(tea.KeyMsg{Type: tea.KeyRight})
-	if model.buttons.SelectedIndex == initialButton {
-		t.Error("Expected button selection to move right")
-	}
-
-	// Move left
-	prevButton := model.buttons.SelectedIndex
-	model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	if model.buttons.SelectedIndex == prevButton {
-		t.Error("Expected button selection to move left")
-	}
 }
 
 func TestCharacterSelectionLoadAction(t *testing.T) {
@@ -166,10 +150,8 @@ func TestCharacterSelectionLoadAction(t *testing.T) {
 	model.loading = false
 	model.updateList()
 
-	// Select "Load" button (index 0) - it should already be selected
-	
-	// Press enter to load
-	updatedModel, cmd := model.handleAction()
+	// Press enter to load selected character
+	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	model = updatedModel
 
 	if cmd == nil {
@@ -210,14 +192,22 @@ func TestCharacterSelectionDeleteAction(t *testing.T) {
 	model.loading = false
 	model.updateList()
 
-	// Navigate to "Delete" button (index 2)
-	model.buttons.MoveRight() // New
-	model.buttons.MoveRight() // Delete
-
-	// Press enter to delete
-	updatedModel, cmd := model.handleAction()
+	// Press 'd' to initiate delete
+	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
 	model = updatedModel
 
+	// Should be in confirmation mode
+	if !model.confirmingDelete {
+		t.Error("Expected model to be in delete confirmation state")
+	}
+	if model.deleteTarget != "Test Hero" {
+		t.Errorf("Expected delete target 'Test Hero', got '%s'", model.deleteTarget)
+	}
+
+	// Press 'y' to confirm
+	updatedModel, cmd = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	model = updatedModel
+	
 	if cmd == nil {
 		t.Fatal("Expected command to be returned for deleting character")
 	}
@@ -234,18 +224,56 @@ func TestCharacterSelectionDeleteAction(t *testing.T) {
 	}
 }
 
+func TestCharacterSelectionCancelDelete(t *testing.T) {
+	store, _ := storage.NewCharacterStorage(t.TempDir())
+	model := NewCharacterSelectionModel(store)
+
+	char := &models.Character{
+		Info: models.CharacterInfo{
+			Name:  "Test Hero",
+			Race:  "Human",
+			Class: "Fighter",
+			Level: 1,
+		},
+	}
+	store.Save(char)
+
+	model.characters = []storage.CharacterInfo{
+		{Name: "Test Hero", Race: "Human", Class: "Fighter", Level: 1},
+	}
+	model.loading = false
+	model.updateList()
+
+	// Press 'd' to initiate delete
+	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	model = updatedModel
+
+	if !model.confirmingDelete {
+		t.Error("Expected model to be in delete confirmation state")
+	}
+
+	// Press 'n' to cancel
+	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	model = updatedModel
+
+	if model.confirmingDelete {
+		t.Error("Expected model to exit delete confirmation state")
+	}
+	if model.deleteTarget != "" {
+		t.Error("Expected delete target to be cleared")
+	}
+	if cmd != nil {
+		t.Error("Expected no command when canceling delete")
+	}
+}
+
 func TestCharacterSelectionQuitAction(t *testing.T) {
 	store, _ := storage.NewCharacterStorage(t.TempDir())
 	model := NewCharacterSelectionModel(store)
 	model.loading = false
 
-	// Navigate to "Quit" button (index 3)
-	model.buttons.MoveRight() // New
-	model.buttons.MoveRight() // Delete
-	model.buttons.MoveRight() // Quit
-
-	// Press enter to quit
-	_, cmd := model.handleAction()
+	// Press 'q' to quit
+	_, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
 
 	if cmd == nil {
 		t.Fatal("Expected quit command to be returned")
@@ -255,6 +283,26 @@ func TestCharacterSelectionQuitAction(t *testing.T) {
 	msg := cmd()
 	if msg == nil {
 		t.Error("Expected quit message")
+	}
+}
+
+func TestCharacterSelectionNewCharacterKey(t *testing.T) {
+	store, _ := storage.NewCharacterStorage(t.TempDir())
+	model := NewCharacterSelectionModel(store)
+	model.loading = false
+
+	// Press 'n' to create new character
+	_, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+
+	if cmd == nil {
+		t.Fatal("Expected command for starting character creation")
+	}
+
+	// Execute command and check message
+	msg := cmd()
+	_, ok := msg.(StartCharacterCreationMsg)
+	if !ok {
+		t.Fatalf("Expected StartCharacterCreationMsg, got %T", msg)
 	}
 }
 
@@ -327,19 +375,17 @@ func TestCharacterSelectionErrorHandling(t *testing.T) {
 	model := NewCharacterSelectionModel(store)
 	model.loading = false
 
-	// Test load with no characters
-	updatedModel, _ := model.handleAction()
+	// Test load with no characters - press enter
+	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	model = updatedModel
 
 	if model.err == nil {
 		t.Error("Expected error when loading with no characters")
 	}
 
-	// Test delete with no characters
+	// Test delete with no characters - press 'd'
 	model.err = nil
-	model.buttons.MoveRight() // New
-	model.buttons.MoveRight() // Delete
-	updatedModel, _ = model.handleAction()
+	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
 	model = updatedModel
 
 	if model.err == nil {

@@ -12,31 +12,29 @@ import (
 
 // CharacterSelectionModel manages the character selection screen.
 type CharacterSelectionModel struct {
-	storage     *storage.CharacterStorage
-	characters  []storage.CharacterInfo
-	list        components.List
-	buttons     components.ButtonGroup
-	helpFooter  components.HelpFooter
-	width       int
-	height      int
-	err         error
-	loading     bool
+	storage           *storage.CharacterStorage
+	characters        []storage.CharacterInfo
+	list              components.List
+	helpFooter        components.HelpFooter
+	width             int
+	height            int
+	err               error
+	loading           bool
+	confirmingDelete  bool
+	deleteTarget      string
 }
 
 // NewCharacterSelectionModel creates a new character selection model.
 func NewCharacterSelectionModel(store *storage.CharacterStorage) *CharacterSelectionModel {
-	// Create buttons for actions
-	buttons := components.NewButtonGroup("Load", "New", "Delete", "Quit")
-
 	// Create help footer with appropriate bindings
 	helpFooter := components.NewHelpFooter()
 
 	return &CharacterSelectionModel{
-		storage:    store,
-		list:       components.NewList("Saved Characters", nil),
-		buttons:    buttons,
-		helpFooter: helpFooter,
-		loading:    true,
+		storage:          store,
+		list:             components.NewList("Saved Characters", nil),
+		helpFooter:       helpFooter,
+		loading:          true,
+		confirmingDelete: false,
 	}
 }
 
@@ -121,7 +119,23 @@ func (m *CharacterSelectionModel) Update(msg tea.Msg) (*CharacterSelectionModel,
 		return m, LoadCharacterListCmd(m.storage)
 
 	case tea.KeyMsg:
-		// Handle navigation keys
+		// If confirming delete, handle y/n
+		if m.confirmingDelete {
+			switch msg.String() {
+			case "y", "Y":
+				// Confirm delete
+				m.confirmingDelete = false
+				return m, DeleteCharacterCmd(m.storage, m.deleteTarget)
+			case "n", "N", "esc":
+				// Cancel delete
+				m.confirmingDelete = false
+				m.deleteTarget = ""
+				return m, nil
+			}
+			return m, nil
+		}
+		
+		// Normal key handling
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
@@ -138,74 +152,39 @@ func (m *CharacterSelectionModel) Update(msg tea.Msg) (*CharacterSelectionModel,
 			}
 			return m, nil
 
-		case "left", "h":
-			m.buttons.MoveLeft()
-			return m, nil
-
-		case "right", "l":
-			m.buttons.MoveRight()
-			return m, nil
-
-		case "enter", " ":
-			return m.handleAction()
-
-		case "tab":
-			m.buttons.MoveRight()
-			return m, nil
-
-		case "shift+tab":
-			m.buttons.MoveLeft()
-			return m, nil
-		}
-	}
-
-	return m, nil
-}
-
-// handleAction performs the selected action.
-func (m *CharacterSelectionModel) handleAction() (*CharacterSelectionModel, tea.Cmd) {
-	if m.loading {
-		return m, nil
-	}
-
-	selectedIndex := m.buttons.SelectedIndex
-	if selectedIndex < 0 || selectedIndex >= len(m.buttons.Buttons) {
-		return m, nil
-	}
-
-	action := m.buttons.Buttons[selectedIndex].Label
-
-	switch action {
-	case "Load":
-		if len(m.characters) == 0 {
-			m.err = fmt.Errorf("no characters available to load")
-			return m, nil
-		}
-		selected := m.list.Selected()
-		if selected != nil {
-			if path, ok := selected.Value.(string); ok {
-				return m, LoadCharacterCmd(path)
+		case "enter":
+			// Load selected character
+			if len(m.characters) == 0 {
+				m.err = fmt.Errorf("no characters available to load")
+				return m, nil
 			}
-		}
-
-	case "New":
-		// Navigate to character creation view
-		return m, func() tea.Msg {
-			return StartCharacterCreationMsg{}
-		}
-
-	case "Delete":
-		if len(m.characters) == 0 {
-			m.err = fmt.Errorf("no characters available to delete")
+			selected := m.list.Selected()
+			if selected != nil {
+				if path, ok := selected.Value.(string); ok {
+					return m, LoadCharacterCmd(path)
+				}
+			}
+			return m, nil
+		
+		case "n", "N":
+			// New character
+			return m, func() tea.Msg {
+				return StartCharacterCreationMsg{}
+			}
+		
+		case "d", "D":
+			// Delete character (with confirmation)
+			if len(m.characters) == 0 {
+				m.err = fmt.Errorf("no characters available to delete")
+				return m, nil
+			}
+			selected := m.list.Selected()
+			if selected != nil {
+				m.confirmingDelete = true
+				m.deleteTarget = selected.Title
+			}
 			return m, nil
 		}
-		selected := m.list.Selected()
-		if selected != nil {
-			return m, DeleteCharacterCmd(m.storage, selected.Title)
-		}
-
-	case "Quit":
-		return m, tea.Quit
 	}
 
 	return m, nil
@@ -250,6 +229,17 @@ func (m *CharacterSelectionModel) View() string {
 		content.WriteString("\n\n")
 	}
 
+	// Delete confirmation prompt
+	if m.confirmingDelete {
+		confirmStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("11")).
+			Bold(true)
+		content.WriteString(confirmStyle.Render(fmt.Sprintf("Delete character '%s'?", m.deleteTarget)))
+		content.WriteString("\n")
+		content.WriteString("Press Y to confirm, N to cancel\n\n")
+		return content.String()
+	}
+
 	// Loading state
 	if m.loading {
 		content.WriteString("Loading characters...\n")
@@ -260,11 +250,11 @@ func (m *CharacterSelectionModel) View() string {
 			Italic(true)
 		content.WriteString(emptyStyle.Render("No saved characters found."))
 		content.WriteString("\n")
-		content.WriteString(emptyStyle.Render("Press 'New' to create a character."))
+		content.WriteString(emptyStyle.Render("Press 'n' to create a character."))
 		content.WriteString("\n\n")
 	} else {
 		// Render character list
-		listHeight := m.height - 12 // Reserve space for title, buttons, help
+		listHeight := m.height - 10 // Reserve space for title and help
 		if listHeight < 5 {
 			listHeight = 5
 		}
@@ -274,12 +264,13 @@ func (m *CharacterSelectionModel) View() string {
 		content.WriteString("\n\n")
 	}
 
-	// Render action buttons
-	content.WriteString(m.buttons.Render())
-	content.WriteString("\n\n")
-
-	// Render help footer
-	content.WriteString(m.helpFooter.Render())
+	// Help text
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	if len(m.characters) > 0 {
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Load | n: New | d: Delete | q: Quit"))
+	} else {
+		content.WriteString(helpStyle.Render("n: New Character | q: Quit"))
+	}
 
 	return content.String()
 }
