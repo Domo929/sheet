@@ -37,13 +37,14 @@ func TestNewButtonGroup(t *testing.T) {
 	if bg.SelectedIndex != 0 {
 		t.Errorf("SelectedIndex = %d, want 0", bg.SelectedIndex)
 	}
-	if !bg.Buttons[0].Focused {
-		t.Error("First button should be focused")
+	if !bg.Buttons[0].Selected {
+		t.Error("First button should be selected")
 	}
 }
 
 func TestButtonGroupNavigation(t *testing.T) {
 	bg := NewButtonGroup("One", "Two", "Three")
+	bg.SetFocused(true) // Set group as focused for navigation
 
 	// Test moving right
 	bg.MoveRight()
@@ -55,6 +56,9 @@ func TestButtonGroupNavigation(t *testing.T) {
 	}
 	if !bg.Buttons[1].Focused {
 		t.Error("Second button should be focused after moving right")
+	}
+	if !bg.Buttons[1].Selected {
+		t.Error("Second button should be selected after moving right")
 	}
 
 	bg.MoveRight()
@@ -131,3 +135,51 @@ func TestButtonGroupEmpty(t *testing.T) {
 		t.Error("Rendered output should be empty for empty button group")
 	}
 }
+
+func TestButtonGroupFocusedVsSelected(t *testing.T) {
+	bg := NewButtonGroup("XP Tracking", "Milestone")
+	
+	// Initially: first button selected, group not focused
+	if !bg.Buttons[0].Selected {
+		t.Error("First button should be selected initially")
+	}
+	if bg.Buttons[0].Focused {
+		t.Error("Buttons should not be focused when group is not focused")
+	}
+	
+	// Set group as focused (like when user tabs to it)
+	bg.SetFocused(true)
+	if !bg.Buttons[0].Focused {
+		t.Error("First button should be focused when group is focused")
+	}
+	if !bg.Buttons[0].Selected {
+		t.Error("First button should still be selected")
+	}
+	
+	// Set group as not focused (like when user tabs away)
+	bg.SetFocused(false)
+	if bg.Buttons[0].Focused {
+		t.Error("Button should not be focused when group loses focus")
+	}
+	if !bg.Buttons[0].Selected {
+		t.Error("Button should remain selected even when group loses focus")
+	}
+	
+	// Move to second button and unfocus
+	bg.SetFocused(true)
+	bg.MoveRight()
+	bg.SetFocused(false)
+	
+	// First button should no longer be selected
+	if bg.Buttons[0].Selected {
+		t.Error("First button should not be selected after moving right")
+	}
+	// Second button should be selected but not focused
+	if !bg.Buttons[1].Selected {
+		t.Error("Second button should be selected")
+	}
+	if bg.Buttons[1].Focused {
+		t.Error("Second button should not be focused when group is not focused")
+	}
+}
+

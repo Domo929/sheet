@@ -649,13 +649,9 @@ func (m *CharacterCreationModel) renderBasicInfo() string {
 	content.WriteString(labelStyle.Render("Progression Type:"))
 	content.WriteString("\n")
 	
-	// Highlight progression buttons if focused
-	if m.focusedField == 2 {
-		focusStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
-		content.WriteString(focusStyle.Render(m.progressionList.Render()))
-	} else {
-		content.WriteString(m.progressionList.Render())
-	}
+	// Set focus state on button group based on focused field
+	m.progressionList.SetFocused(m.focusedField == 2)
+	content.WriteString(m.progressionList.Render())
 	content.WriteString("\n\n")
 	
 	// Help text
