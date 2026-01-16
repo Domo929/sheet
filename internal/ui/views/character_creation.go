@@ -172,31 +172,69 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 		}
 		return m, nil
 		
-	case "up", "k":
+	case "up":
+		// Arrow keys always work for navigation
 		if m.focusedField > 0 {
 			m.focusedField--
 		}
 		return m, nil
 		
-	case "down", "j":
+	case "k":
+		// Vim key only works when NOT in text field
+		if m.focusedField == 2 && m.focusedField > 0 {
+			m.focusedField--
+			return m, nil
+		}
+		// Otherwise treat as regular text input
+		
+	case "down":
+		// Arrow keys always work for navigation
 		if m.focusedField < 2 {
 			m.focusedField++
 		}
 		return m, nil
 		
-	case "left", "h":
+	case "j":
+		// Vim key only works when NOT in text field
+		if m.focusedField == 2 && m.focusedField < 2 {
+			m.focusedField++
+			return m, nil
+		}
+		// Otherwise treat as regular text input
+		
+	case "left":
+		// Arrow keys for progression type selection
 		if m.focusedField == 2 {
 			m.progressionList.MoveLeft()
 			m.updateProgressionType()
 		}
 		return m, nil
 		
-	case "right", "l":
+	case "h":
+		// Vim key only works for progression type selection
+		if m.focusedField == 2 {
+			m.progressionList.MoveLeft()
+			m.updateProgressionType()
+			return m, nil
+		}
+		// Otherwise treat as regular text input
+		
+	case "right":
+		// Arrow keys for progression type selection
 		if m.focusedField == 2 {
 			m.progressionList.MoveRight()
 			m.updateProgressionType()
 		}
 		return m, nil
+		
+	case "l":
+		// Vim key only works for progression type selection
+		if m.focusedField == 2 {
+			m.progressionList.MoveRight()
+			m.updateProgressionType()
+			return m, nil
+		}
+		// Otherwise treat as regular text input
 		
 	case "enter":
 		// Move to next step if validation passes
@@ -223,19 +261,18 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			}
 		}
 		return m, nil
-		
-	default:
-		// Handle text input - only process actual character runes
-		if msg.Type == tea.KeyRunes && (m.focusedField == 0 || m.focusedField == 1) {
-			char := string(msg.Runes)
-			if m.focusedField == 0 {
-				m.nameInput.Value += char
-			} else if m.focusedField == 1 {
-				m.playerNameInput.Value += char
-			}
-		}
-		return m, nil
 	}
+	
+	// Handle text input - only process actual character runes
+	if msg.Type == tea.KeyRunes && (m.focusedField == 0 || m.focusedField == 1) {
+		char := string(msg.Runes)
+		if m.focusedField == 0 {
+			m.nameInput.Value += char
+		} else if m.focusedField == 1 {
+			m.playerNameInput.Value += char
+		}
+	}
+	return m, nil
 }
 
 // handleRaceKeys handles keys for the race selection step.
