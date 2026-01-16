@@ -68,7 +68,7 @@ func TestCharacterGetSavingThrowModifier(t *testing.T) {
 func TestCharacterSpellcasting(t *testing.T) {
 	c := NewCharacter("char-1", "Test", "Elf", "Wizard")
 	c.AbilityScores = NewAbilityScoresFromValues(8, 14, 12, 18, 12, 10) // INT 18 = +4
-	c.Info.Level = 5 // Proficiency +3
+	c.Info.Level = 5                                                    // Proficiency +3
 
 	// Set up spellcasting
 	sc := NewSpellcasting(AbilityIntelligence)
@@ -119,7 +119,7 @@ func TestCharacterDamageAndHealing(t *testing.T) {
 func TestCharacterLongRest(t *testing.T) {
 	c := NewCharacter("char-1", "Test", "Elf", "Wizard")
 	c.CombatStats.HitPoints = HitPoints{Maximum: 30, Current: 10, Temporary: 5}
-	c.CombatStats.HitDice = HitDice{Total: 5, Remaining: 0, DieType: "d6"}
+	c.CombatStats.HitDice = HitDice{Total: 5, Remaining: 0, DieType: 6}
 	c.CombatStats.ExhaustionLevel = 2
 	c.CombatStats.DeathSaves = DeathSaves{Successes: 2, Failures: 1}
 

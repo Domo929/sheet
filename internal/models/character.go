@@ -13,16 +13,16 @@ type Character struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 
 	// Core character information
-	Info          CharacterInfo  `json:"info"`
-	AbilityScores AbilityScores  `json:"abilityScores"`
-	Skills        Skills         `json:"skills"`
-	SavingThrows  SavingThrows   `json:"savingThrows"`
-	CombatStats   CombatStats    `json:"combatStats"`
-	Inventory     Inventory      `json:"inventory"`
-	Spellcasting  *Spellcasting  `json:"spellcasting,omitempty"`
-	Features      Features       `json:"features"`
-	Proficiencies Proficiencies  `json:"proficiencies"`
-	Personality   Personality    `json:"personality"`
+	Info          CharacterInfo `json:"info"`
+	AbilityScores AbilityScores `json:"abilityScores"`
+	Skills        Skills        `json:"skills"`
+	SavingThrows  SavingThrows  `json:"savingThrows"`
+	CombatStats   CombatStats   `json:"combatStats"`
+	Inventory     Inventory     `json:"inventory"`
+	Spellcasting  *Spellcasting `json:"spellcasting,omitempty"`
+	Features      Features      `json:"features"`
+	Proficiencies Proficiencies `json:"proficiencies"`
+	Personality   Personality   `json:"personality"`
 }
 
 // NewCharacter creates a new character with the given basic information.
@@ -36,7 +36,7 @@ func NewCharacter(id, name, race, class string) *Character {
 		AbilityScores: NewAbilityScores(),
 		Skills:        NewSkills(),
 		SavingThrows:  NewSavingThrows(),
-		CombatStats:   NewCombatStats(10, "d8", 1, 30), // Default values
+		CombatStats:   NewCombatStats(10, 8, 1, 30), // Default values
 		Inventory:     NewInventory(),
 		Features:      NewFeatures(),
 		Proficiencies: NewProficiencies(),
@@ -144,6 +144,27 @@ func (c *Character) LongRest() {
 	}
 
 	c.MarkUpdated()
+}
+
+// LevelUp increases the character's level and adjusts stats accordingly.
+// Note: This does NOT automatically increase HP or spell slots, as those depend
+// on class-specific rules that require external data (class features, hit dice rolls, etc.).
+// Use this for milestone leveling or manual level increases.
+// The caller should handle:
+// - Rolling/taking average for HP increase (hit die + CON modifier)
+// - Updating spell slot progression based on class
+// - Adding new class features
+// - Updating hit dice total
+func (c *Character) LevelUp() bool {
+	if !c.Info.LevelUp() {
+		return false // Already at max level
+	}
+
+	// Update hit dice total (assume same die type)
+	c.CombatStats.HitDice.Total = c.Info.Level
+
+	c.MarkUpdated()
+	return true
 }
 
 // ToJSON serializes the character to JSON.
