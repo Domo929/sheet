@@ -1,5 +1,7 @@
 package models
 
+import "errors"
+
 // Currency represents D&D 5e currency.
 type Currency struct {
 	Copper   int `json:"copper"`
@@ -14,14 +16,19 @@ func NewCurrency() Currency {
 	return Currency{}
 }
 
-// TotalInGold converts all currency to gold pieces for comparison.
-// CP=0.01, SP=0.1, EP=0.5, GP=1, PP=10
-func (c *Currency) TotalInGold() float64 {
-	return float64(c.Copper)/100 +
-		float64(c.Silver)/10 +
-		float64(c.Electrum)/2 +
-		float64(c.Gold) +
-		float64(c.Platinum)*10
+// TotalInGold converts all currency to gold pieces (integer).
+// Returns whole gold pieces and remaining copper pieces.
+// Conversion: 100 CP = 1 GP, 10 SP = 1 GP, 2 EP = 1 GP, 10 PP = 100 GP
+func (c *Currency) TotalInGold() (goldPieces int, remainingCopper int) {
+	totalCopper := c.Copper +
+		c.Silver*10 +
+		c.Electrum*50 +
+		c.Gold*100 +
+		c.Platinum*1000
+
+	goldPieces = totalCopper / 100
+	remainingCopper = totalCopper % 100
+	return goldPieces, remainingCopper
 }
 
 // Add adds currency to the pouch.
@@ -32,6 +39,120 @@ func (c *Currency) Add(cp, sp, ep, gp, pp int) {
 	c.Gold += gp
 	c.Platinum += pp
 }
+
+// Spend removes currency from the pouch. Returns error if insufficient funds.
+func (c *Currency) Spend(cp, sp, ep, gp, pp int) error {
+	// Calculate total value in copper pieces
+	currentTotal := c.Copper + c.Silver*10 + c.Electrum*50 + c.Gold*100 + c.Platinum*1000
+	costTotal := cp + sp*10 + ep*50 + gp*100 + pp*1000
+
+	if currentTotal < costTotal {
+		return ErrInsufficientFunds
+	}
+
+	// Deduct from largest denominations first
+	remaining := costTotal
+
+	// Try to pay from exact denominations first
+	if c.Platinum >= pp {
+		c.Platinum -= pp
+		remaining -= pp * 1000
+	}
+	if c.Gold >= gp {
+		c.Gold -= gp
+		remaining -= gp * 100
+	}
+	if c.Electrum >= ep {
+		c.Electrum -= ep
+		remaining -= ep * 50
+	}
+	if c.Silver >= sp {
+		c.Silver -= sp
+		remaining -= sp * 10
+	}
+	if c.Copper >= cp {
+		c.Copper -= cp
+		remaining -= cp
+	}
+
+	// If still remaining, convert from larger denominations
+	for remaining > 0 {
+		if c.Platinum > 0 {
+			c.Platinum--
+			c.Gold += 10
+		} else if c.Gold > 0 {
+			c.Gold--
+			c.Silver += 10
+		} else if c.Electrum > 0 {
+			c.Electrum--
+			c.Silver += 5
+		} else if c.Silver > 0 {
+			c.Silver--
+			c.Copper += 10
+		}
+
+		// Deduct from copper
+		if c.Copper >= remaining {
+			c.Copper -= remaining
+			remaining = 0
+		}
+	}
+
+	return nil
+}
+
+// AddCopper adds copper pieces.
+func (c *Currency) AddCopper(amount int) {
+	c.Copper += amount
+}
+
+// AddSilver adds silver pieces.
+func (c *Currency) AddSilver(amount int) {
+	c.Silver += amount
+}
+
+// AddElectrum adds electrum pieces.
+func (c *Currency) AddElectrum(amount int) {
+	c.Electrum += amount
+}
+
+// AddGold adds gold pieces.
+func (c *Currency) AddGold(amount int) {
+	c.Gold += amount
+}
+
+// AddPlatinum adds platinum pieces.
+func (c *Currency) AddPlatinum(amount int) {
+	c.Platinum += amount
+}
+
+// SpendCopper removes copper pieces. Returns error if insufficient.
+func (c *Currency) SpendCopper(amount int) error {
+	return c.Spend(amount, 0, 0, 0, 0)
+}
+
+// SpendSilver removes silver pieces. Returns error if insufficient.
+func (c *Currency) SpendSilver(amount int) error {
+	return c.Spend(0, amount, 0, 0, 0)
+}
+
+// SpendElectrum removes electrum pieces. Returns error if insufficient.
+func (c *Currency) SpendElectrum(amount int) error {
+	return c.Spend(0, 0, amount, 0, 0)
+}
+
+// SpendGold removes gold pieces. Returns error if insufficient.
+func (c *Currency) SpendGold(amount int) error {
+	return c.Spend(0, 0, 0, amount, 0)
+}
+
+// SpendPlatinum removes platinum pieces. Returns error if insufficient.
+func (c *Currency) SpendPlatinum(amount int) error {
+	return c.Spend(0, 0, 0, 0, amount)
+}
+
+// Common errors
+var ErrInsufficientFunds = errors.New("insufficient funds")
 
 // ItemType categorizes items.
 type ItemType string
@@ -58,8 +179,7 @@ const (
 	SlotGloves   EquipmentSlot = "gloves"
 	SlotBoots    EquipmentSlot = "boots"
 	SlotAmulet   EquipmentSlot = "amulet"
-	SlotRing1    EquipmentSlot = "ring1"
-	SlotRing2    EquipmentSlot = "ring2"
+	SlotRing     EquipmentSlot = "ring" // Changed to support multiple rings
 )
 
 // Item represents an inventory item.
@@ -74,19 +194,19 @@ type Item struct {
 	EquipmentSlot EquipmentSlot `json:"equipmentSlot,omitempty"`
 
 	// Weapon properties
-	Damage         string   `json:"damage,omitempty"`         // e.g., "1d8"
-	DamageType     string   `json:"damageType,omitempty"`     // e.g., "slashing"
-	WeaponProps    []string `json:"weaponProperties,omitempty"` // e.g., ["finesse", "light"]
+	Damage      string   `json:"damage,omitempty"`           // e.g., "1d8"
+	DamageType  string   `json:"damageType,omitempty"`       // e.g., "slashing"
+	WeaponProps []string `json:"weaponProperties,omitempty"` // e.g., ["finesse", "light"]
 
 	// Armor properties
-	ArmorClass int  `json:"armorClass,omitempty"`
+	ArmorClass          int  `json:"armorClass,omitempty"`
 	StealthDisadvantage bool `json:"stealthDisadvantage,omitempty"`
 
 	// Magic item properties
-	Magical       bool   `json:"magical,omitempty"`
+	Magical            bool `json:"magical,omitempty"`
 	RequiresAttunement bool `json:"requiresAttunement,omitempty"`
-	Attuned       bool   `json:"attuned,omitempty"`
-	MagicBonus    int    `json:"magicBonus,omitempty"` // +1, +2, +3
+	Attuned            bool `json:"attuned,omitempty"`
+	MagicBonus         int  `json:"magicBonus,omitempty"` // +1, +2, +3
 
 	// Consumable properties
 	Charges    int `json:"charges,omitempty"`
@@ -122,16 +242,15 @@ func (i *Item) Recharge(amount int) {
 
 // Equipment tracks what items are currently equipped.
 type Equipment struct {
-	MainHand *Item `json:"mainHand,omitempty"`
-	OffHand  *Item `json:"offHand,omitempty"`
-	Head     *Item `json:"head,omitempty"`
-	Body     *Item `json:"body,omitempty"`
-	Cloak    *Item `json:"cloak,omitempty"`
-	Gloves   *Item `json:"gloves,omitempty"`
-	Boots    *Item `json:"boots,omitempty"`
-	Amulet   *Item `json:"amulet,omitempty"`
-	Ring1    *Item `json:"ring1,omitempty"`
-	Ring2    *Item `json:"ring2,omitempty"`
+	MainHand *Item   `json:"mainHand,omitempty"`
+	OffHand  *Item   `json:"offHand,omitempty"`
+	Head     *Item   `json:"head,omitempty"`
+	Body     *Item   `json:"body,omitempty"`
+	Cloak    *Item   `json:"cloak,omitempty"`
+	Gloves   *Item   `json:"gloves,omitempty"`
+	Boots    *Item   `json:"boots,omitempty"`
+	Amulet   *Item   `json:"amulet,omitempty"`
+	Rings    []*Item `json:"rings,omitempty"` // Unlimited rings per 2024 rules
 }
 
 // NewEquipment creates empty equipment slots.
@@ -140,6 +259,7 @@ func NewEquipment() Equipment {
 }
 
 // GetSlot returns the item in the given slot.
+// Note: For rings, use GetRings() instead as there can be multiple.
 func (e *Equipment) GetSlot(slot EquipmentSlot) *Item {
 	switch slot {
 	case SlotMainHand:
@@ -158,16 +278,13 @@ func (e *Equipment) GetSlot(slot EquipmentSlot) *Item {
 		return e.Boots
 	case SlotAmulet:
 		return e.Amulet
-	case SlotRing1:
-		return e.Ring1
-	case SlotRing2:
-		return e.Ring2
 	default:
 		return nil
 	}
 }
 
 // SetSlot sets the item in the given slot. Returns the previously equipped item.
+// Note: For rings, use EquipRing() instead as there can be multiple.
 func (e *Equipment) SetSlot(slot EquipmentSlot, item *Item) *Item {
 	var previous *Item
 	switch slot {
@@ -195,14 +312,28 @@ func (e *Equipment) SetSlot(slot EquipmentSlot, item *Item) *Item {
 	case SlotAmulet:
 		previous = e.Amulet
 		e.Amulet = item
-	case SlotRing1:
-		previous = e.Ring1
-		e.Ring1 = item
-	case SlotRing2:
-		previous = e.Ring2
-		e.Ring2 = item
 	}
 	return previous
+}
+
+// EquipRing adds a ring to the equipped rings.
+func (e *Equipment) EquipRing(ring *Item) {
+	e.Rings = append(e.Rings, ring)
+}
+
+// UnequipRing removes a ring by index. Returns the removed ring.
+func (e *Equipment) UnequipRing(index int) *Item {
+	if index < 0 || index >= len(e.Rings) {
+		return nil
+	}
+	ring := e.Rings[index]
+	e.Rings = append(e.Rings[:index], e.Rings[index+1:]...)
+	return ring
+}
+
+// GetRings returns all equipped rings.
+func (e *Equipment) GetRings() []*Item {
+	return e.Rings
 }
 
 // CountAttunedItems returns the number of attuned magic items.
@@ -210,14 +341,44 @@ func (e *Equipment) CountAttunedItems() int {
 	count := 0
 	slots := []*Item{
 		e.MainHand, e.OffHand, e.Head, e.Body, e.Cloak,
-		e.Gloves, e.Boots, e.Amulet, e.Ring1, e.Ring2,
+		e.Gloves, e.Boots, e.Amulet,
 	}
 	for _, item := range slots {
 		if item != nil && item.Attuned {
 			count++
 		}
 	}
+	// Also count rings
+	for _, ring := range e.Rings {
+		if ring != nil && ring.Attuned {
+			count++
+		}
+	}
 	return count
+}
+
+// AttuneItem attunes a magic item. Returns error if already at max attunement (3 items).
+func (e *Equipment) AttuneItem(item *Item) error {
+	if !item.RequiresAttunement {
+		return errors.New("item does not require attunement")
+	}
+	if item.Attuned {
+		return errors.New("item is already attuned")
+	}
+	if e.CountAttunedItems() >= 3 {
+		return errors.New("already attuned to maximum of 3 items")
+	}
+	item.Attuned = true
+	return nil
+}
+
+// UnattuneItem removes attunement from an item.
+func (e *Equipment) UnattuneItem(item *Item) error {
+	if !item.Attuned {
+		return errors.New("item is not attuned")
+	}
+	item.Attuned = false
+	return nil
 }
 
 // Inventory contains all character items and equipment.

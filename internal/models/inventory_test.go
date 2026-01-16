@@ -6,7 +6,7 @@ func TestCurrencyTotalInGold(t *testing.T) {
 	tests := []struct {
 		name     string
 		currency Currency
-		expected float64
+		expected int
 	}{
 		{"empty", Currency{}, 0},
 		{"10 gold", Currency{Gold: 10}, 10},
@@ -19,9 +19,10 @@ func TestCurrencyTotalInGold(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.currency.TotalInGold()
-			if got != tt.expected {
-				t.Errorf("TotalInGold() = %f, want %f", got, tt.expected)
+			gp, cp := tt.currency.TotalInGold()
+			_ = cp // Ignore remaining copper for these tests
+			if gp != tt.expected {
+				t.Errorf("TotalInGold() = %d GP, want %d GP", gp, tt.expected)
 			}
 		})
 	}
@@ -122,7 +123,7 @@ func TestEquipmentCountAttunedItems(t *testing.T) {
 	// Add attuned items
 	ring1 := NewItem("ring-1", "Ring of Protection", ItemTypeMagicItem)
 	ring1.Attuned = true
-	equip.SetSlot(SlotRing1, &ring1)
+	equip.EquipRing(&ring1)
 
 	cloak := NewItem("cloak-1", "Cloak of Displacement", ItemTypeMagicItem)
 	cloak.Attuned = true
