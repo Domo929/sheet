@@ -21,6 +21,7 @@ const (
 	StepClass
 	StepBackground
 	StepAbilities
+	StepProficiencies
 	StepReview
 )
 
@@ -72,6 +73,9 @@ type CharacterCreationModel struct {
 	backgroundBonus1Target  int          // Which ability gets +1 (index in background options)
 	focusedBonusField       BonusField   // pattern, +2 target, or +1 target
 	backgroundBonusComplete bool         // Whether background bonuses are fully allocated
+
+	// Proficiency Selection step
+	proficiencyManager ProficiencySelectionManager
 
 	// Navigation
 	helpFooter components.HelpFooter
@@ -234,6 +238,8 @@ func (m *CharacterCreationModel) handleKey(msg tea.KeyMsg) (*CharacterCreationMo
 		return m.handleBackgroundKeys(msg)
 	case StepAbilities:
 		return m.handleAbilityKeys(msg)
+	case StepProficiencies:
+		return m.handleProficiencyKeys(msg)
 	default:
 		return m, nil
 	}
@@ -496,9 +502,9 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 				}
 			}
 		} else if m.focusedSection == SectionAbilityScores {
-			// Finalize character
+			// Move to proficiency selection
 			if m.validateAbilityScores() {
-				return m.finalizeCharacter()
+				return m.moveToStep(StepProficiencies)
 			}
 		}
 		return m, nil
@@ -509,6 +515,37 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 	}
 
 	return m, nil
+}
+
+// handleProficiencyKeys handles keys for the proficiency selection step.
+func (m *CharacterCreationModel) handleProficiencyKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		// If proficiencies are complete, finalize character
+		if m.proficiencyManager.IsComplete() {
+			return m.finalizeCharacter()
+		}
+		return m, nil
+
+	case "tab":
+		// Try to move to next section
+		m.proficiencyManager.NextSection()
+		return m, nil
+
+	case "shift+tab":
+		// Try to move to previous section
+		m.proficiencyManager.PreviousSection()
+		return m, nil
+
+	case "esc":
+		// Go back to abilities
+		return m.moveToStep(StepAbilities)
+
+	default:
+		// Pass other keys to the proficiency manager
+		m.proficiencyManager.Update(msg)
+		return m, nil
+	}
 }
 
 // adjustBackgroundBonus handles left/right adjustments in the background bonus section.
@@ -662,6 +699,13 @@ func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreati
 		return m, m.loadClasses()
 	case StepBackground:
 		return m, m.loadBackgrounds()
+	case StepProficiencies:
+		// Initialize proficiency selection manager
+		m.proficiencyManager = NewProficiencySelectionManager(
+			m.selectedClass,
+			m.selectedBackground,
+			m.selectedRace,
+		)
 	}
 
 	return m, nil
@@ -1013,6 +1057,9 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 	m.character.AbilityScores.Wisdom.Base += bonuses[4]
 	m.character.AbilityScores.Charisma.Base += bonuses[5]
 
+	// Apply proficiency selections
+	m.proficiencyManager.ApplyToCharacter(m.character)
+
 	// Save character
 	path, err := m.storage.Save(m.character)
 	if err != nil {
@@ -1111,6 +1158,8 @@ func (m *CharacterCreationModel) View() string {
 		content.WriteString(m.renderBackgroundSelection())
 	case StepAbilities:
 		content.WriteString(m.renderAbilityScores())
+	case StepProficiencies:
+		content.WriteString(m.renderProficiencies())
 	}
 
 	return content.String()
@@ -1467,6 +1516,31 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 
 	// Unified help text
 	content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Adjust | m: Change mode | Enter: Confirm/Finish | Esc: Back"))
+
+	return content.String()
+}
+
+// renderProficiencies renders the proficiency selection step.
+func (m *CharacterCreationModel) renderProficiencies() string {
+	var content strings.Builder
+
+	stepStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8")).
+		Italic(true)
+	content.WriteString(stepStyle.Render("Step 6 of 7: Proficiency Selection"))
+	content.WriteString("\n\n")
+
+	// Render proficiency selection
+	content.WriteString(m.proficiencyManager.View())
+	content.WriteString("\n\n")
+
+	// Help text
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	if m.proficiencyManager.IsComplete() {
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | Space: Select | Tab: Next section | Enter: Continue | Esc: Back"))
+	} else {
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | Space: Select | Tab: Next section | Esc: Back"))
+	}
 
 	return content.String()
 }
