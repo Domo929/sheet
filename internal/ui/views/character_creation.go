@@ -1140,6 +1140,13 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 	content.WriteString(titleStyle.Render("Background Ability Score Bonuses"))
 	content.WriteString("\n")
 	content.WriteString(helpStyle.Render(fmt.Sprintf("From: %s", m.selectedBackground.Name)))
+	
+	// Show completion status
+	if m.backgroundBonusComplete {
+		completeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
+		content.WriteString(" ")
+		content.WriteString(completeStyle.Render("✓ Allocated"))
+	}
 	content.WriteString("\n\n")
 	
 	options := m.selectedBackground.AbilityScores.Options
@@ -1164,7 +1171,7 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 	}
 	
 	var lineStyle lipgloss.Style
-	if m.focusedBonusField == 0 {
+	if !m.backgroundBonusComplete && m.focusedBonusField == 0 {
 		lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
 		content.WriteString("▶ ")
 	} else {
@@ -1184,7 +1191,7 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 			plus2Ability = abilityFullNames[key]
 		}
 		
-		if m.focusedBonusField == 1 {
+		if !m.backgroundBonusComplete && m.focusedBonusField == 1 {
 			lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
 			content.WriteString("▶ ")
 		} else {
@@ -1201,7 +1208,7 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 			plus1Ability = abilityFullNames[key]
 		}
 		
-		if m.focusedBonusField == 2 {
+		if !m.backgroundBonusComplete && m.focusedBonusField == 2 {
 			lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
 			content.WriteString("▶ ")
 		} else {
@@ -1222,9 +1229,6 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 		content.WriteString("\n")
 	}
 	
-	content.WriteString("\n")
-	content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Change selection | Enter: Confirm | Esc: Back"))
-	
 	return content.String()
 }
 
@@ -1240,11 +1244,15 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 	
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	
-	// Background ability bonus selection (if applicable and not yet complete)
-	if m.selectedBackground != nil && len(m.selectedBackground.AbilityScores.Options) > 0 && !m.backgroundBonusComplete {
+	// Background ability bonus selection (if applicable)
+	if m.selectedBackground != nil && len(m.selectedBackground.AbilityScores.Options) > 0 {
 		content.WriteString(m.renderBackgroundBonusSelection())
 		content.WriteString("\n\n")
-		return content.String()
+		
+		// Show separator
+		separatorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+		content.WriteString(separatorStyle.Render("─────────────────────────────────────────"))
+		content.WriteString("\n\n")
 	}
 	
 	// Mode selector
@@ -1364,7 +1372,15 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 	}
 	
 	content.WriteString("\n")
-	content.WriteString(helpStyle.Render("↑/↓: Change ability | ←/→/+/-: Adjust score | m: Change mode | Enter: Finish | Esc: Back"))
+	
+	// Context-aware help text
+	if m.selectedBackground != nil && len(m.selectedBackground.AbilityScores.Options) > 0 && !m.backgroundBonusComplete {
+		// User is working on background bonuses
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Change selection | Enter: Confirm bonuses | Esc: Back"))
+	} else {
+		// User is working on ability scores
+		content.WriteString(helpStyle.Render("↑/↓: Change ability | ←/→/+/-: Adjust score | m: Change mode | Enter: Finish | Esc: Back"))
+	}
 	
 	return content.String()
 }
