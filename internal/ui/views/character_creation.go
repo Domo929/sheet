@@ -75,8 +75,10 @@ type CharacterCreationModel struct {
 	backgroundBonusComplete  bool          // Whether background bonuses are fully allocated
 	
 	// Equipment step
-	startingGold         int    // Starting gold pieces for the character
-	equipmentConfirmed   bool   // Whether equipment has been reviewed and confirmed
+	startingGold             int      // Starting gold pieces for the character
+	equipmentChoices         []int    // Selected option index for each equipment choice (-1 = not selected)
+	focusedEquipmentChoice   int      // Which equipment choice is currently focused
+	equipmentConfirmed       bool     // Whether equipment has been reviewed and confirmed
 	
 	// Navigation
 	helpFooter components.HelpFooter
@@ -704,6 +706,15 @@ func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreati
 		return m, m.loadClasses()
 	case StepBackground:
 		return m, m.loadBackgrounds()
+	case StepEquipment:
+		// Initialize equipment choices
+		if m.selectedClass != nil {
+			m.equipmentChoices = make([]int, len(m.selectedClass.StartingEquipment))
+			for i := range m.equipmentChoices {
+				m.equipmentChoices[i] = -1 // -1 means not yet selected
+			}
+			m.focusedEquipmentChoice = 0
+		}
 	}
 	
 	return m, nil
