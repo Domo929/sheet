@@ -40,7 +40,7 @@ type CharacterCreationModel struct {
 	// Basic Info step
 	nameInput       components.TextInput
 	playerNameInput components.TextInput
-	progressionType string // "xp" or "milestone"
+	progressionType models.ProgressionType
 	progressionList components.ButtonGroup
 	focusedField    int // 0=name, 1=playerName, 2=progression
 	
@@ -69,10 +69,10 @@ type CharacterCreationModel struct {
 // NewCharacterCreationModel creates a new character creation model.
 func NewCharacterCreationModel(store *storage.CharacterStorage, loader *data.Loader) *CharacterCreationModel {
 	nameInput := components.NewTextInput("Character Name", "Enter character name...")
-	nameInput.Width = 40
+	// Width will be set when window size is received
 	
 	playerNameInput := components.NewTextInput("Player Name", "Enter player name...")
-	playerNameInput.Width = 40
+	// Width will be set when window size is received
 	
 	progressionButtons := components.NewButtonGroup("XP Tracking", "Milestone")
 	
@@ -87,7 +87,7 @@ func NewCharacterCreationModel(store *storage.CharacterStorage, loader *data.Loa
 		nameInput:       nameInput,
 		playerNameInput: playerNameInput,
 		progressionList: progressionButtons,
-		progressionType: "xp",
+		progressionType: models.ProgressionXP,
 		focusedField:    0,
 		helpFooter:      helpFooter,
 		buttons:         navButtons,
@@ -120,6 +120,17 @@ func (m *CharacterCreationModel) Update(msg tea.Msg) (*CharacterCreationModel, t
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		// Scale text input widths to terminal width
+		// Use 80% of width or 60 chars max, whichever is smaller
+		inputWidth := msg.Width * 4 / 5
+		if inputWidth > 60 {
+			inputWidth = 60
+		}
+		if inputWidth < 20 {
+			inputWidth = 20
+		}
+		m.nameInput.Width = inputWidth
+		m.playerNameInput.Width = inputWidth
 		return m, nil
 		
 	case RaceDataLoadedMsg:
@@ -292,78 +303,58 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 
 // handleRaceKeys handles keys for the race selection step.
 func (m *CharacterCreationModel) handleRaceKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
-	switch msg.String() {
-	case "up", "k":
-		m.raceList.MoveUp()
-		return m, nil
-		
-	case "down", "j":
-		m.raceList.MoveDown()
-		return m, nil
-		
-	case "enter":
-		// Select race and move to class selection
-		if m.selectCurrentRace() {
-			return m.moveToStep(StepClass)
-		}
-		return m, nil
-		
-	case "esc":
-		// Go back to basic info
-		return m.moveToStep(StepBasicInfo)
-	}
-	
-	return m, nil
+	return m.handleListSelectionKeys(msg, &m.raceList, m.selectCurrentRace, StepBasicInfo, StepClass)
 }
 
 // handleClassKeys handles keys for the class selection step.
 func (m *CharacterCreationModel) handleClassKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
-	switch msg.String() {
-	case "up", "k":
-		m.classList.MoveUp()
-		return m, nil
-		
-	case "down", "j":
-		m.classList.MoveDown()
-		return m, nil
-		
-	case "enter":
-		// Select class and move to background selection
-		if m.selectCurrentClass() {
-			return m.moveToStep(StepBackground)
-		}
-		return m, nil
-		
-	case "esc":
-		// Go back to race selection
-		return m.moveToStep(StepRace)
-	}
-	
-	return m, nil
+	return m.handleListSelectionKeys(msg, &m.classList, m.selectCurrentClass, StepRace, StepBackground)
 }
 
 // handleBackgroundKeys handles keys for the background selection step.
 func (m *CharacterCreationModel) handleBackgroundKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+	// For background, we finalize instead of moving to next step
+	return m.handleListSelectionKeys(msg, &m.backgroundList, func() bool {
+		if m.selectCurrentBackground() {
+			// Future: will move to ability score step
+			// For now: finalize character
+			return true
+		}
+		return false
+	}, StepClass, StepAbilities)
+}
+
+// handleListSelectionKeys is a generic handler for list-based selection steps (race, class, background).
+func (m *CharacterCreationModel) handleListSelectionKeys(
+	msg tea.KeyMsg,
+	list *components.List,
+	selectFunc func() bool,
+	previousStep CreationStep,
+	nextStep CreationStep,
+) (*CharacterCreationModel, tea.Cmd) {
 	switch msg.String() {
 	case "up", "k":
-		m.backgroundList.MoveUp()
+		list.MoveUp()
 		return m, nil
 		
 	case "down", "j":
-		m.backgroundList.MoveDown()
+		list.MoveDown()
 		return m, nil
 		
 	case "enter":
-		// Select background and move to ability scores (future phase)
-		if m.selectCurrentBackground() {
-			// For now, finalize character creation
-			return m.finalizeCharacter()
+		// Select item and move to next step (or finalize)
+		if selectFunc() {
+			// Special case for background: finalize instead of moving to next step
+			if nextStep == StepAbilities {
+				return m.finalizeCharacter()
+			}
+			return m.moveToStep(nextStep)
 		}
 		return m, nil
 		
 	case "esc":
-		// Go back to class selection
-		return m.moveToStep(StepClass)
+		// Go back to previous step
+		return m.moveToStep(previousStep)
 	}
 	
 	return m, nil
@@ -387,19 +378,15 @@ func (m *CharacterCreationModel) validateBasicInfo() bool {
 func (m *CharacterCreationModel) applyBasicInfo() {
 	m.character.Info.Name = strings.TrimSpace(m.nameInput.Value)
 	m.character.Info.PlayerName = strings.TrimSpace(m.playerNameInput.Value)
-	if m.progressionType == "xp" {
-		m.character.Info.ProgressionType = models.ProgressionXP
-	} else {
-		m.character.Info.ProgressionType = models.ProgressionMilestone
-	}
+	m.character.Info.ProgressionType = m.progressionType
 }
 
 // updateProgressionType updates the progression type based on button selection.
 func (m *CharacterCreationModel) updateProgressionType() {
 	if m.progressionList.SelectedIndex == 0 {
-		m.progressionType = "xp"
+		m.progressionType = models.ProgressionXP
 	} else {
-		m.progressionType = "milestone"
+		m.progressionType = models.ProgressionMilestone
 	}
 }
 
