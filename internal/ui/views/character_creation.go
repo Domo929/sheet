@@ -524,13 +524,70 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 
 // handleEquipmentKeys handles keys for the starting equipment step.
 func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+	if m.selectedClass == nil || len(m.selectedClass.StartingEquipment) == 0 {
+		// No equipment to select
+		switch msg.String() {
+		case "enter":
+			m.equipmentConfirmed = true
+			m.startingGold = m.getStartingGold()
+			return m.moveToStep(StepReview)
+		case "esc":
+			return m.moveToStep(StepAbilities)
+		}
+		return m, nil
+	}
+	
 	switch msg.String() {
+	case "up", "k":
+		// Move to previous equipment choice
+		if m.focusedEquipmentChoice > 0 {
+			m.focusedEquipmentChoice--
+		}
+		return m, nil
+		
+	case "down", "j":
+		// Move to next equipment choice
+		if m.focusedEquipmentChoice < len(m.selectedClass.StartingEquipment)-1 {
+			m.focusedEquipmentChoice++
+		}
+		return m, nil
+		
+	case "left", "h":
+		// Select previous option in current choice
+		currentEquip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
+		if currentEquip.Type == "choice" && len(currentEquip.Options) > 0 {
+			currentSelection := m.equipmentChoices[m.focusedEquipmentChoice]
+			if currentSelection > 0 {
+				m.equipmentChoices[m.focusedEquipmentChoice]--
+			} else {
+				// Wrap to last option
+				m.equipmentChoices[m.focusedEquipmentChoice] = len(currentEquip.Options) - 1
+			}
+		}
+		return m, nil
+		
+	case "right", "l":
+		// Select next option in current choice
+		currentEquip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
+		if currentEquip.Type == "choice" && len(currentEquip.Options) > 0 {
+			currentSelection := m.equipmentChoices[m.focusedEquipmentChoice]
+			if currentSelection < len(currentEquip.Options)-1 {
+				m.equipmentChoices[m.focusedEquipmentChoice]++
+			} else {
+				// Wrap to first option
+				m.equipmentChoices[m.focusedEquipmentChoice] = 0
+			}
+		}
+		return m, nil
+		
 	case "enter":
-		// Confirm equipment and move to review
-		m.equipmentConfirmed = true
-		// Set starting gold
-		m.startingGold = m.getStartingGold()
-		return m.moveToStep(StepReview)
+		// Check if all choices are made
+		if m.allEquipmentChoicesMade() {
+			m.equipmentConfirmed = true
+			m.startingGold = m.getStartingGold()
+			return m.moveToStep(StepReview)
+		}
+		return m, nil
 		
 	case "esc":
 		// Go back to abilities
@@ -538,6 +595,48 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 	}
 	
 	return m, nil
+}
+
+// allEquipmentChoicesMade checks if all equipment choices have been selected.
+func (m *CharacterCreationModel) allEquipmentChoicesMade() bool {
+	if m.selectedClass == nil {
+		return true
+	}
+	
+	for i, equip := range m.selectedClass.StartingEquipment {
+		if equip.Type == "choice" {
+			// Check if a selection has been made
+			if i >= len(m.equipmentChoices) || m.equipmentChoices[i] < 0 {
+				return false
+			}
+		}
+		// Fixed items don't need selection
+	}
+	return true
+}
+
+// getSelectedEquipment returns all selected equipment items.
+func (m *CharacterCreationModel) getSelectedEquipment() []data.EquipmentItem {
+	var items []data.EquipmentItem
+	
+	if m.selectedClass == nil {
+		return items
+	}
+	
+	for i, equip := range m.selectedClass.StartingEquipment {
+		if equip.Type == "fixed" && equip.Item != nil {
+			// Fixed item - add directly
+			items = append(items, *equip.Item)
+		} else if equip.Type == "choice" && i < len(m.equipmentChoices) {
+			selectedIdx := m.equipmentChoices[i]
+			if selectedIdx >= 0 && selectedIdx < len(equip.Options) {
+				// Add all items from the selected option
+				items = append(items, equip.Options[selectedIdx].Items...)
+			}
+		}
+	}
+	
+	return items
 }
 
 // handleReviewKeys handles keys for the review step.
@@ -710,8 +809,14 @@ func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreati
 		// Initialize equipment choices
 		if m.selectedClass != nil {
 			m.equipmentChoices = make([]int, len(m.selectedClass.StartingEquipment))
-			for i := range m.equipmentChoices {
-				m.equipmentChoices[i] = -1 // -1 means not yet selected
+			for i, equip := range m.selectedClass.StartingEquipment {
+				if equip.Type == "fixed" {
+					// Fixed items are automatically "selected" (0 = selected)
+					m.equipmentChoices[i] = 0
+				} else {
+					// Choices start unselected
+					m.equipmentChoices[i] = -1
+				}
 			}
 			m.focusedEquipmentChoice = 0
 		}
@@ -1543,6 +1648,8 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	focusStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
+	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
 	
 	content.WriteString(titleStyle.Render("Starting Equipment"))
 	content.WriteString("\n\n")
@@ -1553,12 +1660,40 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 		content.WriteString("\n\n")
 		
 		for i, equip := range m.selectedClass.StartingEquipment {
+			isFocused := (i == m.focusedEquipmentChoice)
+			
 			if equip.Type == "fixed" && equip.Item != nil {
-				// Fixed item - no choice
-				content.WriteString(fmt.Sprintf("  %d. %d× %s\n", i+1, equip.Item.Quantity, equip.Item.Name))
+				// Fixed item - no choice needed
+				prefix := "  "
+				if isFocused {
+					prefix = "▶ "
+				}
+				itemText := fmt.Sprintf("%d. %d× %s", i+1, equip.Item.Quantity, equip.Item.Name)
+				if isFocused {
+					content.WriteString(prefix + focusStyle.Render(itemText) + " ✓\n")
+				} else {
+					content.WriteString(prefix + itemText + " ✓\n")
+				}
 			} else if equip.Type == "choice" && len(equip.Options) > 0 {
-				// Choice - show options
-				content.WriteString(fmt.Sprintf("  %d. Choose one:\n", i+1))
+				// Choice - show options with selection
+				prefix := "  "
+				if isFocused {
+					prefix = "▶ "
+				}
+				
+				choiceText := fmt.Sprintf("%d. Choose one:", i+1)
+				if isFocused {
+					content.WriteString(prefix + focusStyle.Render(choiceText) + "\n")
+				} else {
+					content.WriteString(prefix + choiceText + "\n")
+				}
+				
+				// Show options
+				selectedIdx := -1
+				if i < len(m.equipmentChoices) {
+					selectedIdx = m.equipmentChoices[i]
+				}
+				
 				for j, opt := range equip.Options {
 					if len(opt.Items) > 0 {
 						itemStrs := []string{}
@@ -1569,7 +1704,19 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 								itemStrs = append(itemStrs, item.Name)
 							}
 						}
-						content.WriteString(fmt.Sprintf("     (%c) %s\n", 'a'+j, strings.Join(itemStrs, ", ")))
+						
+						optionText := fmt.Sprintf("(%c) %s", 'a'+j, strings.Join(itemStrs, ", "))
+						
+						if j == selectedIdx {
+							// This option is selected
+							if isFocused {
+								content.WriteString("     " + selectedStyle.Render(optionText+" ✓") + "\n")
+							} else {
+								content.WriteString("     " + optionText + " ✓\n")
+							}
+						} else {
+							content.WriteString("     " + optionText + "\n")
+						}
 					}
 				}
 			}
@@ -1587,7 +1734,12 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	content.WriteString("\n\n")
 	
 	// Help text
-	content.WriteString(helpStyle.Render("Enter: Continue to Review | Esc: Back to Abilities"))
+	allSelected := m.allEquipmentChoicesMade()
+	if allSelected {
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Continue to Review | Esc: Back"))
+	} else {
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Select option | Esc: Back"))
+	}
 	
 	return content.String()
 }
