@@ -261,6 +261,15 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			}
 		}
 		return m, nil
+		
+	case " ":
+		// Handle space in text input fields
+		if m.focusedField == 0 {
+			m.nameInput.Value += " "
+		} else if m.focusedField == 1 {
+			m.playerNameInput.Value += " "
+		}
+		return m, nil
 	}
 	
 	// Handle text input - only process actual character runes
