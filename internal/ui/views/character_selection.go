@@ -22,6 +22,7 @@ type CharacterSelectionModel struct {
 	loading           bool
 	confirmingDelete  bool
 	deleteTarget      string
+	quitting          bool
 }
 
 // NewCharacterSelectionModel creates a new character selection model.
@@ -138,6 +139,7 @@ func (m *CharacterSelectionModel) Update(msg tea.Msg) (*CharacterSelectionModel,
 		// Normal key handling
 		switch msg.String() {
 		case "q", "ctrl+c":
+			m.quitting = true
 			return m, tea.Quit
 
 		case "up", "k":
@@ -205,6 +207,11 @@ func (m *CharacterSelectionModel) updateList() {
 
 // View renders the character selection screen.
 func (m *CharacterSelectionModel) View() string {
+	// Return empty view when quitting to prevent artifacts
+	if m.quitting {
+		return ""
+	}
+	
 	if m.width == 0 || m.height == 0 {
 		return "Initializing terminal display..."
 	}

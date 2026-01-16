@@ -63,6 +63,7 @@ type CharacterCreationModel struct {
 	helpFooter components.HelpFooter
 	buttons    components.ButtonGroup
 	err        error
+	quitting   bool
 }
 
 // NewCharacterCreationModel creates a new character creation model.
@@ -144,6 +145,7 @@ func (m *CharacterCreationModel) Update(msg tea.Msg) (*CharacterCreationModel, t
 func (m *CharacterCreationModel) handleKey(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
 	switch msg.String() {
 	case "ctrl+c":
+		m.quitting = true
 		return m, tea.Quit
 	}
 	
@@ -589,6 +591,11 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 
 // View renders the character creation screen.
 func (m *CharacterCreationModel) View() string {
+	// Return empty view when quitting to prevent artifacts
+	if m.quitting {
+		return ""
+	}
+	
 	if m.width == 0 || m.height == 0 {
 		return "Error: Terminal size not initialized. Please resize your terminal or restart the application."
 	}
