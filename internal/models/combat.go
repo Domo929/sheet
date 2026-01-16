@@ -2,9 +2,10 @@ package models
 
 // HitPoints tracks the character's hit points.
 type HitPoints struct {
-	Maximum   int `json:"maximum"`
-	Current   int `json:"current"`
-	Temporary int `json:"temporary"`
+	Maximum         int `json:"maximum"`
+	Current         int `json:"current"`
+	Temporary       int `json:"temporary"`
+	TemporaryMaximum int `json:"temporaryMaximum,omitempty"` // From spells like Aid
 }
 
 // NewHitPoints creates HitPoints with the given maximum (current set to max).
@@ -42,7 +43,7 @@ func (hp *HitPoints) TakeDamage(damage int) int {
 	return actualDamage
 }
 
-// Heal increases current HP by the given amount, up to maximum.
+// Heal increases current HP by the given amount, up to effective maximum (including temporary).
 // Healing does not affect temporary HP.
 func (hp *HitPoints) Heal(amount int) {
 	if amount <= 0 {
@@ -50,8 +51,9 @@ func (hp *HitPoints) Heal(amount int) {
 	}
 
 	hp.Current += amount
-	if hp.Current > hp.Maximum {
-		hp.Current = hp.Maximum
+	effectiveMax := hp.Maximum + hp.TemporaryMaximum
+	if hp.Current > effectiveMax {
+		hp.Current = effectiveMax
 	}
 }
 
@@ -63,6 +65,31 @@ func (hp *HitPoints) AddTemporaryHP(amount int) {
 	}
 }
 
+// AddTemporaryMaximum increases the maximum HP temporarily (e.g., Aid spell).
+// Unlike temp HP, these increases stack with each casting.
+func (hp *HitPoints) AddTemporaryMaximum(amount int) {
+	if amount > 0 {
+		hp.TemporaryMaximum += amount
+		// Also increase current HP by the same amount
+		hp.Current += amount
+	}
+}
+
+// RemoveTemporaryMaximum removes temporary maximum HP.
+// If current HP exceeds the new maximum, it's reduced to the new maximum.
+func (hp *HitPoints) RemoveTemporaryMaximum(amount int) {
+	if amount > 0 {
+		hp.TemporaryMaximum -= amount
+		if hp.TemporaryMaximum < 0 {
+			hp.TemporaryMaximum = 0
+		}
+		effectiveMax := hp.Maximum + hp.TemporaryMaximum
+		if hp.Current > effectiveMax {
+			hp.Current = effectiveMax
+		}
+	}
+}
+
 // IsUnconscious returns true if current HP is 0.
 func (hp *HitPoints) IsUnconscious() bool {
 	return hp.Current <= 0
@@ -70,13 +97,13 @@ func (hp *HitPoints) IsUnconscious() bool {
 
 // HitDice tracks hit dice available for short rest healing.
 type HitDice struct {
-	Total     int    `json:"total"`
-	Remaining int    `json:"remaining"`
-	DieType   string `json:"dieType"` // e.g., "d8", "d10", "d12"
+	Total     int `json:"total"`
+	Remaining int `json:"remaining"`
+	DieType   int `json:"dieType"` // e.g., 6, 8, 10, 12
 }
 
 // NewHitDice creates HitDice for a character of the given level with the specified die type.
-func NewHitDice(level int, dieType string) HitDice {
+func NewHitDice(level int, dieType int) HitDice {
 	return HitDice{
 		Total:     level,
 		Remaining: level,
@@ -206,7 +233,7 @@ type CombatStats struct {
 }
 
 // NewCombatStats creates combat stats with the given parameters.
-func NewCombatStats(maxHP int, hitDieType string, level int, speed int) CombatStats {
+func NewCombatStats(maxHP int, hitDieType int, level int, speed int) CombatStats {
 	return CombatStats{
 		HitPoints:  NewHitPoints(maxHP),
 		HitDice:    NewHitDice(level, hitDieType),

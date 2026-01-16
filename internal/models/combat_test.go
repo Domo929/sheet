@@ -157,7 +157,7 @@ func TestHitPointsIsUnconscious(t *testing.T) {
 }
 
 func TestHitDiceUse(t *testing.T) {
-	hd := NewHitDice(5, "d8")
+	hd := NewHitDice(5, 8)
 
 	for i := 0; i < 5; i++ {
 		if !hd.Use() {
@@ -191,7 +191,7 @@ func TestHitDiceRecoverOnLongRest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hd := HitDice{Total: tt.total, Remaining: tt.remaining, DieType: "d8"}
+			hd := HitDice{Total: tt.total, Remaining: tt.remaining, DieType: 8}
 			recovered := hd.RecoverOnLongRest()
 			if recovered != tt.expectedRecovered {
 				t.Errorf("Recovered = %d, want %d", recovered, tt.expectedRecovered)
@@ -249,7 +249,7 @@ func TestDeathSavesCriticalFailure(t *testing.T) {
 }
 
 func TestCombatStatsConditions(t *testing.T) {
-	cs := NewCombatStats(20, "d8", 1, 30)
+	cs := NewCombatStats(20, 8, 1, 30)
 
 	// Add condition
 	cs.AddCondition(ConditionPoisoned)
