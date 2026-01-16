@@ -85,15 +85,16 @@ func (cs *CharacterStorage) Save(character *models.Character) (string, error) {
 
 	path := cs.getCharacterPath(character.Info.Name)
 	
-	// Marshal character to JSON
-	data, err := character.ToJSON()
+	// Create file
+	file, err := os.Create(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal character: %w", err)
+		return "", fmt.Errorf("failed to create character file: %w", err)
 	}
+	defer file.Close()
 
-	// Write to file
-	if err := os.WriteFile(path, data, 0644); err != nil {
-		return "", fmt.Errorf("failed to write character file: %w", err)
+	// Write character to file using encoder
+	if err := character.WriteTo(file); err != nil {
+		return "", fmt.Errorf("failed to write character: %w", err)
 	}
 
 	return path, nil
@@ -112,16 +113,17 @@ func (cs *CharacterStorage) Load(characterName string) (*models.Character, error
 		return nil, ErrCharacterNotFound
 	}
 
-	// Read file
-	data, err := os.ReadFile(path)
+	// Open file
+	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read character file: %w", err)
+		return nil, fmt.Errorf("failed to open character file: %w", err)
 	}
+	defer file.Close()
 
-	// Unmarshal character
-	character, err := models.FromJSON(data)
+	// Read character from file using decoder
+	character, err := models.ReadFrom(file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal character: %w", err)
+		return nil, fmt.Errorf("failed to read character: %w", err)
 	}
 
 	return character, nil
@@ -134,16 +136,17 @@ func (cs *CharacterStorage) LoadByPath(path string) (*models.Character, error) {
 		return nil, ErrCharacterNotFound
 	}
 
-	// Read file
-	data, err := os.ReadFile(path)
+	// Open file
+	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read character file: %w", err)
+		return nil, fmt.Errorf("failed to open character file: %w", err)
 	}
+	defer file.Close()
 
-	// Unmarshal character
-	character, err := models.FromJSON(data)
+	// Read character from file using decoder
+	character, err := models.ReadFrom(file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal character: %w", err)
+		return nil, fmt.Errorf("failed to read character: %w", err)
 	}
 
 	return character, nil

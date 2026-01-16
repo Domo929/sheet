@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"io"
 	"time"
 )
 
@@ -177,6 +178,23 @@ func FromJSON(data []byte) (*Character, error) {
 	var c Character
 	err := json.Unmarshal(data, &c)
 	if err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
+// WriteTo writes the character as JSON to an io.Writer.
+func (c *Character) WriteTo(w io.Writer) error {
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(c)
+}
+
+// ReadFrom reads a character from JSON in an io.Reader.
+func ReadFrom(r io.Reader) (*Character, error) {
+	var c Character
+	decoder := json.NewDecoder(r)
+	if err := decoder.Decode(&c); err != nil {
 		return nil, err
 	}
 	return &c, nil

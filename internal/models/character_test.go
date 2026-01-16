@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 )
@@ -266,5 +267,112 @@ func TestCharacterJSONStructure(t *testing.T) {
 		if _, ok := result[key]; !ok {
 			t.Errorf("Missing expected key in JSON: %s", key)
 		}
+	}
+}
+
+func TestCharacterWriteTo(t *testing.T) {
+	c := NewCharacter("char-1", "WriteTest", "Elf", "Wizard")
+	c.AbilityScores.Strength.Base = 10
+	c.AbilityScores.Intelligence.Base = 18
+	c.Info.Level = 5
+
+	// Write to buffer
+	var buf bytes.Buffer
+	err := c.WriteTo(&buf)
+	if err != nil {
+		t.Fatalf("WriteTo() error = %v", err)
+	}
+
+	// Verify we got JSON output
+	var result map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("Failed to unmarshal WriteTo output: %v", err)
+	}
+
+	// Verify some data
+	if result["id"] != "char-1" {
+		t.Errorf("id = %v, want char-1", result["id"])
+	}
+}
+
+func TestCharacterReadFrom(t *testing.T) {
+	// Create test character JSON
+	original := NewCharacter("char-2", "ReadTest", "Dwarf", "Cleric")
+	original.AbilityScores.Wisdom.Base = 16
+	original.AbilityScores.Constitution.Base = 15
+	original.Info.Level = 3
+
+	// Write to buffer
+	var buf bytes.Buffer
+	if err := original.WriteTo(&buf); err != nil {
+		t.Fatalf("WriteTo() error = %v", err)
+	}
+
+	// Read back from buffer
+	loaded, err := ReadFrom(&buf)
+	if err != nil {
+		t.Fatalf("ReadFrom() error = %v", err)
+	}
+
+	// Verify loaded character
+	if loaded.ID != "char-2" {
+		t.Errorf("ID = %s, want char-2", loaded.ID)
+	}
+	if loaded.Info.Name != "ReadTest" {
+		t.Errorf("Name = %s, want ReadTest", loaded.Info.Name)
+	}
+	if loaded.Info.Race != "Dwarf" {
+		t.Errorf("Race = %s, want Dwarf", loaded.Info.Race)
+	}
+	if loaded.Info.Class != "Cleric" {
+		t.Errorf("Class = %s, want Cleric", loaded.Info.Class)
+	}
+	if loaded.Info.Level != 3 {
+		t.Errorf("Level = %d, want 3", loaded.Info.Level)
+	}
+	if loaded.AbilityScores.Wisdom.Base != 16 {
+		t.Errorf("Wisdom = %d, want 16", loaded.AbilityScores.Wisdom.Base)
+	}
+	if loaded.AbilityScores.Constitution.Base != 15 {
+		t.Errorf("Constitution = %d, want 15", loaded.AbilityScores.Constitution.Base)
+	}
+}
+
+func TestCharacterWriteToReadFromRoundTrip(t *testing.T) {
+	// Create complex character
+	original := NewCharacter("char-3", "RoundTrip", "Tiefling", "Warlock")
+	original.Info.Level = 7
+	original.AbilityScores = NewAbilityScoresFromValues(10, 14, 12, 14, 10, 18)
+	original.Skills.SetProficiency(SkillDeception, Proficient)
+	original.Skills.SetProficiency(SkillPersuasion, Expertise)
+	original.CombatStats.HitPoints.Maximum = 50
+	original.CombatStats.HitPoints.Current = 35
+
+	// Write to buffer
+	var buf bytes.Buffer
+	if err := original.WriteTo(&buf); err != nil {
+		t.Fatalf("WriteTo() error = %v", err)
+	}
+
+	// Read back
+	loaded, err := ReadFrom(&buf)
+	if err != nil {
+		t.Fatalf("ReadFrom() error = %v", err)
+	}
+
+	// Verify key fields match
+	if loaded.ID != original.ID {
+		t.Errorf("ID mismatch: got %s, want %s", loaded.ID, original.ID)
+	}
+	if loaded.Info.Level != original.Info.Level {
+		t.Errorf("Level mismatch: got %d, want %d", loaded.Info.Level, original.Info.Level)
+	}
+	if loaded.AbilityScores.Charisma.Base != original.AbilityScores.Charisma.Base {
+		t.Errorf("Charisma mismatch: got %d, want %d", 
+			loaded.AbilityScores.Charisma.Base, original.AbilityScores.Charisma.Base)
+	}
+	if loaded.CombatStats.HitPoints.Maximum != original.CombatStats.HitPoints.Maximum {
+		t.Errorf("Max HP mismatch: got %d, want %d",
+			loaded.CombatStats.HitPoints.Maximum, original.CombatStats.HitPoints.Maximum)
 	}
 }
