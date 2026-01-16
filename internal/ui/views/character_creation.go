@@ -1538,13 +1538,30 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	
 	// Display class starting equipment
 	if m.selectedClass != nil && len(m.selectedClass.StartingEquipment) > 0 {
-		content.WriteString(helpStyle.Render("Based on your class, you start with:"))
+		content.WriteString(helpStyle.Render("Select your starting equipment:"))
 		content.WriteString("\n\n")
 		
-		for _, equip := range m.selectedClass.StartingEquipment {
-			content.WriteString("  • ")
-			content.WriteString(equip)
-			content.WriteString("\n")
+		for i, equip := range m.selectedClass.StartingEquipment {
+			if equip.Type == "fixed" && equip.Item != nil {
+				// Fixed item - no choice
+				content.WriteString(fmt.Sprintf("  %d. %d× %s\n", i+1, equip.Item.Quantity, equip.Item.Name))
+			} else if equip.Type == "choice" && len(equip.Options) > 0 {
+				// Choice - show options
+				content.WriteString(fmt.Sprintf("  %d. Choose one:\n", i+1))
+				for j, opt := range equip.Options {
+					if len(opt.Items) > 0 {
+						itemStrs := []string{}
+						for _, item := range opt.Items {
+							if item.Quantity > 1 {
+								itemStrs = append(itemStrs, fmt.Sprintf("%d× %s", item.Quantity, item.Name))
+							} else {
+								itemStrs = append(itemStrs, item.Name)
+							}
+						}
+						content.WriteString(fmt.Sprintf("     (%c) %s\n", 'a'+j, strings.Join(itemStrs, ", ")))
+					}
+				}
+			}
 		}
 	} else {
 		content.WriteString(helpStyle.Render("No starting equipment specified"))

@@ -33,20 +33,39 @@ type Subtype struct {
 
 // Class represents a playable class in D&D 5e.
 type Class struct {
-	Name                     string       `json:"name"`
-	HitDice                  string       `json:"hitDice"`
-	PrimaryAbility           []string     `json:"primaryAbility"`
-	SavingThrowProficiencies []string     `json:"savingThrowProficiencies"`
-	ArmorProficiencies       []string     `json:"armorProficiencies"`
-	WeaponProficiencies      []string     `json:"weaponProficiencies"`
-	ToolProficiencies        []string     `json:"toolProficiencies"`
-	SkillChoices             SkillChoices `json:"skillChoices"`
-	StartingEquipment        []string     `json:"startingEquipment"`
-	Spellcaster              bool         `json:"spellcaster"`
-	SpellcastingAbility      string       `json:"spellcastingAbility,omitempty"`
-	SpellSlots               []SpellSlot  `json:"spellSlots,omitempty"`
-	Features                 []Feature    `json:"features"`
-	Subclasses               []Subclass   `json:"subclasses,omitempty"`
+	Name                     string            `json:"name"`
+	HitDice                  string            `json:"hitDice"`
+	PrimaryAbility           []string          `json:"primaryAbility"`
+	SavingThrowProficiencies []string          `json:"savingThrowProficiencies"`
+	ArmorProficiencies       []string          `json:"armorProficiencies"`
+	WeaponProficiencies      []string          `json:"weaponProficiencies"`
+	ToolProficiencies        []string          `json:"toolProficiencies"`
+	SkillChoices             SkillChoices      `json:"skillChoices"`
+	StartingEquipment        []EquipmentChoice `json:"startingEquipment"`
+	Spellcaster              bool              `json:"spellcaster"`
+	SpellcastingAbility      string            `json:"spellcastingAbility,omitempty"`
+	SpellSlots               []SpellSlot       `json:"spellSlots,omitempty"`
+	Features                 []Feature         `json:"features"`
+	Subclasses               []Subclass        `json:"subclasses,omitempty"`
+}
+
+// EquipmentChoice represents a starting equipment item or choice.
+type EquipmentChoice struct {
+	Type    string            `json:"type"` // "fixed" or "choice"
+	Item    *EquipmentItem    `json:"item,omitempty"` // For fixed items
+	Options []EquipmentOption `json:"options,omitempty"` // For choices
+}
+
+// EquipmentItem represents a specific equipment item with quantity.
+type EquipmentItem struct {
+	Name     string `json:"name"`     // "Greataxe", "Explorer's Pack", etc.
+	Quantity int    `json:"quantity"` // Number of items
+	Category string `json:"category"` // "weapon", "armor", "pack", "gear", "tool"
+}
+
+// EquipmentOption represents one option in an equipment choice.
+type EquipmentOption struct {
+	Items []EquipmentItem `json:"items"` // One or more items in this option
 }
 
 // SpellSlot represents spell slots available at a given level.

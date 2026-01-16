@@ -55,6 +55,7 @@ type Loader struct {
 	spells      *SpellDatabase
 	backgrounds *BackgroundData
 	conditions  *ConditionData
+	equipment   *Equipment
 
 	// Mutex for thread-safe access
 	mu sync.RWMutex
@@ -100,6 +101,11 @@ func (l *Loader) LoadAll() error {
 	// Load conditions
 	if err := l.loadConditionsUnsafe(); err != nil {
 		return fmt.Errorf("failed to load conditions: %w", err)
+	}
+
+	// Load equipment
+	if err := l.loadEquipmentUnsafe(); err != nil {
+		return fmt.Errorf("failed to load equipment: %w", err)
 	}
 
 	return nil
@@ -315,6 +321,7 @@ func (l *Loader) ClearCache() {
 	l.spells = nil
 	l.backgrounds = nil
 	l.conditions = nil
+	l.equipment = nil
 }
 
 // Internal unsafe methods (must be called with lock held)
@@ -421,5 +428,42 @@ func (l *Loader) loadConditionsUnsafe() error {
 	}
 
 	l.conditions = &conditions
+	return nil
+}
+
+// GetEquipment returns all equipment data, loading it if necessary.
+func (l *Loader) GetEquipment() (*Equipment, error) {
+	l.mu.RLock()
+	if l.equipment != nil {
+		defer l.mu.RUnlock()
+		return l.equipment, nil
+	}
+	l.mu.RUnlock()
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.equipment, l.loadEquipmentUnsafe()
+}
+
+// loadEquipmentUnsafe loads equipment data without acquiring locks.
+// Caller must hold the write lock.
+func (l *Loader) loadEquipmentUnsafe() error {
+	if l.equipment != nil {
+		return nil
+	}
+
+	path := filepath.Join(l.dataDir, "equipment.json")
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open equipment.json: %w", err)
+	}
+	defer f.Close()
+
+	var equipment Equipment
+	if err := json.NewDecoder(f).Decode(&equipment); err != nil {
+		return fmt.Errorf("failed to parse equipment.json: %w", err)
+	}
+
+	l.equipment = &equipment
 	return nil
 }
