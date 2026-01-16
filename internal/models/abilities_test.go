@@ -134,9 +134,6 @@ func TestAbilityScoresGet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.ability), func(t *testing.T) {
 			score := scores.Get(tt.ability)
-			if score == nil {
-				t.Fatalf("Get(%s) returned nil", tt.ability)
-			}
 			if score.Base != tt.expected {
 				t.Errorf("Get(%s).Base = %d, want %d", tt.ability, score.Base, tt.expected)
 			}
@@ -146,8 +143,10 @@ func TestAbilityScoresGet(t *testing.T) {
 
 func TestAbilityScoresGetInvalid(t *testing.T) {
 	scores := NewAbilityScores()
-	if got := scores.Get(Ability("invalid")); got != nil {
-		t.Errorf("Get(invalid) = %v, want nil", got)
+	got := scores.Get(Ability("invalid"))
+	// Should return default value (Base: 10)
+	if got.Base != 10 {
+		t.Errorf("Get(invalid).Base = %d, want 10", got.Base)
 	}
 }
 

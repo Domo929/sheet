@@ -74,30 +74,58 @@ const (
 )
 
 // Get returns the AbilityScore for the given ability.
-func (a *AbilityScores) Get(ability Ability) *AbilityScore {
+func (a AbilityScores) Get(ability Ability) AbilityScore {
 	switch ability {
 	case AbilityStrength:
-		return &a.Strength
+		return a.Strength
 	case AbilityDexterity:
-		return &a.Dexterity
+		return a.Dexterity
 	case AbilityConstitution:
-		return &a.Constitution
+		return a.Constitution
 	case AbilityIntelligence:
-		return &a.Intelligence
+		return a.Intelligence
 	case AbilityWisdom:
-		return &a.Wisdom
+		return a.Wisdom
 	case AbilityCharisma:
-		return &a.Charisma
+		return a.Charisma
 	default:
-		return nil
+		return AbilityScore{Base: 10}
 	}
 }
 
-// GetModifier returns the modifier for the given ability.
-func (a *AbilityScores) GetModifier(ability Ability) int {
-	score := a.Get(ability)
-	if score == nil {
-		return 0
+// Set sets the AbilityScore for the given ability.
+func (a *AbilityScores) Set(ability Ability, score AbilityScore) {
+	switch ability {
+	case AbilityStrength:
+		a.Strength = score
+	case AbilityDexterity:
+		a.Dexterity = score
+	case AbilityConstitution:
+		a.Constitution = score
+	case AbilityIntelligence:
+		a.Intelligence = score
+	case AbilityWisdom:
+		a.Wisdom = score
+	case AbilityCharisma:
+		a.Charisma = score
 	}
-	return score.Modifier()
+}
+
+// SetBase sets the base value for the given ability.
+func (a *AbilityScores) SetBase(ability Ability, base int) {
+	score := a.Get(ability)
+	score.Base = base
+	a.Set(ability, score)
+}
+
+// SetTemporary sets the temporary modifier for the given ability.
+func (a *AbilityScores) SetTemporary(ability Ability, temp int) {
+	score := a.Get(ability)
+	score.Temporary = temp
+	a.Set(ability, score)
+}
+
+// GetModifier returns the modifier for the given ability.
+func (a AbilityScores) GetModifier(ability Ability) int {
+	return a.Get(ability).Modifier()
 }

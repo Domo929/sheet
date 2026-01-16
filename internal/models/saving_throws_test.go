@@ -29,9 +29,8 @@ func TestSavingThrowsGet(t *testing.T) {
 
 	for _, ability := range abilities {
 		save := saves.Get(ability)
-		if save == nil {
-			t.Errorf("SavingThrows.Get(%s) returned nil", ability)
-		}
+		// Just verify we can get all saves
+		_ = save
 	}
 
 	// Check specific one we modified
@@ -42,8 +41,10 @@ func TestSavingThrowsGet(t *testing.T) {
 
 func TestSavingThrowsGetInvalid(t *testing.T) {
 	saves := NewSavingThrows()
-	if got := saves.Get(Ability("invalid")); got != nil {
-		t.Errorf("SavingThrows.Get(invalid) = %v, want nil", got)
+	got := saves.Get(Ability("invalid"))
+	// Should return default (not proficient)
+	if got.Proficient {
+		t.Errorf("SavingThrows.Get(invalid).Proficient = true, want false")
 	}
 }
 
@@ -96,7 +97,7 @@ func TestCalculateSavingThrowModifier(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			save := &SavingThrow{Proficient: tt.proficient}
+			save := SavingThrow{Proficient: tt.proficient}
 			got := CalculateSavingThrowModifier(save, tt.abilityMod, tt.proficiencyBonus)
 			if got != tt.expected {
 				t.Errorf("CalculateSavingThrowModifier() = %d, want %d", got, tt.expected)
@@ -105,9 +106,11 @@ func TestCalculateSavingThrowModifier(t *testing.T) {
 	}
 }
 
-func TestCalculateSavingThrowModifierNil(t *testing.T) {
-	got := CalculateSavingThrowModifier(nil, 3, 2)
+func TestCalculateSavingThrowModifierDefault(t *testing.T) {
+	// Test with default (not proficient) save
+	save := SavingThrow{}
+	got := CalculateSavingThrowModifier(save, 3, 2)
 	if got != 3 {
-		t.Errorf("CalculateSavingThrowModifier(nil, 3, 2) = %d, want 3", got)
+		t.Errorf("CalculateSavingThrowModifier(default, 3, 2) = %d, want 3", got)
 	}
 }
