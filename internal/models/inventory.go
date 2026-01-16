@@ -2,6 +2,15 @@ package models
 
 import "errors"
 
+// Error sentinels for inventory operations
+var (
+	ErrInsufficientFunds         = errors.New("insufficient funds")
+	ErrItemDoesNotRequireAttunement = errors.New("item does not require attunement")
+	ErrItemAlreadyAttuned        = errors.New("item is already attuned")
+	ErrMaxAttunementReached      = errors.New("already attuned to maximum of 3 items")
+	ErrItemNotAttuned            = errors.New("item is not attuned")
+)
+
 // Currency represents D&D 5e currency.
 type Currency struct {
 	Copper   int `json:"copper"`
@@ -150,9 +159,6 @@ func (c *Currency) SpendGold(amount int) error {
 func (c *Currency) SpendPlatinum(amount int) error {
 	return c.Spend(0, 0, 0, 0, amount)
 }
-
-// Common errors
-var ErrInsufficientFunds = errors.New("insufficient funds")
 
 // ItemType categorizes items.
 type ItemType string
@@ -360,13 +366,13 @@ func (e *Equipment) CountAttunedItems() int {
 // AttuneItem attunes a magic item. Returns error if already at max attunement (3 items).
 func (e *Equipment) AttuneItem(item *Item) error {
 	if !item.RequiresAttunement {
-		return errors.New("item does not require attunement")
+		return ErrItemDoesNotRequireAttunement
 	}
 	if item.Attuned {
-		return errors.New("item is already attuned")
+		return ErrItemAlreadyAttuned
 	}
 	if e.CountAttunedItems() >= 3 {
-		return errors.New("already attuned to maximum of 3 items")
+		return ErrMaxAttunementReached
 	}
 	item.Attuned = true
 	return nil
@@ -375,7 +381,7 @@ func (e *Equipment) AttuneItem(item *Item) error {
 // UnattuneItem removes attunement from an item.
 func (e *Equipment) UnattuneItem(item *Item) error {
 	if !item.Attuned {
-		return errors.New("item is not attuned")
+		return ErrItemNotAttuned
 	}
 	item.Attuned = false
 	return nil
