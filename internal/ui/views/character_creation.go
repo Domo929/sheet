@@ -61,17 +61,17 @@ type CharacterCreationModel struct {
 	// Ability Score step
 	abilityScoreMode         AbilityScoreMode // Manual, Standard Array, or Point Buy
 	abilityScores            [6]int           // STR, DEX, CON, INT, WIS, CHA
-	focusedAbility           int              // Which ability is currently focused (0-5)
+	focusedAbility           AbilityIndex     // Which ability is currently focused (0-5)
 	standardArrayValues      []int            // For standard array mode
 	standardArrayUsed        [6]bool          // Track which standard array values are used
-	focusedSection           int              // 0 = background bonus, 1 = ability scores
+	focusedSection           CreationSection  // Background bonus or ability scores
 	
 	// Background bonus allocation (integrated into ability score step)
-	backgroundBonusPattern   int      // 0 = +2/+1, 1 = +1/+1/+1
-	backgroundBonus2Target   int      // Which ability gets +2 (0-5, or index in options)
-	backgroundBonus1Target   int      // Which ability gets +1 (0-5, or index in options)
-	focusedBonusField        int      // 0 = pattern, 1 = +2 target, 2 = +1 target
-	backgroundBonusComplete  bool     // Whether background bonuses are fully allocated
+	backgroundBonusPattern   BonusPattern  // +2/+1 or +1/+1/+1
+	backgroundBonus2Target   int           // Which ability gets +2 (index in background options)
+	backgroundBonus1Target   int           // Which ability gets +1 (index in background options)
+	focusedBonusField        BonusField    // pattern, +2 target, or +1 target
+	backgroundBonusComplete  bool          // Whether background bonuses are fully allocated
 	
 	// Navigation
 	helpFooter components.HelpFooter
@@ -87,6 +87,43 @@ const (
 	AbilityModeManual AbilityScoreMode = iota
 	AbilityModeStandardArray
 	AbilityModePointBuy
+)
+
+// CreationSection represents which section is focused in the ability screen.
+type CreationSection int
+
+const (
+	SectionBackgroundBonus CreationSection = iota
+	SectionAbilityScores
+)
+
+// BonusPattern represents the background ability bonus allocation pattern.
+type BonusPattern int
+
+const (
+	BonusPattern2Plus1     BonusPattern = iota // +2 to one ability, +1 to another
+	BonusPattern1Plus1Plus1                    // +1 to three abilities
+)
+
+// BonusField represents which bonus field is focused.
+type BonusField int
+
+const (
+	BonusFieldPattern BonusField = iota
+	BonusFieldPlus2Target
+	BonusFieldPlus1Target
+)
+
+// AbilityIndex represents an ability score index (0-5 for STR, DEX, CON, INT, WIS, CHA).
+type AbilityIndex int
+
+const (
+	AbilityIndexSTR AbilityIndex = iota
+	AbilityIndexDEX
+	AbilityIndexCON
+	AbilityIndexINT
+	AbilityIndexWIS
+	AbilityIndexCHA
 )
 
 // NewCharacterCreationModel creates a new character creation model.
@@ -352,68 +389,68 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 	
 	switch msg.String() {
 	case "up", "k":
-		if hasBackgroundBonuses && m.focusedSection == 0 {
+		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus {
 			// In background bonus section - navigate fields
-			if m.focusedBonusField > 0 {
+			if m.focusedBonusField > BonusFieldPattern {
 				m.focusedBonusField--
 			} else {
 				// At top of bonus section - can't go higher
 			}
-		} else if m.focusedSection == 1 {
+		} else if m.focusedSection == SectionAbilityScores {
 			// In ability score section - navigate abilities
-			if m.focusedAbility > 0 {
+			if m.focusedAbility > AbilityIndexSTR {
 				m.focusedAbility--
 			} else if hasBackgroundBonuses {
 				// At top of ability section - move to bonus section
-				m.focusedSection = 0
+				m.focusedSection = SectionBackgroundBonus
 				// Set bonus field to last valid field
-				if m.backgroundBonusPattern == 0 {
-					m.focusedBonusField = 2 // +1 target
+				if m.backgroundBonusPattern == BonusPattern2Plus1 {
+					m.focusedBonusField = BonusFieldPlus1Target // +1 target
 				} else {
-					m.focusedBonusField = 0 // pattern only
+					m.focusedBonusField = BonusFieldPattern // pattern only
 				}
 			}
 		}
 		return m, nil
 		
 	case "down", "j":
-		if hasBackgroundBonuses && m.focusedSection == 0 {
+		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus {
 			// In background bonus section
-			maxField := 0
-			if m.backgroundBonusPattern == 0 {
-				maxField = 2 // pattern, +2, +1
+			maxField := BonusFieldPattern
+			if m.backgroundBonusPattern == BonusPattern2Plus1 {
+				maxField = BonusFieldPlus1Target // pattern, +2, +1
 			}
 			
 			if m.focusedBonusField < maxField {
 				m.focusedBonusField++
 			} else {
 				// At bottom of bonus section - move to ability section
-				m.focusedSection = 1
-				m.focusedAbility = 0
+				m.focusedSection = SectionAbilityScores
+				m.focusedAbility = AbilityIndexSTR
 			}
-		} else if m.focusedSection == 1 {
+		} else if m.focusedSection == SectionAbilityScores {
 			// In ability score section
-			if m.focusedAbility < 5 {
+			if m.focusedAbility < AbilityIndexCHA {
 				m.focusedAbility++
 			}
 		}
 		return m, nil
 		
 	case "right", "l", "+", "=":
-		if hasBackgroundBonuses && m.focusedSection == 0 {
+		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus {
 			// Adjusting background bonuses
 			return m.adjustBackgroundBonus(true), nil
-		} else if m.focusedSection == 1 {
+		} else if m.focusedSection == SectionAbilityScores {
 			// Adjusting ability scores
 			return m.incrementAbility(), nil
 		}
 		return m, nil
 		
 	case "left", "h", "-", "_":
-		if hasBackgroundBonuses && m.focusedSection == 0 {
+		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus {
 			// Adjusting background bonuses
 			return m.adjustBackgroundBonus(false), nil
-		} else if m.focusedSection == 1 {
+		} else if m.focusedSection == SectionAbilityScores {
 			// Adjusting ability scores
 			return m.decrementAbility(), nil
 		}
@@ -421,7 +458,7 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 		
 	case "m":
 		// Toggle mode (only works in ability score section)
-		if m.focusedSection == 1 {
+		if m.focusedSection == SectionAbilityScores {
 			switch m.abilityScoreMode {
 			case AbilityModeManual:
 				m.abilityScoreMode = AbilityModeStandardArray
@@ -437,19 +474,19 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 		return m, nil
 		
 	case "enter":
-		if hasBackgroundBonuses && m.focusedSection == 0 && !m.backgroundBonusComplete {
+		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus && !m.backgroundBonusComplete {
 			// Confirm background bonuses
-			if m.backgroundBonusPattern == 1 {
+			if m.backgroundBonusPattern == BonusPattern1Plus1Plus1 {
 				// +1/+1/+1 - auto-allocate
 				m.backgroundBonusComplete = true
-				m.focusedSection = 1 // Move to ability scores
+				m.focusedSection = SectionAbilityScores // Move to ability scores
 				m.focusedAbility = 0
 			} else {
 				// +2/+1 - need both targets selected and different
 				if m.backgroundBonus2Target >= 0 && m.backgroundBonus1Target >= 0 {
 					if m.backgroundBonus2Target != m.backgroundBonus1Target {
 						m.backgroundBonusComplete = true
-						m.focusedSection = 1 // Move to ability scores
+						m.focusedSection = SectionAbilityScores // Move to ability scores
 						m.focusedAbility = 0
 					} else {
 						m.err = fmt.Errorf("+2 and +1 must be assigned to different abilities")
@@ -458,7 +495,7 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 					m.err = fmt.Errorf("must select abilities for both +2 and +1 bonuses")
 				}
 			}
-		} else if m.focusedSection == 1 {
+		} else if m.focusedSection == SectionAbilityScores {
 			// Finalize character
 			if m.validateAbilityScores() {
 				return m.finalizeCharacter()
@@ -485,22 +522,22 @@ func (m *CharacterCreationModel) adjustBackgroundBonus(increase bool) *Character
 	canUse2Plus1 := len(options) >= 2 && points == 3
 	canUse1Plus1Plus1 := len(options) >= 3 && points == 3
 	
-	if m.focusedBonusField == 0 {
+	if m.focusedBonusField == BonusFieldPattern {
 		// Toggle pattern
 		if increase {
-			if m.backgroundBonusPattern == 0 && canUse1Plus1Plus1 {
-				m.backgroundBonusPattern = 1
+			if m.backgroundBonusPattern == BonusPattern2Plus1 && canUse1Plus1Plus1 {
+				m.backgroundBonusPattern = BonusPattern1Plus1Plus1
 			} else if canUse2Plus1 {
-				m.backgroundBonusPattern = 0
+				m.backgroundBonusPattern = BonusPattern2Plus1
 			}
 		} else {
-			if m.backgroundBonusPattern == 1 && canUse2Plus1 {
-				m.backgroundBonusPattern = 0
+			if m.backgroundBonusPattern == BonusPattern1Plus1Plus1 && canUse2Plus1 {
+				m.backgroundBonusPattern = BonusPattern2Plus1
 			} else if canUse1Plus1Plus1 {
-				m.backgroundBonusPattern = 1
+				m.backgroundBonusPattern = BonusPattern1Plus1Plus1
 			}
 		}
-	} else if m.focusedBonusField == 1 {
+	} else if m.focusedBonusField == BonusFieldPlus2Target {
 		// Cycle +2 target (must be different from +1 target)
 		if increase {
 			newTarget := (m.backgroundBonus2Target + 1) % len(options)
@@ -523,7 +560,7 @@ func (m *CharacterCreationModel) adjustBackgroundBonus(increase bool) *Character
 			}
 			m.backgroundBonus2Target = newTarget
 		}
-	} else if m.focusedBonusField == 2 {
+	} else if m.focusedBonusField == BonusFieldPlus1Target {
 		// Cycle +1 target (must be different from +2 target)
 		if increase {
 			newTarget := (m.backgroundBonus1Target + 1) % len(options)
@@ -769,10 +806,10 @@ func (m *CharacterCreationModel) selectCurrentBackground() bool {
 	m.character.Info.Background = bg.Name
 	
 	// Reset background bonus allocation for ability score step
-	m.backgroundBonusPattern = 0
+	m.backgroundBonusPattern = BonusPattern2Plus1
 	m.backgroundBonus2Target = -1
 	m.backgroundBonus1Target = -1
-	m.focusedBonusField = 0
+	m.focusedBonusField = BonusFieldPattern
 	m.backgroundBonusComplete = false
 	
 	m.err = nil
@@ -1004,7 +1041,7 @@ func (m *CharacterCreationModel) getBackgroundBonuses() [6]int {
 		"str": 0, "dex": 1, "con": 2, "int": 3, "wis": 4, "cha": 5,
 	}
 	
-	if m.backgroundBonusPattern == 0 {
+	if m.backgroundBonusPattern == BonusPattern2Plus1 {
 		// +2/+1 pattern
 		if m.backgroundBonus2Target >= 0 && m.backgroundBonus2Target < len(options) {
 			abilityKey := options[m.backgroundBonus2Target]
@@ -1219,14 +1256,14 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 	_ = canUse1Plus1Plus1 // May be used for validation in future
 	
 	var patternStr string
-	if m.backgroundBonusPattern == 0 {
+	if m.backgroundBonusPattern == BonusPattern2Plus1 {
 		patternStr = "+2 / +1"
 	} else {
 		patternStr = "+1 / +1 / +1"
 	}
 	
 	var lineStyle lipgloss.Style
-	if m.focusedSection == 0 && m.focusedBonusField == 0 {
+	if m.focusedSection == SectionBackgroundBonus && m.focusedBonusField == BonusFieldPattern {
 		lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
 		content.WriteString("▶ ")
 	} else {
@@ -1238,7 +1275,7 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 	content.WriteString("\n\n")
 	
 	// Ability selections (if +2/+1 pattern)
-	if m.backgroundBonusPattern == 0 && canUse2Plus1 {
+	if m.backgroundBonusPattern == BonusPattern2Plus1 && canUse2Plus1 {
 		// +2 target
 		plus2Ability := "None"
 		if m.backgroundBonus2Target >= 0 && m.backgroundBonus2Target < len(options) {
@@ -1246,7 +1283,7 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 			plus2Ability = abilityFullNames[key]
 		}
 		
-		if m.focusedSection == 0 && m.focusedBonusField == 1 {
+		if m.focusedSection == SectionBackgroundBonus && m.focusedBonusField == BonusFieldPlus2Target {
 			lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
 			content.WriteString("▶ ")
 		} else {
@@ -1263,7 +1300,7 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 			plus1Ability = abilityFullNames[key]
 		}
 		
-		if m.focusedSection == 0 && m.focusedBonusField == 2 {
+		if m.focusedSection == SectionBackgroundBonus && m.focusedBonusField == BonusFieldPlus1Target {
 			lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
 			content.WriteString("▶ ")
 		} else {
@@ -1272,7 +1309,7 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 		}
 		content.WriteString(lineStyle.Render(fmt.Sprintf("+1 Bonus: %s", plus1Ability)))
 		content.WriteString("\n")
-	} else if m.backgroundBonusPattern == 1 {
+	} else if m.backgroundBonusPattern == BonusPattern1Plus1Plus1 {
 		// +1/+1/+1 auto-allocation
 		content.WriteString(helpStyle.Render("Auto-allocated to: "))
 		var allocated []string
@@ -1344,7 +1381,7 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 		
 		// Style based on focus (only show focus if in ability score section)
 		var lineStyle lipgloss.Style
-		if m.focusedSection == 1 && i == m.focusedAbility {
+		if m.focusedSection == SectionAbilityScores && AbilityIndex(i) == m.focusedAbility {
 			lineStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("13")).
 				Bold(true)
@@ -1355,7 +1392,7 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 		
 		// Build line
 		var line strings.Builder
-		if m.focusedSection == 1 && i == m.focusedAbility {
+		if m.focusedSection == SectionAbilityScores && AbilityIndex(i) == m.focusedAbility {
 			line.WriteString("▶ ")
 		} else {
 			line.WriteString("  ")
