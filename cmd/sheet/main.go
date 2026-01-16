@@ -16,12 +16,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create and run the Bubble Tea program with alternate screen
-	p := tea.NewProgram(
-		model,
-		tea.WithAltScreen(),       // Use alternate screen buffer
-		tea.WithMouseCellMotion(), // Enable mouse support
-	)
+	// Create and run the Bubble Tea program
+	// Note: Not using WithAltScreen to avoid cursor positioning issues on exit
+	p := tea.NewProgram(model, tea.WithMouseCellMotion())
 	
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running application: %v\n", err)
