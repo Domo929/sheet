@@ -342,17 +342,17 @@ func (m *CharacterCreationModel) handleBackgroundKeys(msg tea.KeyMsg) (*Characte
 // handleAbilityKeys handles keys for the ability score assignment step.
 func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
 	switch msg.String() {
-	case "tab", "right", "l":
-		// Move to next ability
-		m.focusedAbility = (m.focusedAbility + 1) % 6
-		return m, nil
-		
-	case "shift+tab", "left", "h":
+	case "up", "k":
 		// Move to previous ability
 		m.focusedAbility--
 		if m.focusedAbility < 0 {
 			m.focusedAbility = 5
 		}
+		return m, nil
+		
+	case "down", "j":
+		// Move to next ability
+		m.focusedAbility = (m.focusedAbility + 1) % 6
 		return m, nil
 		
 	case "m":
@@ -370,10 +370,10 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 		}
 		return m, nil
 		
-	case "up", "k", "+", "=":
+	case "right", "l", "+", "=":
 		return m.incrementAbility(), nil
 		
-	case "down", "j", "-", "_":
+	case "left", "h", "-", "_":
 		return m.decrementAbility(), nil
 		
 	case "enter":
@@ -1137,7 +1137,7 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 	}
 	
 	content.WriteString("\n")
-	content.WriteString(helpStyle.Render("Tab/←/→: Change ability | ↑/↓/+/-: Adjust score | m: Change mode | Enter: Finish | Esc: Back"))
+	content.WriteString(helpStyle.Render("↑/↓: Change ability | ←/→/+/-: Adjust score | m: Change mode | Enter: Finish | Esc: Back"))
 	
 	return content.String()
 }
