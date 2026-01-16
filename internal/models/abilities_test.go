@@ -188,3 +188,102 @@ func TestStandardArray(t *testing.T) {
 		}
 	}
 }
+
+func TestPointBuyCost(t *testing.T) {
+	tests := []struct {
+		score    int
+		expected int
+	}{
+		{8, 0},
+		{9, 1},
+		{10, 2},
+		{11, 3},
+		{12, 4},
+		{13, 5},
+		{14, 7},
+		{15, 9},
+		{7, 0},  // Below minimum
+		{16, 11}, // Above maximum (theoretical)
+	}
+
+	for _, tt := range tests {
+		t.Run(string(rune(tt.score)), func(t *testing.T) {
+			got := PointBuyCost(tt.score)
+			if got != tt.expected {
+				t.Errorf("PointBuyCost(%d) = %d, want %d", tt.score, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestValidatePointBuy(t *testing.T) {
+	tests := []struct {
+		name         string
+		scores       AbilityScores
+		expectedPts  int
+		expectedValid bool
+	}{
+		{
+			name:         "standard valid allocation (27 points)",
+			scores:       NewAbilityScoresFromValues(15, 14, 13, 12, 10, 8),
+			expectedPts:  27,
+			expectedValid: true,
+		},
+		{
+			name:         "all 13s (30 points, invalid)",
+			scores:       NewAbilityScoresFromValues(13, 13, 13, 13, 13, 13),
+			expectedPts:  30,
+			expectedValid: false,
+		},
+		{
+			name:         "balanced allocation (24 points)",
+			scores:       NewAbilityScoresFromValues(13, 13, 13, 12, 12, 12),
+			expectedPts:  27,
+			expectedValid: true,
+		},
+		{
+			name:         "all 10s (12 points)",
+			scores:       NewAbilityScoresFromValues(10, 10, 10, 10, 10, 10),
+			expectedPts:  12,
+			expectedValid: true,
+		},
+		{
+			name:         "invalid - score too low",
+			scores:       NewAbilityScoresFromValues(7, 13, 13, 13, 13, 13),
+			expectedPts:  0,
+			expectedValid: false,
+		},
+		{
+			name:         "invalid - score too high",
+			scores:       NewAbilityScoresFromValues(16, 13, 13, 13, 13, 13),
+			expectedPts:  0,
+			expectedValid: false,
+		},
+		{
+			name:         "min-max allocation",
+			scores:       NewAbilityScoresFromValues(15, 15, 15, 8, 8, 8),
+			expectedPts:  27,
+			expectedValid: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotPts, gotValid := ValidatePointBuy(tt.scores)
+			if gotPts != tt.expectedPts {
+				t.Errorf("ValidatePointBuy() points = %d, want %d", gotPts, tt.expectedPts)
+			}
+			if gotValid != tt.expectedValid {
+				t.Errorf("ValidatePointBuy() valid = %v, want %v", gotValid, tt.expectedValid)
+			}
+		})
+	}
+}
+
+func TestCalculatePointBuyTotal(t *testing.T) {
+	scores := NewAbilityScoresFromValues(15, 14, 13, 12, 10, 8)
+	total := CalculatePointBuyTotal(scores)
+	if total != 27 {
+		t.Errorf("CalculatePointBuyTotal() = %d, want 27", total)
+	}
+}

@@ -278,3 +278,94 @@ func (cs *CombatStats) HasCondition(condition Condition) bool {
 func (cs *CombatStats) ClearConditions() {
 	cs.Conditions = []Condition{}
 }
+
+// CalculateAC calculates the total AC from base AC, armor, shield, and modifiers.
+// Base AC is typically 10 + DEX modifier when unarmored.
+// With armor: use armor's AC + DEX modifier (capped based on armor type).
+// Additional modifiers can come from magic items, spells, or class features.
+func CalculateAC(baseAC int, armorAC int, shieldBonus int, dexModifier int, additionalModifiers int, maxDexBonus int) int {
+	ac := baseAC
+
+	// If wearing armor, use armor's AC instead of base
+	if armorAC > 0 {
+		ac = armorAC
+
+		// Apply DEX modifier up to max allowed by armor
+		if maxDexBonus == -1 {
+			// No limit (e.g., light armor)
+			ac += dexModifier
+		} else if maxDexBonus > 0 {
+			// Limited DEX (e.g., medium armor allows max +2)
+			if dexModifier > maxDexBonus {
+				ac += maxDexBonus
+			} else {
+				ac += dexModifier
+			}
+		}
+		// maxDexBonus == 0 means no DEX bonus (heavy armor)
+	} else {
+		// No armor, use base AC with full DEX modifier
+		ac += dexModifier
+	}
+
+	// Add shield bonus
+	ac += shieldBonus
+
+	// Add any additional modifiers (magic items, spells, etc.)
+	ac += additionalModifiers
+
+	return ac
+}
+
+// WeaponProperty represents properties a weapon can have.
+type WeaponProperty string
+
+const (
+	PropertyFinesse    WeaponProperty = "finesse"
+	PropertyLight      WeaponProperty = "light"
+	PropertyHeavy      WeaponProperty = "heavy"
+	PropertyReach      WeaponProperty = "reach"
+	PropertyThrown     WeaponProperty = "thrown"
+	PropertyVersatile  WeaponProperty = "versatile"
+	PropertyTwoHanded  WeaponProperty = "two-handed"
+	PropertyAmmunition WeaponProperty = "ammunition"
+	PropertyLoading    WeaponProperty = "loading"
+)
+
+// CalculateAttackBonus calculates the attack bonus for a weapon.
+// strMod and dexMod are the character's STR and DEX modifiers.
+// proficiencyBonus is added if the character is proficient with the weapon.
+// magicBonus is from magic weapons (+1, +2, +3, etc.).
+// weaponProps contains the weapon's properties (e.g., "finesse", "thrown").
+// useStrength can force using STR even for ranged/finesse weapons.
+func CalculateAttackBonus(strMod int, dexMod int, proficient bool, proficiencyBonus int, magicBonus int, weaponProps []string, useStrength bool) int {
+	abilityMod := strMod // Default to STR for melee weapons
+
+	// Check if weapon has finesse property
+	hasFinesse := false
+	for _, prop := range weaponProps {
+		if prop == string(PropertyFinesse) {
+			hasFinesse = true
+			break
+		}
+	}
+
+	// If finesse weapon, use higher of STR or DEX (unless forced to use STR)
+	if hasFinesse && !useStrength {
+		if dexMod > strMod {
+			abilityMod = dexMod
+		}
+	}
+
+	attackBonus := abilityMod
+
+	// Add proficiency bonus if proficient
+	if proficient {
+		attackBonus += proficiencyBonus
+	}
+
+	// Add magic bonus
+	attackBonus += magicBonus
+
+	return attackBonus
+}

@@ -291,3 +291,228 @@ func TestAllConditionsCount(t *testing.T) {
 		t.Errorf("AllConditions() returned %d conditions, want 15", len(conditions))
 	}
 }
+
+func TestCalculateAC(t *testing.T) {
+	tests := []struct {
+		name                string
+		baseAC              int
+		armorAC             int
+		shieldBonus         int
+		dexModifier         int
+		additionalModifiers int
+		maxDexBonus         int
+		expected            int
+	}{
+		{
+			name:                "unarmored with +2 DEX",
+			baseAC:              10,
+			armorAC:             0,
+			shieldBonus:         0,
+			dexModifier:         2,
+			additionalModifiers: 0,
+			maxDexBonus:         -1,
+			expected:            12,
+		},
+		{
+			name:                "light armor (no DEX limit) with +3 DEX",
+			baseAC:              10,
+			armorAC:             11,
+			shieldBonus:         0,
+			dexModifier:         3,
+			additionalModifiers: 0,
+			maxDexBonus:         -1,
+			expected:            14,
+		},
+		{
+			name:                "medium armor (max +2 DEX) with +3 DEX",
+			baseAC:              10,
+			armorAC:             14,
+			shieldBonus:         0,
+			dexModifier:         3,
+			additionalModifiers: 0,
+			maxDexBonus:         2,
+			expected:            16,
+		},
+		{
+			name:                "heavy armor (no DEX) with +2 DEX",
+			baseAC:              10,
+			armorAC:             18,
+			shieldBonus:         0,
+			dexModifier:         2,
+			additionalModifiers: 0,
+			maxDexBonus:         0,
+			expected:            18,
+		},
+		{
+			name:                "armor with shield",
+			baseAC:              10,
+			armorAC:             16,
+			shieldBonus:         2,
+			dexModifier:         1,
+			additionalModifiers: 0,
+			maxDexBonus:         2,
+			expected:            19,
+		},
+		{
+			name:                "armor with magic bonus",
+			baseAC:              10,
+			armorAC:             14,
+			shieldBonus:         0,
+			dexModifier:         2,
+			additionalModifiers: 1,
+			maxDexBonus:         2,
+			expected:            17,
+		},
+		{
+			name:                "full setup with all bonuses",
+			baseAC:              10,
+			armorAC:             15,
+			shieldBonus:         2,
+			dexModifier:         3,
+			additionalModifiers: 2,
+			maxDexBonus:         2,
+			expected:            21,
+		},
+		{
+			name:                "negative DEX modifier unarmored",
+			baseAC:              10,
+			armorAC:             0,
+			shieldBonus:         0,
+			dexModifier:         -1,
+			additionalModifiers: 0,
+			maxDexBonus:         -1,
+			expected:            9,
+		},
+		{
+			name:                "medium armor with +1 DEX (below cap)",
+			baseAC:              10,
+			armorAC:             14,
+			shieldBonus:         0,
+			dexModifier:         1,
+			additionalModifiers: 0,
+			maxDexBonus:         2,
+			expected:            15,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := CalculateAC(tt.baseAC, tt.armorAC, tt.shieldBonus, tt.dexModifier, tt.additionalModifiers, tt.maxDexBonus)
+			if got != tt.expected {
+				t.Errorf("CalculateAC() = %d, want %d", got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestCalculateAttackBonus(t *testing.T) {
+	tests := []struct {
+		name             string
+		strMod           int
+		dexMod           int
+		proficient       bool
+		proficiencyBonus int
+		magicBonus       int
+		weaponProps      []string
+		useStrength      bool
+		expected         int
+	}{
+		{
+			name:             "melee weapon, proficient, no magic",
+			strMod:           3,
+			dexMod:           1,
+			proficient:       true,
+			proficiencyBonus: 2,
+			magicBonus:       0,
+			weaponProps:      []string{},
+			useStrength:      false,
+			expected:         5,
+		},
+		{
+			name:             "finesse weapon using DEX",
+			strMod:           2,
+			dexMod:           4,
+			proficient:       true,
+			proficiencyBonus: 2,
+			magicBonus:       0,
+			weaponProps:      []string{string(PropertyFinesse)},
+			useStrength:      false,
+			expected:         6,
+		},
+		{
+			name:             "finesse weapon using STR (higher)",
+			strMod:           4,
+			dexMod:           2,
+			proficient:       true,
+			proficiencyBonus: 2,
+			magicBonus:       0,
+			weaponProps:      []string{string(PropertyFinesse)},
+			useStrength:      false,
+			expected:         6,
+		},
+		{
+			name:             "finesse weapon forced to use STR",
+			strMod:           2,
+			dexMod:           4,
+			proficient:       true,
+			proficiencyBonus: 2,
+			magicBonus:       0,
+			weaponProps:      []string{string(PropertyFinesse)},
+			useStrength:      true,
+			expected:         4,
+		},
+		{
+			name:             "magic weapon +1",
+			strMod:           3,
+			dexMod:           1,
+			proficient:       true,
+			proficiencyBonus: 3,
+			magicBonus:       1,
+			weaponProps:      []string{},
+			useStrength:      false,
+			expected:         7,
+		},
+		{
+			name:             "not proficient",
+			strMod:           3,
+			dexMod:           1,
+			proficient:       false,
+			proficiencyBonus: 2,
+			magicBonus:       0,
+			weaponProps:      []string{},
+			useStrength:      false,
+			expected:         3,
+		},
+		{
+			name:             "finesse light weapon",
+			strMod:           2,
+			dexMod:           4,
+			proficient:       true,
+			proficiencyBonus: 2,
+			magicBonus:       0,
+			weaponProps:      []string{string(PropertyFinesse), string(PropertyLight)},
+			useStrength:      false,
+			expected:         6,
+		},
+		{
+			name:             "magic weapon +3, high level",
+			strMod:           5,
+			dexMod:           2,
+			proficient:       true,
+			proficiencyBonus: 6,
+			magicBonus:       3,
+			weaponProps:      []string{},
+			useStrength:      false,
+			expected:         14,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := CalculateAttackBonus(tt.strMod, tt.dexMod, tt.proficient, tt.proficiencyBonus, tt.magicBonus, tt.weaponProps, tt.useStrength)
+			if got != tt.expected {
+				t.Errorf("CalculateAttackBonus() = %d, want %d", got, tt.expected)
+			}
+		})
+	}
+}

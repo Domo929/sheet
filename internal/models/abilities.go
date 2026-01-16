@@ -129,3 +129,67 @@ func (a *AbilityScores) SetTemporary(ability Ability, temp int) {
 func (a AbilityScores) GetModifier(ability Ability) int {
 	return a.Get(ability).Modifier()
 }
+
+// PointBuyCost returns the point buy cost for a given ability score.
+// In D&D 5e point buy, scores range from 8-15, with costs as follows:
+// Score: 8=0, 9=1, 10=2, 11=3, 12=4, 13=5, 14=7, 15=9 points.
+// Scores above 13 cost 2 points per increase.
+func PointBuyCost(score int) int {
+	switch score {
+	case 8:
+		return 0
+	case 9:
+		return 1
+	case 10:
+		return 2
+	case 11:
+		return 3
+	case 12:
+		return 4
+	case 13:
+		return 5
+	case 14:
+		return 7
+	case 15:
+		return 9
+	default:
+		// Scores outside valid range
+		if score < 8 {
+			return 0
+		}
+		// For scores above 15, continue the pattern (though 15 is the max in standard point buy)
+		if score > 15 {
+			return 9 + (score-15)*2
+		}
+		return 0
+	}
+}
+
+// ValidatePointBuy checks if a set of ability scores is valid for point buy.
+// Returns the total points used and whether it's valid (total <= 27 and all scores in range).
+func ValidatePointBuy(scores AbilityScores) (totalPoints int, valid bool) {
+	abilities := []Ability{
+		AbilityStrength, AbilityDexterity, AbilityConstitution,
+		AbilityIntelligence, AbilityWisdom, AbilityCharisma,
+	}
+
+	totalPoints = 0
+	for _, ability := range abilities {
+		score := scores.Get(ability).Base
+		// Check if score is in valid range (8-15)
+		if score < 8 || score > 15 {
+			return totalPoints, false
+		}
+		totalPoints += PointBuyCost(score)
+	}
+
+	// Standard point buy gives 27 points
+	valid = totalPoints <= 27
+	return totalPoints, valid
+}
+
+// CalculatePointBuyTotal calculates the total points used in a point buy allocation.
+func CalculatePointBuyTotal(scores AbilityScores) int {
+	total, _ := ValidatePointBuy(scores)
+	return total
+}
