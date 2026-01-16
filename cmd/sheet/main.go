@@ -5,41 +5,21 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/Domo929/sheet/internal/ui"
 )
 
-type model struct {
-	message string
-}
-
-func initialModel() model {
-	return model{
-		message: "D&D 5e Character Sheet TUI - Coming Soon!",
-	}
-}
-
-func (m model) Init() tea.Cmd {
-	return nil
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			return m, tea.Quit
-		}
-	}
-	return m, nil
-}
-
-func (m model) View() string {
-	return fmt.Sprintf("%s\n\nPress q to quit.\n", m.message)
-}
-
 func main() {
-	p := tea.NewProgram(initialModel())
+	// Create the application model
+	model, err := ui.NewModel()
+	if err != nil {
+		fmt.Printf("Error initializing application: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Create and run the Bubble Tea program
+	p := tea.NewProgram(model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("Error running application: %v\n", err)
 		os.Exit(1)
 	}
 }
