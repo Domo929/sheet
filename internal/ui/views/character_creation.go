@@ -1174,6 +1174,19 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 	// Add starting gold
 	m.character.Inventory.Currency.AddGold(m.startingGold)
 	
+	// Add starting equipment
+	selectedEquipment := m.getSelectedEquipment()
+	for _, equipItem := range selectedEquipment {
+		// Convert data.EquipmentItem to models.Item
+		item := models.NewItem(
+			fmt.Sprintf("%s-%d", strings.ToLower(strings.ReplaceAll(equipItem.Name, " ", "_")), len(m.character.Inventory.Items)),
+			equipItem.Name,
+			categoryToItemType(equipItem.Category),
+		)
+		item.Quantity = equipItem.Quantity
+		m.character.Inventory.AddItem(item)
+	}
+	
 	// Save character
 	path, err := m.storage.Save(m.character)
 	if err != nil {
@@ -1186,6 +1199,22 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 			Character: m.character,
 			Path:      path,
 		}
+	}
+}
+
+// categoryToItemType converts equipment category to ItemType.
+func categoryToItemType(category string) models.ItemType {
+	switch category {
+	case "weapon":
+		return models.ItemTypeWeapon
+	case "armor":
+		return models.ItemTypeArmor
+	case "pack":
+		return models.ItemTypeGeneral
+	case "tool":
+		return models.ItemTypeTool
+	default:
+		return models.ItemTypeGeneral
 	}
 }
 
