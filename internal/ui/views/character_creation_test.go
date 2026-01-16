@@ -228,33 +228,54 @@ func TestBackgroundBonusAllocation(t *testing.T) {
 		},
 	}
 
-	// Simulate selecting the background (triggers auto-allocation)
-	if len(model.selectedBackground.AbilityScores.Options) >= 2 && model.selectedBackground.AbilityScores.Points == 3 {
-		model.abilitySelections = []string{
-			model.selectedBackground.AbilityScores.Options[0],
-			model.selectedBackground.AbilityScores.Options[0],
-			model.selectedBackground.AbilityScores.Options[1],
-		}
+	// Enter allocation mode
+	model.allocatingBonuses = true
+	model.focusedBonusSlot = 0
+	model.abilitySelections = []string{}
+	model.abilityBonusAmounts = []int{}
+
+	// Allocate +2 to int
+	model.incrementBackgroundBonus()
+	model.incrementBackgroundBonus()
+
+	if len(model.abilitySelections) != 1 {
+		t.Fatalf("Expected 1 ability selection, got %d", len(model.abilitySelections))
+	}
+	if model.abilitySelections[0] != "int" {
+		t.Errorf("Expected 'int', got %s", model.abilitySelections[0])
+	}
+	if model.abilityBonusAmounts[0] != 2 {
+		t.Errorf("Expected +2 bonus, got %d", model.abilityBonusAmounts[0])
 	}
 
-	// Check that 3 selections were made
-	if len(model.abilitySelections) != 3 {
-		t.Errorf("Expected 3 ability selections, got %d", len(model.abilitySelections))
+	// Move to next ability (wis) and allocate +1
+	model.focusedBonusSlot = 1
+	model.incrementBackgroundBonus()
+
+	if len(model.abilitySelections) != 2 {
+		t.Fatalf("Expected 2 ability selections, got %d", len(model.abilitySelections))
+	}
+	if model.abilitySelections[1] != "wis" {
+		t.Errorf("Expected 'wis', got %s", model.abilitySelections[1])
+	}
+	if model.abilityBonusAmounts[1] != 1 {
+		t.Errorf("Expected +1 bonus, got %d", model.abilityBonusAmounts[1])
 	}
 
-	// Check pattern is +2/+1 (first option appears twice)
-	countInt := 0
-	countWis := 0
-	for _, sel := range model.abilitySelections {
-		if sel == "int" {
-			countInt++
-		} else if sel == "wis" {
-			countWis++
-		}
+	// Verify total is 3
+	total := 0
+	for _, amt := range model.abilityBonusAmounts {
+		total += amt
+	}
+	if total != 3 {
+		t.Errorf("Expected total of 3 points, got %d", total)
 	}
 
-	if countInt != 2 || countWis != 1 {
-		t.Errorf("Expected +2 int / +1 wis allocation, got int=%d, wis=%d", countInt, countWis)
+	// Test decrement
+	model.focusedBonusSlot = 0 // Back to int
+	model.decrementBackgroundBonus()
+	if model.abilityBonusAmounts[0] != 1 {
+		t.Errorf("Expected +1 after decrement, got %d", model.abilityBonusAmounts[0])
 	}
 }
 

@@ -58,6 +58,9 @@ type CharacterCreationModel struct {
 	backgroundList       components.List
 	selectedBackground   *data.Background
 	abilitySelections    []string // Selected ability scores for background bonus
+	abilityBonusAmounts  []int    // Amount of bonus for each selection (+2, +1, etc)
+	focusedBonusSlot     int      // Which bonus slot is focused (for allocation UI)
+	allocatingBonuses    bool     // Whether we're in bonus allocation mode
 	
 	// Ability Score step
 	abilityScoreMode     AbilityScoreMode // Manual, Standard Array, or Point Buy
@@ -334,9 +337,127 @@ func (m *CharacterCreationModel) handleClassKeys(msg tea.KeyMsg) (*CharacterCrea
 
 // handleBackgroundKeys handles keys for the background selection step.
 func (m *CharacterCreationModel) handleBackgroundKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+	// If we're in bonus allocation mode, handle that separately
+	if m.allocatingBonuses {
+		return m.handleBackgroundBonusKeys(msg)
+	}
+	
+	// Otherwise, handle normal list selection
 	return m.handleListSelectionKeys(msg, &m.backgroundList, func() bool {
 		return m.selectCurrentBackground()
 	}, StepClass, StepAbilities)
+}
+
+// handleBackgroundBonusKeys handles ability score bonus allocation for backgrounds.
+func (m *CharacterCreationModel) handleBackgroundBonusKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+	if m.selectedBackground == nil {
+		return m, nil
+	}
+	
+	options := m.selectedBackground.AbilityScores.Options
+	totalPoints := m.selectedBackground.AbilityScores.Points
+	allocatedPoints := 0
+	for _, amt := range m.abilityBonusAmounts {
+		allocatedPoints += amt
+	}
+	
+	switch msg.String() {
+	case "up", "k":
+		// Move to previous ability option
+		if m.focusedBonusSlot > 0 {
+			m.focusedBonusSlot--
+		}
+		return m, nil
+		
+	case "down", "j":
+		// Move to next ability option
+		if m.focusedBonusSlot < len(options)-1 {
+			m.focusedBonusSlot++
+		}
+		return m, nil
+		
+	case "right", "l", "+", "=":
+		// Increment bonus for this ability
+		return m.incrementBackgroundBonus(), nil
+		
+	case "left", "h", "-", "_":
+		// Decrement bonus for this ability
+		return m.decrementBackgroundBonus(), nil
+		
+	case "enter":
+		// Finish allocation and move to ability scores
+		if allocatedPoints == totalPoints {
+			m.allocatingBonuses = false
+			return m.moveToStep(StepAbilities)
+		} else {
+			m.err = fmt.Errorf("must allocate all %d points (currently: %d)", totalPoints, allocatedPoints)
+		}
+		return m, nil
+		
+	case "esc":
+		// Cancel and go back to background list
+		m.allocatingBonuses = false
+		m.abilitySelections = []string{}
+		m.abilityBonusAmounts = []int{}
+		m.selectedBackground = nil
+		return m, nil
+	}
+	
+	return m, nil
+}
+
+// incrementBackgroundBonus adds a point to the currently focused ability.
+func (m *CharacterCreationModel) incrementBackgroundBonus() *CharacterCreationModel {
+	if m.selectedBackground == nil {
+		return m
+	}
+	
+	options := m.selectedBackground.AbilityScores.Options
+	totalPoints := m.selectedBackground.AbilityScores.Points
+	allocatedPoints := 0
+	for _, amt := range m.abilityBonusAmounts {
+		allocatedPoints += amt
+	}
+	
+	if allocatedPoints < totalPoints {
+		// Find or create entry for this ability
+		found := false
+		for i, ability := range m.abilitySelections {
+			if ability == options[m.focusedBonusSlot] {
+				m.abilityBonusAmounts[i]++
+				found = true
+				break
+			}
+		}
+		if !found {
+			m.abilitySelections = append(m.abilitySelections, options[m.focusedBonusSlot])
+			m.abilityBonusAmounts = append(m.abilityBonusAmounts, 1)
+		}
+	}
+	return m
+}
+
+// decrementBackgroundBonus removes a point from the currently focused ability.
+func (m *CharacterCreationModel) decrementBackgroundBonus() *CharacterCreationModel {
+	if m.selectedBackground == nil {
+		return m
+	}
+	
+	options := m.selectedBackground.AbilityScores.Options
+	for i, ability := range m.abilitySelections {
+		if ability == options[m.focusedBonusSlot] {
+			if m.abilityBonusAmounts[i] > 0 {
+				m.abilityBonusAmounts[i]--
+				// Remove if zero
+				if m.abilityBonusAmounts[i] == 0 {
+					m.abilitySelections = append(m.abilitySelections[:i], m.abilitySelections[i+1:]...)
+					m.abilityBonusAmounts = append(m.abilityBonusAmounts[:i], m.abilityBonusAmounts[i+1:]...)
+				}
+			}
+			break
+		}
+	}
+	return m
 }
 
 // handleAbilityKeys handles keys for the ability score assignment step.
@@ -608,22 +729,16 @@ func (m *CharacterCreationModel) selectCurrentBackground() bool {
 	m.selectedBackground = bg
 	m.character.Info.Background = bg.Name
 	
-	// Auto-allocate background ability bonuses (MVP: +2/+1 pattern)
-	// TODO: Allow user to choose allocation in a future enhancement
-	if len(bg.AbilityScores.Options) >= 2 && bg.AbilityScores.Points == 3 {
-		// Common case: +2/+1 split
-		m.abilitySelections = []string{
-			bg.AbilityScores.Options[0],
-			bg.AbilityScores.Options[0], // +2 to first option
-			bg.AbilityScores.Options[1], // +1 to second option
-		}
-	} else if len(bg.AbilityScores.Options) >= 3 && bg.AbilityScores.Points == 3 {
-		// Alternative: +1/+1/+1 split
-		m.abilitySelections = []string{
-			bg.AbilityScores.Options[0],
-			bg.AbilityScores.Options[1],
-			bg.AbilityScores.Options[2],
-		}
+	// If background has ability score options, enter allocation mode
+	if len(bg.AbilityScores.Options) > 0 && bg.AbilityScores.Points > 0 {
+		m.allocatingBonuses = true
+		m.focusedBonusSlot = 0
+		m.abilitySelections = make([]string, 0)
+		m.abilityBonusAmounts = make([]int, 0)
+	} else {
+		// No bonuses to allocate
+		m.abilitySelections = []string{}
+		m.abilityBonusAmounts = []int{}
 	}
 	
 	m.err = nil
@@ -819,20 +934,21 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 	}
 	
 	// Apply background ability bonuses if any are selected
-	for _, abilityName := range m.abilitySelections {
+	for i, abilityName := range m.abilitySelections {
+		bonus := m.abilityBonusAmounts[i]
 		switch abilityName {
 		case "str":
-			m.character.AbilityScores.Strength.Base++
+			m.character.AbilityScores.Strength.Base += bonus
 		case "dex":
-			m.character.AbilityScores.Dexterity.Base++
+			m.character.AbilityScores.Dexterity.Base += bonus
 		case "con":
-			m.character.AbilityScores.Constitution.Base++
+			m.character.AbilityScores.Constitution.Base += bonus
 		case "int":
-			m.character.AbilityScores.Intelligence.Base++
+			m.character.AbilityScores.Intelligence.Base += bonus
 		case "wis":
-			m.character.AbilityScores.Wisdom.Base++
+			m.character.AbilityScores.Wisdom.Base += bonus
 		case "cha":
-			m.character.AbilityScores.Charisma.Base++
+			m.character.AbilityScores.Charisma.Base += bonus
 		}
 	}
 	
@@ -992,7 +1108,12 @@ func (m *CharacterCreationModel) renderBackgroundSelection() string {
 	content.WriteString(stepStyle.Render("Step 4 of 5: Background Selection"))
 	content.WriteString("\n\n")
 	
-	// Render background list
+	// If allocating bonuses, show allocation UI
+	if m.allocatingBonuses && m.selectedBackground != nil {
+		return m.renderBackgroundBonusAllocation()
+	}
+	
+	// Otherwise show background list
 	m.backgroundList.Width = m.width - 4
 	m.backgroundList.Height = m.height - 15
 	content.WriteString(m.backgroundList.Render())
@@ -1001,6 +1122,99 @@ func (m *CharacterCreationModel) renderBackgroundSelection() string {
 	// Help text
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Next | Esc: Back"))
+	
+	return content.String()
+}
+
+// renderBackgroundBonusAllocation renders the ability score bonus allocation UI.
+func (m *CharacterCreationModel) renderBackgroundBonusAllocation() string {
+	var content strings.Builder
+	
+	stepStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8")).
+		Italic(true)
+	content.WriteString(stepStyle.Render("Step 4 of 5: Background Ability Score Bonuses"))
+	content.WriteString("\n\n")
+	
+	// Background name
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("12"))
+	content.WriteString(titleStyle.Render(m.selectedBackground.Name))
+	content.WriteString("\n\n")
+	
+	// Instructions
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	totalPoints := m.selectedBackground.AbilityScores.Points
+	allocatedPoints := 0
+	for _, amt := range m.abilityBonusAmounts {
+		allocatedPoints += amt
+	}
+	remainingPoints := totalPoints - allocatedPoints
+	
+	pointsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("11"))
+	if remainingPoints == 0 {
+		pointsStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
+	} else if remainingPoints < 0 {
+		pointsStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Bold(true)
+	}
+	
+	content.WriteString(helpStyle.Render(fmt.Sprintf("Allocate %d ability score points:", totalPoints)))
+	content.WriteString("\n")
+	content.WriteString(pointsStyle.Render(fmt.Sprintf("Allocated: %d / %d  (Remaining: %d)", allocatedPoints, totalPoints, remainingPoints)))
+	content.WriteString("\n\n")
+	
+	// Show available abilities with current allocations
+	options := m.selectedBackground.AbilityScores.Options
+	abilityFullNames := map[string]string{
+		"str": "Strength",
+		"dex": "Dexterity",
+		"con": "Constitution",
+		"int": "Intelligence",
+		"wis": "Wisdom",
+		"cha": "Charisma",
+	}
+	
+	for i, abilityKey := range options {
+		// Get current allocation for this ability
+		currentBonus := 0
+		for j, ability := range m.abilitySelections {
+			if ability == abilityKey {
+				currentBonus = m.abilityBonusAmounts[j]
+				break
+			}
+		}
+		
+		// Style based on focus
+		var lineStyle lipgloss.Style
+		if i == m.focusedBonusSlot {
+			lineStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("13")).
+				Bold(true)
+		} else {
+			lineStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("15"))
+		}
+		
+		// Build line
+		var line strings.Builder
+		if i == m.focusedBonusSlot {
+			line.WriteString("▶ ")
+		} else {
+			line.WriteString("  ")
+		}
+		
+		abilityName := abilityFullNames[abilityKey]
+		if abilityName == "" {
+			abilityName = strings.ToUpper(abilityKey)
+		}
+		
+		line.WriteString(fmt.Sprintf("%-3s  %-14s  +%d", strings.ToUpper(abilityKey), abilityName, currentBonus))
+		
+		content.WriteString(lineStyle.Render(line.String()))
+		content.WriteString("\n")
+	}
+	
+	content.WriteString("\n")
+	content.WriteString(helpStyle.Render("↑/↓: Select ability | ←/→/+/-: Adjust bonus | Enter: Confirm | Esc: Cancel"))
 	
 	return content.String()
 }
@@ -1040,20 +1254,21 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 	// Background bonuses
 	backgroundBonuses := [6]int{0, 0, 0, 0, 0, 0}
 	if m.selectedBackground != nil {
-		for _, abilityName := range m.abilitySelections {
+		for i, abilityName := range m.abilitySelections {
+			bonus := m.abilityBonusAmounts[i]
 			switch abilityName {
 			case "str":
-				backgroundBonuses[0]++
+				backgroundBonuses[0] += bonus
 			case "dex":
-				backgroundBonuses[1]++
+				backgroundBonuses[1] += bonus
 			case "con":
-				backgroundBonuses[2]++
+				backgroundBonuses[2] += bonus
 			case "int":
-				backgroundBonuses[3]++
+				backgroundBonuses[3] += bonus
 			case "wis":
-				backgroundBonuses[4]++
+				backgroundBonuses[4] += bonus
 			case "cha":
-				backgroundBonuses[5]++
+				backgroundBonuses[5] += bonus
 			}
 		}
 	}
