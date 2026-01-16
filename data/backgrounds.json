@@ -1,0 +1,196 @@
+{
+  "backgrounds": [
+    {
+      "name": "Acolyte",
+      "description": "You devoted yourself to service in a temple, either nestled in a town or secluded in a sacred grove. You performed sacred rites in honor of a god or gods.",
+      "abilityScores": {
+        "options": ["int", "wis", "cha"],
+        "points": 3
+      },
+      "skillProficiencies": ["Insight", "Religion"],
+      "toolProficiency": "Calligrapher's Supplies",
+      "equipment": ["Calligrapher's Supplies", "Book (prayers)", "Holy Symbol", "Parchment (10 sheets)", "Robe", "3 GP"],
+      "feat": "Magic Initiate (Cleric)"
+    },
+    {
+      "name": "Artisan",
+      "description": "You began mopping floors and scrubbing kettles in an artisan's workshop for a few coppers per day as soon as you were strong enough to carry a bucket. As you grew stronger, your tasks became more complex.",
+      "abilityScores": {
+        "options": ["str", "dex", "int"],
+        "points": 3
+      },
+      "skillProficiencies": ["Investigation", "Persuasion"],
+      "toolProficiency": "Artisan's Tools (one of your choice)",
+      "equipment": ["Artisan's Tools (same as proficiency)", "2 Pouches", "Traveler's Clothes", "11 GP"],
+      "feat": "Crafter"
+    },
+    {
+      "name": "Charlatan",
+      "description": "Once you were old enough to order an ale, you soon had a favorite stool in every tavern within ten miles of where you were born. You learned to earn gold by tricking commoners and low-ranking nobles.",
+      "abilityScores": {
+        "options": ["dex", "con", "cha"],
+        "points": 3
+      },
+      "skillProficiencies": ["Deception", "Sleight of Hand"],
+      "toolProficiency": "Forgery Kit",
+      "equipment": ["Forgery Kit", "Costume", "Fine Clothes", "15 GP"],
+      "feat": "Skilled"
+    },
+    {
+      "name": "Criminal",
+      "description": "You learned to earn coin by breaking the law. As a criminal, you worked alone or as part of a larger organization. You might have been a pickpocket, forger, burglar, smuggler, or fence.",
+      "abilityScores": {
+        "options": ["dex", "con", "int"],
+        "points": 3
+      },
+      "skillProficiencies": ["Sleight of Hand", "Stealth"],
+      "toolProficiency": "Thieves' Tools",
+      "equipment": ["Thieves' Tools", "Crowbar", "2 Pouches", "Traveler's Clothes", "16 GP"],
+      "feat": "Alert"
+    },
+    {
+      "name": "Entertainer",
+      "description": "You spent much of your youth following roving circuses and traveling entertainers, performing odd jobs for coppers. When you grew old enough to perform, you learned a trade.",
+      "abilityScores": {
+        "options": ["str", "dex", "cha"],
+        "points": 3
+      },
+      "skillProficiencies": ["Acrobatics", "Performance"],
+      "toolProficiency": "Musical Instrument (one of your choice)",
+      "equipment": ["Musical Instrument (same as proficiency)", "2 Costumes", "Mirror", "Perfume", "Traveler's Clothes", "11 GP"],
+      "feat": "Musician"
+    },
+    {
+      "name": "Farmer",
+      "description": "You grew up close to the land. Years of tilling soil and harvesting crops taught you patience and hard work. You might have worked on your family's farm, or you might have worked for another landholder.",
+      "abilityScores": {
+        "options": ["str", "con", "wis"],
+        "points": 3
+      },
+      "skillProficiencies": ["Animal Handling", "Nature"],
+      "toolProficiency": "Carpenter's Tools",
+      "equipment": ["Carpenter's Tools", "Healer's Kit", "Iron Pot", "Shovel", "Sickle", "Traveler's Clothes", "30 GP"],
+      "feat": "Tough"
+    },
+    {
+      "name": "Guard",
+      "description": "Your feet ache from long hours of standing watch. Your keen eyes scan the night for signs of trouble, and you carry the weight of civic duty on your shoulders.",
+      "abilityScores": {
+        "options": ["str", "int", "wis"],
+        "points": 3
+      },
+      "skillProficiencies": ["Athletics", "Perception"],
+      "toolProficiency": "Gaming Set (one of your choice)",
+      "equipment": ["Gaming Set (same as proficiency)", "Hooded Lantern", "Manacles", "Quiver", "Shortbow", "Arrows (20)", "Spear", "Traveler's Clothes", "12 GP"],
+      "feat": "Alert"
+    },
+    {
+      "name": "Guide",
+      "description": "You came of age outdoors, far from your home settlement. You learned to hunt, forage, navigate, and survive in the wilderness.",
+      "abilityScores": {
+        "options": ["dex", "con", "wis"],
+        "points": 3
+      },
+      "skillProficiencies": ["Stealth", "Survival"],
+      "toolProficiency": "Cartographer's Tools",
+      "equipment": ["Cartographer's Tools", "Bedroll", "Quiver", "Shortbow", "Arrows (20)", "Tent", "Traveler's Clothes", "3 GP"],
+      "feat": "Magic Initiate (Druid)"
+    },
+    {
+      "name": "Hermit",
+      "description": "You spent your formative years in seclusion, apart from society and its trappings. You studied, meditated, or performed some service appropriate to your hermitage.",
+      "abilityScores": {
+        "options": ["con", "wis", "cha"],
+        "points": 3
+      },
+      "skillProficiencies": ["Medicine", "Religion"],
+      "toolProficiency": "Herbalism Kit",
+      "equipment": ["Herbalism Kit", "Bedroll", "Book (philosophy)", "Lamp", "Oil (3 flasks)", "Traveler's Clothes", "16 GP"],
+      "feat": "Healer"
+    },
+    {
+      "name": "Merchant",
+      "description": "You were raised to barter, bargain, and trade. You learned to value goods and appraise objects. You might have worked from a shop, wagon, or ship.",
+      "abilityScores": {
+        "options": ["con", "int", "cha"],
+        "points": 3
+      },
+      "skillProficiencies": ["Animal Handling", "Persuasion"],
+      "toolProficiency": "Navigator's Tools",
+      "equipment": ["Navigator's Tools", "2 Pouches", "Traveler's Clothes", "22 GP"],
+      "feat": "Lucky"
+    },
+    {
+      "name": "Noble",
+      "description": "You were raised in a castle, surrounded by wealth, power, and privilege. Your family of minor combated aristocrats saw to it that you received an excellent education.",
+      "abilityScores": {
+        "options": ["str", "int", "cha"],
+        "points": 3
+      },
+      "skillProficiencies": ["History", "Persuasion"],
+      "toolProficiency": "Gaming Set (one of your choice)",
+      "equipment": ["Gaming Set (same as proficiency)", "Fine Clothes", "Perfume", "Signet Ring", "29 GP"],
+      "feat": "Skilled"
+    },
+    {
+      "name": "Sage",
+      "description": "You spent years learning the lore of the multiverse. You scoured manuscripts, studied scrolls, and listened to the greatest experts on the subjects that interest you.",
+      "abilityScores": {
+        "options": ["con", "int", "wis"],
+        "points": 3
+      },
+      "skillProficiencies": ["Arcana", "History"],
+      "toolProficiency": "Calligrapher's Supplies",
+      "equipment": ["Calligrapher's Supplies", "Book (history)", "Parchment (8 sheets)", "Robe", "8 GP"],
+      "feat": "Magic Initiate (Wizard)"
+    },
+    {
+      "name": "Sailor",
+      "description": "You've spent years working aboard ship, from fishing boats to merchant vessels to naval warships. You learned to tie knots, reef sails, and navigate by the stars.",
+      "abilityScores": {
+        "options": ["str", "dex", "wis"],
+        "points": 3
+      },
+      "skillProficiencies": ["Acrobatics", "Perception"],
+      "toolProficiency": "Navigator's Tools",
+      "equipment": ["Navigator's Tools", "Dagger", "Fishing Tackle", "Silk Rope", "Traveler's Clothes", "20 GP"],
+      "feat": "Tavern Brawler"
+    },
+    {
+      "name": "Scribe",
+      "description": "You spent formative years in a scriptorium, copying texts and learning to write in a clear hand. Your education and patience have opened doors to scholarly pursuits.",
+      "abilityScores": {
+        "options": ["dex", "int", "wis"],
+        "points": 3
+      },
+      "skillProficiencies": ["Investigation", "Perception"],
+      "toolProficiency": "Calligrapher's Supplies",
+      "equipment": ["Calligrapher's Supplies", "Fine Clothes", "Lamp", "Oil (3 flasks)", "Parchment (12 sheets)", "23 GP"],
+      "feat": "Skilled"
+    },
+    {
+      "name": "Soldier",
+      "description": "You began training for war as soon as you reached adulthood and carry the bytes of that life with you. You might have been part of a standing army, a noble's honor guard, or a mercenary company.",
+      "abilityScores": {
+        "options": ["str", "dex", "con"],
+        "points": 3
+      },
+      "skillProficiencies": ["Athletics", "Intimidation"],
+      "toolProficiency": "Gaming Set (one of your choice)",
+      "equipment": ["Gaming Set (same as proficiency)", "Healer's Kit", "Quiver", "Shortbow", "Arrows (20)", "Spear", "Traveler's Clothes", "14 GP"],
+      "feat": "Savage Attacker"
+    },
+    {
+      "name": "Wayfarer",
+      "description": "You grew up on the road. You drifted from place to place, stopping in settlements long enough to earn a few coins before moving on. You've seen the world, but you've never had a place to call home.",
+      "abilityScores": {
+        "options": ["dex", "wis", "cha"],
+        "points": 3
+      },
+      "skillProficiencies": ["Insight", "Stealth"],
+      "toolProficiency": "Thieves' Tools",
+      "equipment": ["Thieves' Tools", "Bedroll", "Mess Kit", "2 Pouches", "Traveler's Clothes", "16 GP"],
+      "feat": "Lucky"
+    }
+  ]
+}
