@@ -103,6 +103,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case views.CancelCharacterCreationMsg:
+		// User cancelled character creation, return to selection screen
+		m.currentView = ViewCharacterSelection
+		m.characterCreationModel = nil
+		return m, nil
+
 	case views.CharacterLoadedMsg:
 		// Load the character from storage
 		char, err := m.storage.LoadByPath(msg.Path)

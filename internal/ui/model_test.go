@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Domo929/sheet/internal/models"
+	"github.com/Domo929/sheet/internal/ui/views"
 )
 
 func TestMainSheetQuitKey(t *testing.T) {
@@ -62,3 +63,29 @@ func TestMainSheetCtrlCQuit(t *testing.T) {
 		t.Errorf("Expected tea.QuitMsg, got %T", msg)
 	}
 }
+
+func TestCancelCharacterCreation(t *testing.T) {
+	m, err := NewModel()
+	if err != nil {
+		t.Fatalf("Failed to create model: %v", err)
+	}
+	
+	// Start character creation
+	m.currentView = ViewCharacterCreation
+	m.characterCreationModel = &views.CharacterCreationModel{}
+	
+	// Send cancel message
+	updatedModel, _ := m.Update(views.CancelCharacterCreationMsg{})
+	m = updatedModel.(Model)
+	
+	// Should return to character selection
+	if m.currentView != ViewCharacterSelection {
+		t.Errorf("Expected ViewCharacterSelection after cancel, got %v", m.currentView)
+	}
+	
+	// Creation model should be cleared
+	if m.characterCreationModel != nil {
+		t.Error("Expected characterCreationModel to be nil after cancel")
+	}
+}
+

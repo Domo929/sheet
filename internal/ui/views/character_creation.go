@@ -105,6 +105,9 @@ type CharacterCreatedMsg struct {
 	Path      string
 }
 
+// CancelCharacterCreationMsg is sent when user cancels character creation.
+type CancelCharacterCreationMsg struct{}
+
 // Init initializes the character creation model.
 func (m *CharacterCreationModel) Init() tea.Cmd {
 	return nil
@@ -245,9 +248,10 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 		return m, nil
 		
 	case "esc":
-		// Cancel creation
-		m.err = fmt.Errorf("character creation cancelled")
-		return m, tea.Quit
+		// Cancel creation - return to character selection
+		return m, func() tea.Msg {
+			return CancelCharacterCreationMsg{}
+		}
 		
 	case "backspace":
 		// Handle backspace for text input fields
