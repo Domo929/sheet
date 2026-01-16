@@ -228,54 +228,39 @@ func TestBackgroundBonusAllocation(t *testing.T) {
 		},
 	}
 
-	// Enter allocation mode
-	model.allocatingBonuses = true
-	model.focusedBonusSlot = 0
-	model.abilitySelections = []string{}
-	model.abilityBonusAmounts = []int{}
+	// Test +2/+1 pattern
+	model.backgroundBonusPattern = 0
+	model.backgroundBonus2Target = 0 // int
+	model.backgroundBonus1Target = 1 // wis
+	model.backgroundBonusComplete = true
 
-	// Allocate +2 to int
-	model.incrementBackgroundBonus()
-	model.incrementBackgroundBonus()
-
-	if len(model.abilitySelections) != 1 {
-		t.Fatalf("Expected 1 ability selection, got %d", len(model.abilitySelections))
+	bonuses := model.getBackgroundBonuses()
+	
+	// Check int got +2 (index 3)
+	if bonuses[3] != 2 {
+		t.Errorf("Expected +2 to INT, got %d", bonuses[3])
 	}
-	if model.abilitySelections[0] != "int" {
-		t.Errorf("Expected 'int', got %s", model.abilitySelections[0])
+	
+	// Check wis got +1 (index 4)
+	if bonuses[4] != 1 {
+		t.Errorf("Expected +1 to WIS, got %d", bonuses[4])
 	}
-	if model.abilityBonusAmounts[0] != 2 {
-		t.Errorf("Expected +2 bonus, got %d", model.abilityBonusAmounts[0])
+	
+	// Test +1/+1/+1 pattern
+	model.backgroundBonusPattern = 1
+	model.backgroundBonusComplete = true
+	
+	bonuses = model.getBackgroundBonuses()
+	
+	// Check first 3 options got +1 each
+	if bonuses[3] != 1 { // int
+		t.Errorf("Expected +1 to INT, got %d", bonuses[3])
 	}
-
-	// Move to next ability (wis) and allocate +1
-	model.focusedBonusSlot = 1
-	model.incrementBackgroundBonus()
-
-	if len(model.abilitySelections) != 2 {
-		t.Fatalf("Expected 2 ability selections, got %d", len(model.abilitySelections))
+	if bonuses[4] != 1 { // wis
+		t.Errorf("Expected +1 to WIS, got %d", bonuses[4])
 	}
-	if model.abilitySelections[1] != "wis" {
-		t.Errorf("Expected 'wis', got %s", model.abilitySelections[1])
-	}
-	if model.abilityBonusAmounts[1] != 1 {
-		t.Errorf("Expected +1 bonus, got %d", model.abilityBonusAmounts[1])
-	}
-
-	// Verify total is 3
-	total := 0
-	for _, amt := range model.abilityBonusAmounts {
-		total += amt
-	}
-	if total != 3 {
-		t.Errorf("Expected total of 3 points, got %d", total)
-	}
-
-	// Test decrement
-	model.focusedBonusSlot = 0 // Back to int
-	model.decrementBackgroundBonus()
-	if model.abilityBonusAmounts[0] != 1 {
-		t.Errorf("Expected +1 after decrement, got %d", model.abilityBonusAmounts[0])
+	if bonuses[5] != 1 { // cha
+		t.Errorf("Expected +1 to CHA, got %d", bonuses[5])
 	}
 }
 
