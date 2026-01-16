@@ -29,11 +29,11 @@ func TestXPForNextLevel(t *testing.T) {
 		level    int
 		expected int
 	}{
-		{1, 300},    // Need 300 XP for level 2
-		{4, 6500},   // Need 6500 XP for level 5
-		{10, 85000}, // Need 85000 XP for level 11
+		{1, 300},     // Need 300 XP for level 2
+		{4, 6500},    // Need 6500 XP for level 5
+		{10, 85000},  // Need 85000 XP for level 11
 		{19, 355000}, // Need 355000 XP for level 20
-		{20, 0},     // Max level, no more XP needed
+		{20, 0},      // Max level, no more XP needed
 	}
 
 	for _, tt := range tests {

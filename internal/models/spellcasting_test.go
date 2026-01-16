@@ -190,7 +190,7 @@ func TestSpellcastingPrepare(t *testing.T) {
 
 func TestCalculateSpellSaveDC(t *testing.T) {
 	tests := []struct {
-		name      string
+		name       string
 		abilityMod int
 		profBonus  int
 		expected   int
@@ -213,7 +213,7 @@ func TestCalculateSpellSaveDC(t *testing.T) {
 
 func TestCalculateSpellAttackBonus(t *testing.T) {
 	tests := []struct {
-		name      string
+		name       string
 		abilityMod int
 		profBonus  int
 		expected   int

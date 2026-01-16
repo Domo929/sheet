@@ -137,14 +137,14 @@ func (pm *PactMagic) Restore() {
 
 // Spellcasting contains all spellcasting information for a character.
 type Spellcasting struct {
-	Ability          Ability      `json:"ability"`
-	SpellSlots       SpellSlots   `json:"spellSlots"`
-	KnownSpells      []KnownSpell `json:"knownSpells,omitempty"`
-	CantripsKnown    []string     `json:"cantripsKnown,omitempty"`
-	PreparesSpells   bool         `json:"preparesSpells"` // Whether class prepares spells
-	MaxPrepared      int          `json:"maxPrepared,omitempty"`
-	PactMagic        *PactMagic   `json:"pactMagic,omitempty"` // For Warlocks
-	RitualCaster     bool         `json:"ritualCaster,omitempty"`
+	Ability        Ability      `json:"ability"`
+	SpellSlots     SpellSlots   `json:"spellSlots"`
+	KnownSpells    []KnownSpell `json:"knownSpells,omitempty"`
+	CantripsKnown  []string     `json:"cantripsKnown,omitempty"`
+	PreparesSpells bool         `json:"preparesSpells"` // Whether class prepares spells
+	MaxPrepared    int          `json:"maxPrepared,omitempty"`
+	PactMagic      *PactMagic   `json:"pactMagic,omitempty"` // For Warlocks
+	RitualCaster   bool         `json:"ritualCaster,omitempty"`
 }
 
 // NewSpellcasting creates a new spellcasting tracker.

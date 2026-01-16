@@ -3,7 +3,7 @@ package models
 // Feature represents a class feature, racial trait, or feat.
 type Feature struct {
 	Name        string `json:"name"`
-	Source      string `json:"source"`      // e.g., "Cleric 1", "Elf", "Alert (Feat)"
+	Source      string `json:"source"` // e.g., "Cleric 1", "Elf", "Alert (Feat)"
 	Description string `json:"description"`
 	Level       int    `json:"level,omitempty"` // Level gained (for class features)
 }

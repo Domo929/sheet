@@ -25,18 +25,18 @@ const (
 
 // CharacterInfo contains basic character information.
 type CharacterInfo struct {
-	Name            string          `json:"name"`
-	PlayerName      string          `json:"playerName,omitempty"`
-	Race            string          `json:"race"`
-	Subrace         string          `json:"subrace,omitempty"`
-	Class           string          `json:"class"`
-	Subclass        string          `json:"subclass,omitempty"`
-	Level           int             `json:"level"`
-	Background      string          `json:"background"`
-	Alignment       Alignment       `json:"alignment,omitempty"`
-	ExperiencePoints int            `json:"experiencePoints"`
-	ProgressionType ProgressionType `json:"progressionType"`
-	Inspiration     bool            `json:"inspiration"`
+	Name             string          `json:"name"`
+	PlayerName       string          `json:"playerName,omitempty"`
+	Race             string          `json:"race"`
+	Subrace          string          `json:"subrace,omitempty"`
+	Class            string          `json:"class"`
+	Subclass         string          `json:"subclass,omitempty"`
+	Level            int             `json:"level"`
+	Background       string          `json:"background"`
+	Alignment        Alignment       `json:"alignment,omitempty"`
+	ExperiencePoints int             `json:"experiencePoints"`
+	ProgressionType  ProgressionType `json:"progressionType"`
+	Inspiration      bool            `json:"inspiration"`
 }
 
 // NewCharacterInfo creates a new character info with defaults.
