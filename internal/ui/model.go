@@ -2,6 +2,7 @@ package ui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/views"
@@ -12,6 +13,7 @@ type ViewType int
 
 const (
 	ViewCharacterSelection ViewType = iota
+	ViewCharacterCreation
 	ViewMainSheet
 	ViewInventory
 	ViewSpellbook
@@ -28,10 +30,13 @@ type Model struct {
 	height       int
 	character    *models.Character
 	storage      *storage.CharacterStorage
+	loader       *data.Loader
 	err          error
+	quitting     bool // Track if we're in the process of quitting
 	
 	// View-specific models
 	characterSelectionModel *views.CharacterSelectionModel
+	characterCreationModel  *views.CharacterCreationModel
 	// mainSheetModel interface{}
 	// inventoryModel interface{}
 	// etc.
@@ -45,12 +50,16 @@ func NewModel() (Model, error) {
 		return Model{}, err
 	}
 
+	// Initialize data loader
+	loader := data.NewLoader("./data")
+
 	// Initialize character selection model
 	charSelectionModel := views.NewCharacterSelectionModel(store)
 
 	return Model{
 		currentView:             ViewCharacterSelection,
 		storage:                 store,
+		loader:                  loader,
 		characterSelectionModel: charSelectionModel,
 	}, nil
 }
@@ -71,6 +80,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		// Forward to current view
 		return m.updateCurrentView(msg)
+
+	case views.StartCharacterCreationMsg:
+		// Create and initialize character creation model
+		m.characterCreationModel = views.NewCharacterCreationModel(m.storage, m.loader)
+		// Pass current window size to the new model
+		if m.width > 0 && m.height > 0 {
+			m.characterCreationModel, _ = m.characterCreationModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
+		m.currentView = ViewCharacterCreation
+		return m, m.characterCreationModel.Init()
+
+	case views.CharacterCreatedMsg:
+		// Character created successfully, return to selection screen
+		m.currentView = ViewCharacterSelection
+		m.characterCreationModel = nil
+		// Reload character list
+		if m.characterSelectionModel != nil {
+			return m, m.characterSelectionModel.Init()
+		}
+		return m, nil
+
+	case views.CancelCharacterCreationMsg:
+		// User cancelled character creation, return to selection screen
+		m.currentView = ViewCharacterSelection
+		m.characterCreationModel = nil
+		return m, nil
 
 	case views.CharacterLoadedMsg:
 		// Load the character from storage
@@ -117,8 +155,21 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.characterSelectionModel = updatedModel
 			cmd = c
 		}
+	case ViewCharacterCreation:
+		if m.characterCreationModel != nil {
+			updatedModel, c := m.characterCreationModel.Update(msg)
+			m.characterCreationModel = updatedModel
+			cmd = c
+		}
 	case ViewMainSheet:
-		// Will be implemented in main sheet phase
+		// Handle keys for main sheet view (stub)
+		if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			switch keyMsg.String() {
+			case "q", "ctrl+c":
+				m.quitting = true
+				return m, tea.Quit
+			}
+		}
 	default:
 		// Other views not yet implemented
 	}
@@ -128,6 +179,11 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View renders the current view (required by Bubble Tea).
 func (m Model) View() string {
+	// Return empty view when quitting to avoid flashing content
+	if m.quitting {
+		return ""
+	}
+	
 	if m.err != nil {
 		return "Error: " + m.err.Error() + "\n\nPress q to quit."
 	}
@@ -136,6 +192,8 @@ func (m Model) View() string {
 	switch m.currentView {
 	case ViewCharacterSelection:
 		return m.renderCharacterSelection()
+	case ViewCharacterCreation:
+		return m.renderCharacterCreation()
 	case ViewMainSheet:
 		return m.renderMainSheet()
 	case ViewInventory:
@@ -161,6 +219,13 @@ func (m Model) renderCharacterSelection() string {
 		return m.characterSelectionModel.View()
 	}
 	return "Character Selection View (TODO)\n\nPress q to quit."
+}
+
+func (m Model) renderCharacterCreation() string {
+	if m.characterCreationModel != nil {
+		return m.characterCreationModel.View()
+	}
+	return "Character Creation View (TODO)\n\nPress q to quit."
 }
 
 func (m Model) renderMainSheet() string {
