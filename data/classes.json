@@ -1,0 +1,4096 @@
+{
+  "classes": [
+    {
+      "name": "Barbarian",
+      "hitDice": "d12",
+      "primaryAbility": [
+        "Strength"
+      ],
+      "savingThrowProficiencies": [
+        "Strength",
+        "Constitution"
+      ],
+      "armorProficiencies": [
+        "Light Armor",
+        "Medium Armor",
+        "Shields"
+      ],
+      "weaponProficiencies": [
+        "Simple Weapons",
+        "Martial Weapons"
+      ],
+      "toolProficiencies": [],
+      "skillChoices": {
+        "count": 2,
+        "options": [
+          "Animal Handling",
+          "Athletics",
+          "Intimidation",
+          "Nature",
+          "Perception",
+          "Survival"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Greataxe or (b) any martial melee weapon",
+        "Choice: (a) two handaxes or (b) any simple weapon",
+        "Explorer's Pack",
+        "Four javelins"
+      ],
+      "spellcaster": false,
+      "features": [
+        {
+          "level": 1,
+          "name": "Rage",
+          "description": "In battle, you fight with primal ferocity. On your turn, you can enter a rage as a bonus action. While raging, you gain bonus damage on melee attacks using Strength, advantage on Strength checks and saves, and resistance to bludgeoning, piercing, and slashing damage. Rage lasts 1 minute, ends early if you're knocked unconscious or if your turn ends and you haven't attacked or taken damage since your last turn. You can rage a number of times shown for your level, regaining all uses on a long rest."
+        },
+        {
+          "level": 1,
+          "name": "Unarmored Defense",
+          "description": "While not wearing armor, your AC equals 10 + Dexterity modifier + Constitution modifier. You can use a shield and still gain this benefit."
+        },
+        {
+          "level": 2,
+          "name": "Reckless Attack",
+          "description": "When you make your first attack on your turn, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls using Strength during this turn, but attack rolls against you have advantage until your next turn."
+        },
+        {
+          "level": 2,
+          "name": "Danger Sense",
+          "description": "You have advantage on Dexterity saving throws against effects you can see, such as traps and spells. To gain this benefit, you can't be blinded, deafened, or incapacitated."
+        },
+        {
+          "level": 3,
+          "name": "Primal Path",
+          "description": "Choose a Primal Path that shapes the nature of your rage: Path of the Berserker, Path of the Totem Warrior, or others. Your choice grants features at 3rd, 6th, 10th, and 14th level."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Extra Attack",
+          "description": "You can attack twice, instead of once, whenever you take the Attack action on your turn."
+        },
+        {
+          "level": 5,
+          "name": "Fast Movement",
+          "description": "Your speed increases by 10 feet while you aren't wearing heavy armor."
+        },
+        {
+          "level": 6,
+          "name": "Primal Path Feature",
+          "description": "You gain a feature from your Primal Path."
+        },
+        {
+          "level": 7,
+          "name": "Feral Instinct",
+          "description": "You have advantage on initiative rolls. Additionally, if you are surprised at the beginning of combat and aren't incapacitated, you can act normally on your first turn, but only if you enter your rage before doing anything else on that turn."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 9,
+          "name": "Brutal Critical (1 die)",
+          "description": "You can roll one additional weapon damage die when determining the extra damage for a critical hit with a melee attack."
+        },
+        {
+          "level": 10,
+          "name": "Primal Path Feature",
+          "description": "You gain a feature from your Primal Path."
+        },
+        {
+          "level": 11,
+          "name": "Relentless Rage",
+          "description": "Your rage can keep you fighting despite grievous wounds. If you drop to 0 hit points while raging and don't die outright, you can make a DC 10 Constitution saving throw. If you succeed, you drop to 1 hit point instead. Each time you use this feature after the first, the DC increases by 5. The DC resets to 10 when you finish a short or long rest."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 13,
+          "name": "Brutal Critical (2 dice)",
+          "description": "You can roll two additional weapon damage dice when determining the extra damage for a critical hit with a melee attack."
+        },
+        {
+          "level": 14,
+          "name": "Primal Path Feature",
+          "description": "You gain a feature from your Primal Path."
+        },
+        {
+          "level": 15,
+          "name": "Persistent Rage",
+          "description": "Your rage is so fierce that it ends early only if you fall unconscious or if you choose to end it."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 17,
+          "name": "Brutal Critical (3 dice)",
+          "description": "You can roll three additional weapon damage dice when determining the extra damage for a critical hit with a melee attack."
+        },
+        {
+          "level": 18,
+          "name": "Indomitable Might",
+          "description": "If your total for a Strength check is less than your Strength score, you can use that score in place of the total."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Primal Champion",
+          "description": "You embody the power of the wilds. Your Strength and Constitution scores increase by 4. Your maximum for those scores is now 24."
+        }
+      ],
+      "rageBonus": [
+        {
+          "level": 1,
+          "bonus": 2,
+          "rages": 2
+        },
+        {
+          "level": 2,
+          "bonus": 2,
+          "rages": 2
+        },
+        {
+          "level": 3,
+          "bonus": 2,
+          "rages": 3
+        },
+        {
+          "level": 4,
+          "bonus": 2,
+          "rages": 3
+        },
+        {
+          "level": 5,
+          "bonus": 2,
+          "rages": 3
+        },
+        {
+          "level": 6,
+          "bonus": 2,
+          "rages": 4
+        },
+        {
+          "level": 7,
+          "bonus": 2,
+          "rages": 4
+        },
+        {
+          "level": 8,
+          "bonus": 2,
+          "rages": 4
+        },
+        {
+          "level": 9,
+          "bonus": 3,
+          "rages": 4
+        },
+        {
+          "level": 10,
+          "bonus": 3,
+          "rages": 4
+        },
+        {
+          "level": 11,
+          "bonus": 3,
+          "rages": 4
+        },
+        {
+          "level": 12,
+          "bonus": 3,
+          "rages": 5
+        },
+        {
+          "level": 13,
+          "bonus": 3,
+          "rages": 5
+        },
+        {
+          "level": 14,
+          "bonus": 3,
+          "rages": 5
+        },
+        {
+          "level": 15,
+          "bonus": 3,
+          "rages": 5
+        },
+        {
+          "level": 16,
+          "bonus": 4,
+          "rages": 5
+        },
+        {
+          "level": 17,
+          "bonus": 4,
+          "rages": 6
+        },
+        {
+          "level": 18,
+          "bonus": 4,
+          "rages": 6
+        },
+        {
+          "level": 19,
+          "bonus": 4,
+          "rages": 6
+        },
+        {
+          "level": 20,
+          "bonus": 4,
+          "rages": "unlimited"
+        }
+      ]
+    },
+    {
+      "name": "Bard",
+      "hitDice": "d8",
+      "primaryAbility": [
+        "Charisma"
+      ],
+      "savingThrowProficiencies": [
+        "Dexterity",
+        "Charisma"
+      ],
+      "armorProficiencies": [
+        "Light Armor"
+      ],
+      "weaponProficiencies": [
+        "Simple Weapons",
+        "Hand Crossbows",
+        "Longswords",
+        "Rapiers",
+        "Shortswords"
+      ],
+      "toolProficiencies": [
+        "Three musical instruments of your choice"
+      ],
+      "skillChoices": {
+        "count": 3,
+        "options": [
+          "Any"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Rapier, (b) Longsword, or (c) any simple weapon",
+        "Choice: (a) Diplomat's Pack or (b) Entertainer's Pack",
+        "Choice: (a) Lute or (b) any other musical instrument",
+        "Leather armor and a dagger"
+      ],
+      "spellcaster": true,
+      "spellcastingAbility": "Charisma",
+      "spellsKnown": [
+        {
+          "level": 1,
+          "cantrips": 2,
+          "spells": 4
+        },
+        {
+          "level": 2,
+          "cantrips": 2,
+          "spells": 5
+        },
+        {
+          "level": 3,
+          "cantrips": 2,
+          "spells": 6
+        },
+        {
+          "level": 4,
+          "cantrips": 3,
+          "spells": 7
+        },
+        {
+          "level": 5,
+          "cantrips": 3,
+          "spells": 8
+        },
+        {
+          "level": 6,
+          "cantrips": 3,
+          "spells": 9
+        },
+        {
+          "level": 7,
+          "cantrips": 3,
+          "spells": 10
+        },
+        {
+          "level": 8,
+          "cantrips": 3,
+          "spells": 11
+        },
+        {
+          "level": 9,
+          "cantrips": 3,
+          "spells": 12
+        },
+        {
+          "level": 10,
+          "cantrips": 4,
+          "spells": 14
+        },
+        {
+          "level": 11,
+          "cantrips": 4,
+          "spells": 15
+        },
+        {
+          "level": 12,
+          "cantrips": 4,
+          "spells": 15
+        },
+        {
+          "level": 13,
+          "cantrips": 4,
+          "spells": 16
+        },
+        {
+          "level": 14,
+          "cantrips": 4,
+          "spells": 18
+        },
+        {
+          "level": 15,
+          "cantrips": 4,
+          "spells": 19
+        },
+        {
+          "level": 16,
+          "cantrips": 4,
+          "spells": 19
+        },
+        {
+          "level": 17,
+          "cantrips": 4,
+          "spells": 20
+        },
+        {
+          "level": 18,
+          "cantrips": 4,
+          "spells": 22
+        },
+        {
+          "level": 19,
+          "cantrips": 4,
+          "spells": 22
+        },
+        {
+          "level": 20,
+          "cantrips": 4,
+          "spells": 22
+        }
+      ],
+      "spellSlots": [
+        {
+          "level": 1,
+          "1st": 2,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 2,
+          "1st": 3,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 3,
+          "1st": 4,
+          "2nd": 2,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 4,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 5,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 2,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 6,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 7,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 1,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 8,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 2,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 9,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 1,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 10,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 11,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 12,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 13,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 14,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 15,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 16,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 17,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 18,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 19,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 20,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 2,
+          "8th": 1,
+          "9th": 1
+        }
+      ],
+      "features": [
+        {
+          "level": 1,
+          "name": "Spellcasting",
+          "description": "You can cast bard spells. Charisma is your spellcasting ability. You learn spells from the bard spell list and can use any musical instrument as a spellcasting focus."
+        },
+        {
+          "level": 1,
+          "name": "Bardic Inspiration",
+          "description": "You can inspire others through stirring words or music. As a bonus action, choose one creature within 60 feet who can hear you. That creature gains one Bardic Inspiration die (d6). Once within the next 10 minutes, the creature can roll the die and add it to one ability check, attack roll, or saving throw. The creature can wait until after it rolls the d20 before using the die, but must decide before knowing whether the roll succeeds or fails. You can use this feature a number of times equal to your Charisma modifier (minimum of once), and regain uses on a long rest."
+        },
+        {
+          "level": 2,
+          "name": "Jack of All Trades",
+          "description": "You can add half your proficiency bonus (rounded down) to any ability check you make that doesn't already use your proficiency bonus."
+        },
+        {
+          "level": 2,
+          "name": "Song of Rest",
+          "description": "You can use soothing music or oration during a short rest to help revitalize your wounded allies. You and any friendly creatures who hear your performance regain extra hit points equal to your Charisma modifier at the end of the short rest."
+        },
+        {
+          "level": 3,
+          "name": "Bard College",
+          "description": "Choose a college that you emulate in your bardic techniques: College of Lore, College of Valor, or others. Your choice grants features at 3rd, 6th, and 14th level."
+        },
+        {
+          "level": 3,
+          "name": "Expertise",
+          "description": "Choose two of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies. At 10th level, you can choose two more skills to gain this benefit."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Bardic Inspiration (d8)",
+          "description": "Your Bardic Inspiration die becomes a d8."
+        },
+        {
+          "level": 5,
+          "name": "Font of Inspiration",
+          "description": "You regain all of your expended uses of Bardic Inspiration when you finish a short or long rest."
+        },
+        {
+          "level": 6,
+          "name": "Countercharm",
+          "description": "You can use musical notes or words of power to disrupt mind-influencing effects. As an action, you can start a performance that lasts until the end of your next turn. During that time, you and any friendly creatures within 30 feet of you have advantage on saving throws against being frightened or charmed."
+        },
+        {
+          "level": 6,
+          "name": "Bard College Feature",
+          "description": "You gain a feature from your Bard College."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 10,
+          "name": "Bardic Inspiration (d10)",
+          "description": "Your Bardic Inspiration die becomes a d10."
+        },
+        {
+          "level": 10,
+          "name": "Expertise",
+          "description": "Choose two more of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies."
+        },
+        {
+          "level": 10,
+          "name": "Magical Secrets",
+          "description": "You learn two spells of your choice from any class's spell list. The spells must be of a level you can cast. The chosen spells count as bard spells for you. You learn two additional spells from any class at 14th and 18th level."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 14,
+          "name": "Bard College Feature",
+          "description": "You gain a feature from your Bard College."
+        },
+        {
+          "level": 14,
+          "name": "Magical Secrets",
+          "description": "You learn two more spells of your choice from any class's spell list."
+        },
+        {
+          "level": 15,
+          "name": "Bardic Inspiration (d12)",
+          "description": "Your Bardic Inspiration die becomes a d12."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 18,
+          "name": "Magical Secrets",
+          "description": "You learn two more spells of your choice from any class's spell list."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Superior Inspiration",
+          "description": "When you roll initiative and have no uses of Bardic Inspiration left, you regain one use."
+        }
+      ]
+    },
+    {
+      "name": "Cleric",
+      "hitDice": "d8",
+      "primaryAbility": [
+        "Wisdom"
+      ],
+      "savingThrowProficiencies": [
+        "Wisdom",
+        "Charisma"
+      ],
+      "armorProficiencies": [
+        "Light Armor",
+        "Medium Armor",
+        "Shields"
+      ],
+      "weaponProficiencies": [
+        "Simple Weapons"
+      ],
+      "toolProficiencies": [],
+      "skillChoices": {
+        "count": 2,
+        "options": [
+          "History",
+          "Insight",
+          "Medicine",
+          "Persuasion",
+          "Religion"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Mace or (b) Warhammer (if proficient)",
+        "Choice: (a) Scale mail, (b) Leather armor, or (c) Chain mail (if proficient)",
+        "Choice: (a) Light crossbow and 20 bolts or (b) any simple weapon",
+        "Choice: (a) Priest's Pack or (b) Explorer's Pack",
+        "Shield and holy symbol"
+      ],
+      "spellcaster": true,
+      "spellcastingAbility": "Wisdom",
+      "spellPreparation": "prepared",
+      "spellSlots": [
+        {
+          "level": 1,
+          "1st": 2,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 2,
+          "1st": 3,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 3,
+          "1st": 4,
+          "2nd": 2,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 4,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 5,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 2,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 6,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 7,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 1,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 8,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 2,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 9,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 1,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 10,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 11,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 12,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 13,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 14,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 15,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 16,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 17,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 18,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 19,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 20,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 2,
+          "8th": 1,
+          "9th": 1
+        }
+      ],
+      "features": [
+        {
+          "level": 1,
+          "name": "Spellcasting",
+          "description": "You can cast cleric spells. Wisdom is your spellcasting ability. You prepare spells from the cleric spell list. The number of spells you can prepare equals your Wisdom modifier + your cleric level (minimum of 1). You can use a holy symbol as a spellcasting focus."
+        },
+        {
+          "level": 1,
+          "name": "Divine Domain",
+          "description": "Choose one domain related to your deity: Knowledge, Life, Light, Nature, Tempest, Trickery, War, or others. Your choice grants domain spells and features at 1st, 2nd, 6th, 8th, and 17th level."
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity (1/rest)",
+          "description": "You gain the ability to channel divine energy directly from your deity. You start with two Channel Divinity effects: Turn Undead and an effect determined by your domain. You can use Channel Divinity once between rests. Some cleric levels grant additional uses."
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Turn Undead",
+          "description": "As an action, you present your holy symbol and speak a prayer. Each undead within 30 feet that can see or hear you must make a Wisdom saving throw. On a failed save, the creature is turned for 1 minute or until it takes damage."
+        },
+        {
+          "level": 3,
+          "name": "Divine Domain Feature",
+          "description": "You gain a feature from your Divine Domain."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Destroy Undead (CR 1/2)",
+          "description": "When an undead fails its saving throw against your Turn Undead feature, it is instantly destroyed if its challenge rating is 1/2 or lower."
+        },
+        {
+          "level": 6,
+          "name": "Channel Divinity (2/rest)",
+          "description": "You can use your Channel Divinity feature twice between rests."
+        },
+        {
+          "level": 6,
+          "name": "Divine Domain Feature",
+          "description": "You gain a feature from your Divine Domain."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 8,
+          "name": "Destroy Undead (CR 1)",
+          "description": "Your Destroy Undead feature now destroys undead of CR 1 or lower."
+        },
+        {
+          "level": 8,
+          "name": "Divine Domain Feature",
+          "description": "You gain a feature from your Divine Domain."
+        },
+        {
+          "level": 10,
+          "name": "Divine Intervention",
+          "description": "You can call on your deity to intervene on your behalf. You roll percentile dice. If you roll equal to or less than your cleric level, your deity intervenes. If it fails, you can't use this feature again for 7 days. If it succeeds, you can't use it again for 7 days."
+        },
+        {
+          "level": 11,
+          "name": "Destroy Undead (CR 2)",
+          "description": "Your Destroy Undead feature now destroys undead of CR 2 or lower."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 14,
+          "name": "Destroy Undead (CR 3)",
+          "description": "Your Destroy Undead feature now destroys undead of CR 3 or lower."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 17,
+          "name": "Destroy Undead (CR 4)",
+          "description": "Your Destroy Undead feature now destroys undead of CR 4 or lower."
+        },
+        {
+          "level": 17,
+          "name": "Divine Domain Feature",
+          "description": "You gain a feature from your Divine Domain."
+        },
+        {
+          "level": 18,
+          "name": "Channel Divinity (3/rest)",
+          "description": "You can use your Channel Divinity feature three times between rests."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Divine Intervention Improvement",
+          "description": "Your call for divine intervention succeeds automatically, no roll required."
+        }
+      ]
+    },
+    {
+      "name": "Druid",
+      "hitDice": "d8",
+      "primaryAbility": [
+        "Wisdom"
+      ],
+      "savingThrowProficiencies": [
+        "Intelligence",
+        "Wisdom"
+      ],
+      "armorProficiencies": [
+        "Light Armor",
+        "Medium Armor",
+        "Shields (druids will not wear armor or use shields made of metal)"
+      ],
+      "weaponProficiencies": [
+        "Clubs",
+        "Daggers",
+        "Darts",
+        "Javelins",
+        "Maces",
+        "Quarterstaffs",
+        "Scimitars",
+        "Sickles",
+        "Slings",
+        "Spears"
+      ],
+      "toolProficiencies": [
+        "Herbalism kit"
+      ],
+      "skillChoices": {
+        "count": 2,
+        "options": [
+          "Arcana",
+          "Animal Handling",
+          "Insight",
+          "Medicine",
+          "Nature",
+          "Perception",
+          "Religion",
+          "Survival"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Wooden shield or (b) any simple weapon",
+        "Choice: (a) Scimitar or (b) any simple melee weapon",
+        "Leather armor, explorer's pack, and druidic focus"
+      ],
+      "spellcaster": true,
+      "spellcastingAbility": "Wisdom",
+      "spellPreparation": "prepared",
+      "spellSlots": [
+        {
+          "level": 1,
+          "1st": 2,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 2,
+          "1st": 3,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 3,
+          "1st": 4,
+          "2nd": 2,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 4,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 5,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 2,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 6,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 7,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 1,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 8,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 2,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 9,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 1,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 10,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 11,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 12,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 13,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 14,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 15,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 16,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 17,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 18,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 19,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 20,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 2,
+          "8th": 1,
+          "9th": 1
+        }
+      ],
+      "features": [
+        {
+          "level": 1,
+          "name": "Druidic",
+          "description": "You know Druidic, the secret language of druids. You can speak and leave hidden messages in Druidic. Others spot the message with a DC 15 Wisdom (Perception) check but can't decipher it without magic."
+        },
+        {
+          "level": 1,
+          "name": "Spellcasting",
+          "description": "You can cast druid spells. Wisdom is your spellcasting ability. You prepare spells from the druid spell list. The number of spells you can prepare equals your Wisdom modifier + your druid level (minimum of 1)."
+        },
+        {
+          "level": 2,
+          "name": "Wild Shape",
+          "description": "You can use your action to magically assume the shape of a beast you have seen before. You can use this feature twice, regaining uses on a short or long rest. Your druid level determines the beasts you can transform into."
+        },
+        {
+          "level": 2,
+          "name": "Druid Circle",
+          "description": "Choose a circle: Circle of the Land, Circle of the Moon, or others. Your choice grants features at 2nd, 6th, 10th, and 14th level."
+        },
+        {
+          "level": 4,
+          "name": "Wild Shape Improvement",
+          "description": "You can use Wild Shape to transform into beasts with a CR as high as 1/2. You ignore the Max CR column in the Beast Shapes table."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 6,
+          "name": "Druid Circle Feature",
+          "description": "You gain a feature from your Druid Circle."
+        },
+        {
+          "level": 8,
+          "name": "Wild Shape Improvement",
+          "description": "You can transform into beasts with CR as high as 1."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 10,
+          "name": "Druid Circle Feature",
+          "description": "You gain a feature from your Druid Circle."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 14,
+          "name": "Druid Circle Feature",
+          "description": "You gain a feature from your Druid Circle."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 18,
+          "name": "Timeless Body",
+          "description": "The primal magic you wield slows your aging. For every 10 years that pass, your body ages only 1 year."
+        },
+        {
+          "level": 18,
+          "name": "Beast Spells",
+          "description": "You can cast many of your druid spells in any shape you assume using Wild Shape."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Archdruid",
+          "description": "You can use Wild Shape an unlimited number of times. Additionally, you can ignore the verbal and somatic components of your druid spells."
+        }
+      ]
+    },
+    {
+      "name": "Fighter",
+      "hitDice": "d10",
+      "primaryAbility": [
+        "Strength",
+        "Dexterity"
+      ],
+      "savingThrowProficiencies": [
+        "Strength",
+        "Constitution"
+      ],
+      "armorProficiencies": [
+        "All Armor",
+        "Shields"
+      ],
+      "weaponProficiencies": [
+        "Simple Weapons",
+        "Martial Weapons"
+      ],
+      "toolProficiencies": [],
+      "skillChoices": {
+        "count": 2,
+        "options": [
+          "Acrobatics",
+          "Animal Handling",
+          "Athletics",
+          "History",
+          "Insight",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Chain mail or (b) Leather armor, longbow, and 20 arrows",
+        "Choice: (a) Martial weapon and shield or (b) two martial weapons",
+        "Choice: (a) Light crossbow and 20 bolts or (b) two handaxes",
+        "Choice: (a) Dungeoneer's Pack or (b) Explorer's Pack"
+      ],
+      "spellcaster": false,
+      "features": [
+        {
+          "level": 1,
+          "name": "Fighting Style",
+          "description": "Choose a fighting style: Archery, Defense, Dueling, Great Weapon Fighting, Protection, or Two-Weapon Fighting. You can't take the same Fighting Style option more than once."
+        },
+        {
+          "level": 1,
+          "name": "Second Wind",
+          "description": "You can use a bonus action to regain hit points equal to 1d10 + your fighter level. Once used, you must finish a short or long rest before you can use it again."
+        },
+        {
+          "level": 2,
+          "name": "Action Surge (one use)",
+          "description": "You can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action. Once used, you must finish a short or long rest before you can use it again."
+        },
+        {
+          "level": 3,
+          "name": "Martial Archetype",
+          "description": "Choose an archetype: Battle Master, Champion, Eldritch Knight, or others. Your choice grants features at 3rd, 7th, 10th, 15th, and 18th level."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Extra Attack",
+          "description": "You can attack twice, instead of once, whenever you take the Attack action on your turn."
+        },
+        {
+          "level": 6,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 7,
+          "name": "Martial Archetype Feature",
+          "description": "You gain a feature from your Martial Archetype."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 9,
+          "name": "Indomitable (one use)",
+          "description": "You can reroll a saving throw you fail. If you do so, you must use the new roll. You can't use this feature again until you finish a long rest."
+        },
+        {
+          "level": 10,
+          "name": "Martial Archetype Feature",
+          "description": "You gain a feature from your Martial Archetype."
+        },
+        {
+          "level": 11,
+          "name": "Extra Attack (2)",
+          "description": "You can attack three times whenever you take the Attack action on your turn."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 13,
+          "name": "Indomitable (two uses)",
+          "description": "You can use Indomitable twice before a long rest."
+        },
+        {
+          "level": 14,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 15,
+          "name": "Martial Archetype Feature",
+          "description": "You gain a feature from your Martial Archetype."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 17,
+          "name": "Action Surge (two uses)",
+          "description": "You can use Action Surge twice before a rest."
+        },
+        {
+          "level": 17,
+          "name": "Indomitable (three uses)",
+          "description": "You can use Indomitable three times before a long rest."
+        },
+        {
+          "level": 18,
+          "name": "Martial Archetype Feature",
+          "description": "You gain a feature from your Martial Archetype."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Extra Attack (3)",
+          "description": "You can attack four times whenever you take the Attack action on your turn."
+        }
+      ]
+    },
+    {
+      "name": "Monk",
+      "hitDice": "d8",
+      "primaryAbility": [
+        "Dexterity",
+        "Wisdom"
+      ],
+      "savingThrowProficiencies": [
+        "Strength",
+        "Dexterity"
+      ],
+      "armorProficiencies": [],
+      "weaponProficiencies": [
+        "Simple Weapons",
+        "Shortswords"
+      ],
+      "toolProficiencies": [
+        "Choice of one type of artisan's tools or one musical instrument"
+      ],
+      "skillChoices": {
+        "count": 2,
+        "options": [
+          "Acrobatics",
+          "Athletics",
+          "History",
+          "Insight",
+          "Religion",
+          "Stealth"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Shortsword or (b) any simple weapon",
+        "Choice: (a) Dungeoneer's Pack or (b) Explorer's Pack",
+        "10 darts"
+      ],
+      "spellcaster": false,
+      "features": [
+        {
+          "level": 1,
+          "name": "Unarmored Defense",
+          "description": "While wearing no armor and not wielding a shield, your AC equals 10 + Dexterity modifier + Wisdom modifier."
+        },
+        {
+          "level": 1,
+          "name": "Martial Arts",
+          "description": "You gain the following benefits while unarmed or wielding only monk weapons and not wearing armor or wielding a shield: You can use Dexterity instead of Strength for attack and damage rolls; you can roll your Martial Arts die in place of normal damage; when you use the Attack action with an unarmed strike or monk weapon, you can make one unarmed strike as a bonus action. Your Martial Arts die is a d4, increasing at higher levels."
+        },
+        {
+          "level": 2,
+          "name": "Ki",
+          "description": "You gain access to ki, represented by a number of ki points equal to your monk level. You can spend ki points to fuel various ki features. You regain all ki points on a short or long rest. Starting ki features include: Flurry of Blows (1 ki), Patient Defense (1 ki), and Step of the Wind (1 ki). Some features require your target to make a saving throw (DC = 8 + proficiency bonus + Wisdom modifier)."
+        },
+        {
+          "level": 2,
+          "name": "Unarmored Movement",
+          "description": "Your speed increases by 10 feet while not wearing armor or wielding a shield. This bonus increases at certain monk levels."
+        },
+        {
+          "level": 3,
+          "name": "Monastic Tradition",
+          "description": "Choose a tradition: Way of the Open Hand, Way of Shadow, Way of the Four Elements, or others. Your choice grants features at 3rd, 6th, 11th, and 17th level."
+        },
+        {
+          "level": 3,
+          "name": "Deflect Missiles",
+          "description": "You can use your reaction to deflect or catch a missile when hit by a ranged weapon attack. The damage you take is reduced by 1d10 + Dexterity modifier + monk level. If you reduce damage to 0 and have a free hand, you can catch the missile and spend 1 ki point to make a ranged attack with it."
+        },
+        {
+          "level": 4,
+          "name": "Slow Fall",
+          "description": "You can use your reaction to reduce falling damage by an amount equal to five times your monk level."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Extra Attack",
+          "description": "You can attack twice, instead of once, whenever you take the Attack action on your turn."
+        },
+        {
+          "level": 5,
+          "name": "Stunning Strike",
+          "description": "When you hit another creature with a melee weapon attack, you can spend 1 ki point to attempt to stun it. The target must succeed on a Constitution saving throw or be stunned until the end of your next turn."
+        },
+        {
+          "level": 6,
+          "name": "Ki-Empowered Strikes",
+          "description": "Your unarmed strikes count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage."
+        },
+        {
+          "level": 6,
+          "name": "Monastic Tradition Feature",
+          "description": "You gain a feature from your Monastic Tradition."
+        },
+        {
+          "level": 7,
+          "name": "Evasion",
+          "description": "When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail."
+        },
+        {
+          "level": 7,
+          "name": "Stillness of Mind",
+          "description": "You can use your action to end one effect on yourself that is causing you to be charmed or frightened."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 9,
+          "name": "Unarmored Movement Improvement",
+          "description": "You gain the ability to move along vertical surfaces and across liquids on your turn without falling during the move."
+        },
+        {
+          "level": 10,
+          "name": "Purity of Body",
+          "description": "You are immune to disease and poison."
+        },
+        {
+          "level": 11,
+          "name": "Monastic Tradition Feature",
+          "description": "You gain a feature from your Monastic Tradition."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 13,
+          "name": "Tongue of the Sun and Moon",
+          "description": "You learn to touch the ki of other minds so that you understand all spoken languages. Any creature that can understand a language can understand what you say."
+        },
+        {
+          "level": 14,
+          "name": "Diamond Soul",
+          "description": "You gain proficiency in all saving throws. Additionally, when you fail a saving throw, you can spend 1 ki point to reroll it and take the second result."
+        },
+        {
+          "level": 15,
+          "name": "Timeless Body",
+          "description": "You suffer none of the frailty of old age, and you can't be aged magically. You can still die of old age."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 17,
+          "name": "Monastic Tradition Feature",
+          "description": "You gain a feature from your Monastic Tradition."
+        },
+        {
+          "level": 18,
+          "name": "Empty Body",
+          "description": "You can use your action to spend 4 ki points to become invisible for 1 minute. During that time, you also have resistance to all damage but force damage. Additionally, you can spend 8 ki points to cast the astral projection spell without material components."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Perfect Self",
+          "description": "When you roll for initiative and have no ki points remaining, you regain 4 ki points."
+        }
+      ],
+      "martialArtsDie": [
+        {
+          "level": 1,
+          "die": "d4"
+        },
+        {
+          "level": 5,
+          "die": "d6"
+        },
+        {
+          "level": 11,
+          "die": "d8"
+        },
+        {
+          "level": 17,
+          "die": "d10"
+        }
+      ],
+      "unarmoredMovement": [
+        {
+          "level": 2,
+          "bonus": 10
+        },
+        {
+          "level": 6,
+          "bonus": 15
+        },
+        {
+          "level": 10,
+          "bonus": 20
+        },
+        {
+          "level": 14,
+          "bonus": 25
+        },
+        {
+          "level": 18,
+          "bonus": 30
+        }
+      ]
+    },
+    {
+      "name": "Paladin",
+      "hitDice": "d10",
+      "primaryAbility": [
+        "Strength",
+        "Charisma"
+      ],
+      "savingThrowProficiencies": [
+        "Wisdom",
+        "Charisma"
+      ],
+      "armorProficiencies": [
+        "All Armor",
+        "Shields"
+      ],
+      "weaponProficiencies": [
+        "Simple Weapons",
+        "Martial Weapons"
+      ],
+      "toolProficiencies": [],
+      "skillChoices": {
+        "count": 2,
+        "options": [
+          "Athletics",
+          "Insight",
+          "Intimidation",
+          "Medicine",
+          "Persuasion",
+          "Religion"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Martial weapon and shield or (b) two martial weapons",
+        "Choice: (a) Five javelins or (b) any simple melee weapon",
+        "Choice: (a) Priest's Pack or (b) Explorer's Pack",
+        "Chain mail and a holy symbol"
+      ],
+      "spellcaster": true,
+      "spellcastingAbility": "Charisma",
+      "spellPreparation": "prepared",
+      "spellSlots": [
+        {
+          "level": 1,
+          "1st": 0,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 2,
+          "1st": 2,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 3,
+          "1st": 3,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 4,
+          "1st": 3,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 5,
+          "1st": 4,
+          "2nd": 2,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 6,
+          "1st": 4,
+          "2nd": 2,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 7,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 8,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 9,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 2,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 10,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 2,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 11,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 12,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 13,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 1,
+          "5th": 0
+        },
+        {
+          "level": 14,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 1,
+          "5th": 0
+        },
+        {
+          "level": 15,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 2,
+          "5th": 0
+        },
+        {
+          "level": 16,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 2,
+          "5th": 0
+        },
+        {
+          "level": 17,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 1
+        },
+        {
+          "level": 18,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 1
+        },
+        {
+          "level": 19,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2
+        },
+        {
+          "level": 20,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2
+        }
+      ],
+      "features": [
+        {
+          "level": 1,
+          "name": "Divine Sense",
+          "description": "As an action, you can detect celestials, fiends, and undead within 60 feet. You can use this feature a number of times equal to 1 + your Charisma modifier. You regain all uses on a long rest."
+        },
+        {
+          "level": 1,
+          "name": "Lay on Hands",
+          "description": "You have a pool of healing power equal to 5 \u00d7 your paladin level. As an action, you can touch a creature and restore hit points (up to the maximum in your pool) or cure one disease or neutralize one poison. You regain all uses on a long rest."
+        },
+        {
+          "level": 2,
+          "name": "Fighting Style",
+          "description": "Choose a fighting style: Defense, Dueling, Great Weapon Fighting, or Protection."
+        },
+        {
+          "level": 2,
+          "name": "Spellcasting",
+          "description": "You can cast paladin spells starting at 2nd level. Charisma is your spellcasting ability. You prepare spells from the paladin spell list. The number of spells you can prepare equals your Charisma modifier + half your paladin level (rounded down, minimum of 1)."
+        },
+        {
+          "level": 2,
+          "name": "Divine Smite",
+          "description": "When you hit with a melee weapon attack, you can expend one spell slot to deal extra radiant damage: 2d8 for a 1st-level slot, plus 1d8 for each spell level higher than 1st (max 5d8). The damage increases by 1d8 if the target is an undead or fiend (max 6d8)."
+        },
+        {
+          "level": 3,
+          "name": "Divine Health",
+          "description": "You are immune to disease."
+        },
+        {
+          "level": 3,
+          "name": "Sacred Oath",
+          "description": "Choose an oath: Oath of Devotion, Oath of the Ancients, Oath of Vengeance, or others. Your choice grants features at 3rd, 7th, 15th, and 20th level. You gain oath spells at certain levels."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Extra Attack",
+          "description": "You can attack twice, instead of once, whenever you take the Attack action on your turn."
+        },
+        {
+          "level": 6,
+          "name": "Aura of Protection",
+          "description": "Whenever you or a friendly creature within 10 feet must make a saving throw, they gain a bonus equal to your Charisma modifier (minimum +1). At 18th level, the range increases to 30 feet."
+        },
+        {
+          "level": 7,
+          "name": "Sacred Oath Feature",
+          "description": "You gain a feature from your Sacred Oath."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 10,
+          "name": "Aura of Courage",
+          "description": "You and friendly creatures within 10 feet of you can't be frightened while you are conscious. At 18th level, the range increases to 30 feet."
+        },
+        {
+          "level": 11,
+          "name": "Improved Divine Smite",
+          "description": "You are so suffused with righteous might that all your melee weapon strikes carry divine power. Whenever you hit with a melee weapon, the creature takes an extra 1d8 radiant damage."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 14,
+          "name": "Cleansing Touch",
+          "description": "You can use your action to end one spell on yourself or one willing creature you touch. You can use this feature a number of times equal to your Charisma modifier (minimum once). You regain uses on a long rest."
+        },
+        {
+          "level": 15,
+          "name": "Sacred Oath Feature",
+          "description": "You gain a feature from your Sacred Oath."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 18,
+          "name": "Aura Improvements",
+          "description": "The range of your auras increases to 30 feet."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Sacred Oath Feature",
+          "description": "You gain a feature from your Sacred Oath."
+        }
+      ]
+    },
+    {
+      "name": "Ranger",
+      "hitDice": "d10",
+      "primaryAbility": [
+        "Dexterity",
+        "Wisdom"
+      ],
+      "savingThrowProficiencies": [
+        "Strength",
+        "Dexterity"
+      ],
+      "armorProficiencies": [
+        "Light Armor",
+        "Medium Armor",
+        "Shields"
+      ],
+      "weaponProficiencies": [
+        "Simple Weapons",
+        "Martial Weapons"
+      ],
+      "toolProficiencies": [],
+      "skillChoices": {
+        "count": 3,
+        "options": [
+          "Animal Handling",
+          "Athletics",
+          "Insight",
+          "Investigation",
+          "Nature",
+          "Perception",
+          "Stealth",
+          "Survival"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Scale mail or (b) Leather armor",
+        "Choice: (a) Two shortswords or (b) two simple melee weapons",
+        "Choice: (a) Dungeoneer's Pack or (b) Explorer's Pack",
+        "Longbow and a quiver of 20 arrows"
+      ],
+      "spellcaster": true,
+      "spellcastingAbility": "Wisdom",
+      "spellsKnown": [
+        {
+          "level": 1,
+          "spells": 0
+        },
+        {
+          "level": 2,
+          "spells": 2
+        },
+        {
+          "level": 3,
+          "spells": 3
+        },
+        {
+          "level": 4,
+          "spells": 3
+        },
+        {
+          "level": 5,
+          "spells": 4
+        },
+        {
+          "level": 6,
+          "spells": 4
+        },
+        {
+          "level": 7,
+          "spells": 5
+        },
+        {
+          "level": 8,
+          "spells": 5
+        },
+        {
+          "level": 9,
+          "spells": 6
+        },
+        {
+          "level": 10,
+          "spells": 6
+        },
+        {
+          "level": 11,
+          "spells": 7
+        },
+        {
+          "level": 12,
+          "spells": 7
+        },
+        {
+          "level": 13,
+          "spells": 8
+        },
+        {
+          "level": 14,
+          "spells": 8
+        },
+        {
+          "level": 15,
+          "spells": 9
+        },
+        {
+          "level": 16,
+          "spells": 9
+        },
+        {
+          "level": 17,
+          "spells": 10
+        },
+        {
+          "level": 18,
+          "spells": 10
+        },
+        {
+          "level": 19,
+          "spells": 11
+        },
+        {
+          "level": 20,
+          "spells": 11
+        }
+      ],
+      "spellSlots": [
+        {
+          "level": 1,
+          "1st": 0,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 2,
+          "1st": 2,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 3,
+          "1st": 3,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 4,
+          "1st": 3,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 5,
+          "1st": 4,
+          "2nd": 2,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 6,
+          "1st": 4,
+          "2nd": 2,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 7,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 8,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 9,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 2,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 10,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 2,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 11,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 12,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 0,
+          "5th": 0
+        },
+        {
+          "level": 13,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 1,
+          "5th": 0
+        },
+        {
+          "level": 14,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 1,
+          "5th": 0
+        },
+        {
+          "level": 15,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 2,
+          "5th": 0
+        },
+        {
+          "level": 16,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 2,
+          "5th": 0
+        },
+        {
+          "level": 17,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 1
+        },
+        {
+          "level": 18,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 1
+        },
+        {
+          "level": 19,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2
+        },
+        {
+          "level": 20,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2
+        }
+      ],
+      "features": [
+        {
+          "level": 1,
+          "name": "Favored Enemy",
+          "description": "Choose a type of favored enemy: aberrations, beasts, celestials, constructs, dragons, elementals, fey, fiends, giants, monstrosities, oozes, plants, or undead. Alternatively, choose two races of humanoid. You have advantage on Wisdom (Survival) checks to track your favored enemies and Intelligence checks to recall information about them. You learn one language of your choice spoken by your favored enemies."
+        },
+        {
+          "level": 1,
+          "name": "Natural Explorer",
+          "description": "Choose one type of favored terrain: arctic, coast, desert, forest, grassland, mountain, swamp, or Underdark. When you make an Intelligence or Wisdom check related to your favored terrain, your proficiency bonus is doubled. While traveling in your favored terrain, you gain several benefits."
+        },
+        {
+          "level": 2,
+          "name": "Fighting Style",
+          "description": "Choose a fighting style: Archery, Defense, Dueling, or Two-Weapon Fighting."
+        },
+        {
+          "level": 2,
+          "name": "Spellcasting",
+          "description": "You can cast ranger spells starting at 2nd level. Wisdom is your spellcasting ability. You know a limited number of spells from the ranger spell list."
+        },
+        {
+          "level": 3,
+          "name": "Ranger Archetype",
+          "description": "Choose an archetype: Hunter, Beast Master, or others. Your choice grants features at 3rd, 7th, 11th, and 15th level."
+        },
+        {
+          "level": 3,
+          "name": "Primeval Awareness",
+          "description": "You can use your action and expend one ranger spell slot to focus your awareness. For 1 minute per level of the spell slot, you sense whether aberrations, celestials, dragons, elementals, fey, fiends, or undead are present within 1 mile of you (or 6 miles in your favored terrain)."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Extra Attack",
+          "description": "You can attack twice, instead of once, whenever you take the Attack action on your turn."
+        },
+        {
+          "level": 6,
+          "name": "Favored Enemy and Natural Explorer Improvement",
+          "description": "You gain an additional favored enemy and favored terrain."
+        },
+        {
+          "level": 7,
+          "name": "Ranger Archetype Feature",
+          "description": "You gain a feature from your Ranger Archetype."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 8,
+          "name": "Land's Stride",
+          "description": "Moving through nonmagical difficult terrain costs you no extra movement. You can pass through nonmagical plants without being slowed and without taking damage if they have thorns, spines, or similar hazards."
+        },
+        {
+          "level": 10,
+          "name": "Natural Explorer Improvement",
+          "description": "You gain an additional favored terrain."
+        },
+        {
+          "level": 10,
+          "name": "Hide in Plain Sight",
+          "description": "You can spend 1 minute creating camouflage for yourself. You must have access to mud, dirt, plants, soot, and other naturally occurring materials. Once camouflaged, you gain a +10 bonus to Dexterity (Stealth) checks as long as you remain there without moving or taking actions."
+        },
+        {
+          "level": 11,
+          "name": "Ranger Archetype Feature",
+          "description": "You gain a feature from your Ranger Archetype."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 14,
+          "name": "Favored Enemy Improvement",
+          "description": "You gain an additional favored enemy."
+        },
+        {
+          "level": 14,
+          "name": "Vanish",
+          "description": "You can use the Hide action as a bonus action on your turn. Also, you can't be tracked by nonmagical means unless you choose to leave a trail."
+        },
+        {
+          "level": 15,
+          "name": "Ranger Archetype Feature",
+          "description": "You gain a feature from your Ranger Archetype."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 18,
+          "name": "Feral Senses",
+          "description": "You gain preternatural senses that help you fight creatures you can't see. When you attack a creature you can't see, your inability to see it doesn't impose disadvantage on your attack rolls. You're also aware of the location of any invisible creature within 30 feet, provided it isn't hidden from you and you aren't blinded or deafened."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Foe Slayer",
+          "description": "You become an unparalleled hunter of your enemies. Once on each of your turns, you can add your Wisdom modifier to the attack roll or damage roll of an attack you make against one of your favored enemies. You can choose to use this feature before or after the roll, but before any effects are applied."
+        }
+      ]
+    },
+    {
+      "name": "Rogue",
+      "hitDice": "d8",
+      "primaryAbility": [
+        "Dexterity"
+      ],
+      "savingThrowProficiencies": [
+        "Dexterity",
+        "Intelligence"
+      ],
+      "armorProficiencies": [
+        "Light Armor"
+      ],
+      "weaponProficiencies": [
+        "Simple Weapons",
+        "Hand Crossbows",
+        "Longswords",
+        "Rapiers",
+        "Shortswords"
+      ],
+      "toolProficiencies": [
+        "Thieves' Tools"
+      ],
+      "skillChoices": {
+        "count": 4,
+        "options": [
+          "Acrobatics",
+          "Athletics",
+          "Deception",
+          "Insight",
+          "Intimidation",
+          "Investigation",
+          "Perception",
+          "Performance",
+          "Persuasion",
+          "Sleight of Hand",
+          "Stealth"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Rapier or (b) Shortsword",
+        "Choice: (a) Shortbow and quiver of 20 arrows or (b) Shortsword",
+        "Choice: (a) Burglar's Pack, (b) Dungeoneer's Pack, or (c) Explorer's Pack",
+        "Leather armor, two daggers, and thieves' tools"
+      ],
+      "spellcaster": false,
+      "features": [
+        {
+          "level": 1,
+          "name": "Expertise",
+          "description": "Choose two of your skill proficiencies or one skill and thieves' tools. Your proficiency bonus is doubled for any check using either of the chosen proficiencies. At 6th level, you can choose two more."
+        },
+        {
+          "level": 1,
+          "name": "Sneak Attack",
+          "description": "Once per turn, you can deal extra damage to one creature you hit with an attack if you have advantage or if another enemy of the target is within 5 feet and you don't have disadvantage. The attack must use a finesse or ranged weapon. Extra damage is 1d6 and increases as you gain levels: +1d6 every two levels."
+        },
+        {
+          "level": 1,
+          "name": "Thieves' Cant",
+          "description": "You know thieves' cant, a secret mix of dialect, jargon, and code that allows you to hide messages in seemingly normal conversation."
+        },
+        {
+          "level": 2,
+          "name": "Cunning Action",
+          "description": "You can take a bonus action on each of your turns to take the Dash, Disengage, or Hide action."
+        },
+        {
+          "level": 3,
+          "name": "Roguish Archetype",
+          "description": "Choose an archetype: Thief, Assassin, Arcane Trickster, or others. Your choice grants features at 3rd, 9th, 13th, and 17th level."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Uncanny Dodge",
+          "description": "When an attacker you can see hits you with an attack, you can use your reaction to halve the attack's damage against you."
+        },
+        {
+          "level": 6,
+          "name": "Expertise",
+          "description": "Choose two more of your skill proficiencies. Your proficiency bonus is doubled for any check using either of them."
+        },
+        {
+          "level": 7,
+          "name": "Evasion",
+          "description": "When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed, and only half damage if you fail."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 9,
+          "name": "Roguish Archetype Feature",
+          "description": "You gain a feature from your Roguish Archetype."
+        },
+        {
+          "level": 10,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 11,
+          "name": "Reliable Talent",
+          "description": "Whenever you make an ability check that lets you add your proficiency bonus, you treat a d20 roll of 9 or lower as a 10."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 13,
+          "name": "Roguish Archetype Feature",
+          "description": "You gain a feature from your Roguish Archetype."
+        },
+        {
+          "level": 14,
+          "name": "Blindsense",
+          "description": "If you are able to hear, you are aware of the location of any hidden or invisible creature within 10 feet of you."
+        },
+        {
+          "level": 15,
+          "name": "Slippery Mind",
+          "description": "You gain proficiency in Wisdom saving throws."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 17,
+          "name": "Roguish Archetype Feature",
+          "description": "You gain a feature from your Roguish Archetype."
+        },
+        {
+          "level": 18,
+          "name": "Elusive",
+          "description": "No attack roll has advantage against you while you aren't incapacitated."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Stroke of Luck",
+          "description": "If your attack misses a target within range, you can turn it into a hit. Alternatively, if you fail an ability check, you can treat the d20 roll as a 20. Once used, you can't use this feature again until you finish a short or long rest."
+        }
+      ],
+      "sneakAttackDice": [
+        {
+          "level": 1,
+          "dice": "1d6"
+        },
+        {
+          "level": 3,
+          "dice": "2d6"
+        },
+        {
+          "level": 5,
+          "dice": "3d6"
+        },
+        {
+          "level": 7,
+          "dice": "4d6"
+        },
+        {
+          "level": 9,
+          "dice": "5d6"
+        },
+        {
+          "level": 11,
+          "dice": "6d6"
+        },
+        {
+          "level": 13,
+          "dice": "7d6"
+        },
+        {
+          "level": 15,
+          "dice": "8d6"
+        },
+        {
+          "level": 17,
+          "dice": "9d6"
+        },
+        {
+          "level": 19,
+          "dice": "10d6"
+        }
+      ]
+    },
+    {
+      "name": "Sorcerer",
+      "hitDice": "d6",
+      "primaryAbility": [
+        "Charisma"
+      ],
+      "savingThrowProficiencies": [
+        "Constitution",
+        "Charisma"
+      ],
+      "armorProficiencies": [],
+      "weaponProficiencies": [
+        "Daggers",
+        "Darts",
+        "Slings",
+        "Quarterstaffs",
+        "Light Crossbows"
+      ],
+      "toolProficiencies": [],
+      "skillChoices": {
+        "count": 2,
+        "options": [
+          "Arcana",
+          "Deception",
+          "Insight",
+          "Intimidation",
+          "Persuasion",
+          "Religion"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Light crossbow and 20 bolts or (b) any simple weapon",
+        "Choice: (a) Component pouch or (b) Arcane focus",
+        "Choice: (a) Dungeoneer's Pack or (b) Explorer's Pack",
+        "Two daggers"
+      ],
+      "spellcaster": true,
+      "spellcastingAbility": "Charisma",
+      "spellsKnown": [
+        {
+          "level": 1,
+          "cantrips": 4,
+          "spells": 2
+        },
+        {
+          "level": 2,
+          "cantrips": 4,
+          "spells": 3
+        },
+        {
+          "level": 3,
+          "cantrips": 4,
+          "spells": 4
+        },
+        {
+          "level": 4,
+          "cantrips": 5,
+          "spells": 5
+        },
+        {
+          "level": 5,
+          "cantrips": 5,
+          "spells": 6
+        },
+        {
+          "level": 6,
+          "cantrips": 5,
+          "spells": 7
+        },
+        {
+          "level": 7,
+          "cantrips": 5,
+          "spells": 8
+        },
+        {
+          "level": 8,
+          "cantrips": 5,
+          "spells": 9
+        },
+        {
+          "level": 9,
+          "cantrips": 5,
+          "spells": 10
+        },
+        {
+          "level": 10,
+          "cantrips": 6,
+          "spells": 11
+        },
+        {
+          "level": 11,
+          "cantrips": 6,
+          "spells": 12
+        },
+        {
+          "level": 12,
+          "cantrips": 6,
+          "spells": 12
+        },
+        {
+          "level": 13,
+          "cantrips": 6,
+          "spells": 13
+        },
+        {
+          "level": 14,
+          "cantrips": 6,
+          "spells": 13
+        },
+        {
+          "level": 15,
+          "cantrips": 6,
+          "spells": 14
+        },
+        {
+          "level": 16,
+          "cantrips": 6,
+          "spells": 14
+        },
+        {
+          "level": 17,
+          "cantrips": 6,
+          "spells": 15
+        },
+        {
+          "level": 18,
+          "cantrips": 6,
+          "spells": 15
+        },
+        {
+          "level": 19,
+          "cantrips": 6,
+          "spells": 15
+        },
+        {
+          "level": 20,
+          "cantrips": 6,
+          "spells": 15
+        }
+      ],
+      "spellSlots": [
+        {
+          "level": 1,
+          "1st": 2,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 2,
+          "1st": 3,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 3,
+          "1st": 4,
+          "2nd": 2,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 4,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 5,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 2,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 6,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 7,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 1,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 8,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 2,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 9,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 1,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 10,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 11,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 12,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 13,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 14,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 15,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 16,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 17,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 18,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 19,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 20,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 2,
+          "8th": 1,
+          "9th": 1
+        }
+      ],
+      "features": [
+        {
+          "level": 1,
+          "name": "Spellcasting",
+          "description": "You can cast sorcerer spells. Charisma is your spellcasting ability. You know a limited number of spells from the sorcerer spell list. You can use an arcane focus as a spellcasting focus."
+        },
+        {
+          "level": 1,
+          "name": "Sorcerous Origin",
+          "description": "Choose the source of your power: Draconic Bloodline, Wild Magic, Divine Soul, or others. Your choice grants features at 1st, 6th, 14th, and 18th level."
+        },
+        {
+          "level": 2,
+          "name": "Font of Magic",
+          "description": "You have 2 sorcery points and gain more as you level up. You can use sorcery points to fuel metamagic or create spell slots. You regain all sorcery points on a long rest."
+        },
+        {
+          "level": 3,
+          "name": "Metamagic",
+          "description": "You gain the ability to twist your spells to suit your needs. Choose two Metamagic options from: Careful Spell, Distant Spell, Empowered Spell, Extended Spell, Heightened Spell, Quickened Spell, Subtle Spell, Twinned Spell. You gain another at 10th and 17th level."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 6,
+          "name": "Sorcerous Origin Feature",
+          "description": "You gain a feature from your Sorcerous Origin."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 10,
+          "name": "Metamagic",
+          "description": "You gain another Metamagic option."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 14,
+          "name": "Sorcerous Origin Feature",
+          "description": "You gain a feature from your Sorcerous Origin."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 17,
+          "name": "Metamagic",
+          "description": "You gain another Metamagic option."
+        },
+        {
+          "level": 18,
+          "name": "Sorcerous Origin Feature",
+          "description": "You gain a feature from your Sorcerous Origin."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Sorcerous Restoration",
+          "description": "When you finish a short rest, you regain 4 expended sorcery points."
+        }
+      ],
+      "sorceryPoints": [
+        {
+          "level": 2,
+          "points": 2
+        },
+        {
+          "level": 3,
+          "points": 3
+        },
+        {
+          "level": 4,
+          "points": 4
+        },
+        {
+          "level": 5,
+          "points": 5
+        },
+        {
+          "level": 6,
+          "points": 6
+        },
+        {
+          "level": 7,
+          "points": 7
+        },
+        {
+          "level": 8,
+          "points": 8
+        },
+        {
+          "level": 9,
+          "points": 9
+        },
+        {
+          "level": 10,
+          "points": 10
+        },
+        {
+          "level": 11,
+          "points": 11
+        },
+        {
+          "level": 12,
+          "points": 12
+        },
+        {
+          "level": 13,
+          "points": 13
+        },
+        {
+          "level": 14,
+          "points": 14
+        },
+        {
+          "level": 15,
+          "points": 15
+        },
+        {
+          "level": 16,
+          "points": 16
+        },
+        {
+          "level": 17,
+          "points": 17
+        },
+        {
+          "level": 18,
+          "points": 18
+        },
+        {
+          "level": 19,
+          "points": 19
+        },
+        {
+          "level": 20,
+          "points": 20
+        }
+      ]
+    },
+    {
+      "name": "Warlock",
+      "hitDice": "d8",
+      "primaryAbility": [
+        "Charisma"
+      ],
+      "savingThrowProficiencies": [
+        "Wisdom",
+        "Charisma"
+      ],
+      "armorProficiencies": [
+        "Light Armor"
+      ],
+      "weaponProficiencies": [
+        "Simple Weapons"
+      ],
+      "toolProficiencies": [],
+      "skillChoices": {
+        "count": 2,
+        "options": [
+          "Arcana",
+          "Deception",
+          "History",
+          "Intimidation",
+          "Investigation",
+          "Nature",
+          "Religion"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Light crossbow and 20 bolts or (b) any simple weapon",
+        "Choice: (a) Component pouch or (b) Arcane focus",
+        "Choice: (a) Scholar's Pack or (b) Dungeoneer's Pack",
+        "Leather armor, any simple weapon, and two daggers"
+      ],
+      "spellcaster": true,
+      "spellcastingAbility": "Charisma",
+      "pactMagic": true,
+      "spellsKnown": [
+        {
+          "level": 1,
+          "cantrips": 2,
+          "spells": 2
+        },
+        {
+          "level": 2,
+          "cantrips": 2,
+          "spells": 3
+        },
+        {
+          "level": 3,
+          "cantrips": 2,
+          "spells": 4
+        },
+        {
+          "level": 4,
+          "cantrips": 3,
+          "spells": 5
+        },
+        {
+          "level": 5,
+          "cantrips": 3,
+          "spells": 6
+        },
+        {
+          "level": 6,
+          "cantrips": 3,
+          "spells": 7
+        },
+        {
+          "level": 7,
+          "cantrips": 3,
+          "spells": 8
+        },
+        {
+          "level": 8,
+          "cantrips": 3,
+          "spells": 9
+        },
+        {
+          "level": 9,
+          "cantrips": 3,
+          "spells": 10
+        },
+        {
+          "level": 10,
+          "cantrips": 4,
+          "spells": 10
+        },
+        {
+          "level": 11,
+          "cantrips": 4,
+          "spells": 11
+        },
+        {
+          "level": 12,
+          "cantrips": 4,
+          "spells": 11
+        },
+        {
+          "level": 13,
+          "cantrips": 4,
+          "spells": 12
+        },
+        {
+          "level": 14,
+          "cantrips": 4,
+          "spells": 12
+        },
+        {
+          "level": 15,
+          "cantrips": 4,
+          "spells": 13
+        },
+        {
+          "level": 16,
+          "cantrips": 4,
+          "spells": 13
+        },
+        {
+          "level": 17,
+          "cantrips": 4,
+          "spells": 14
+        },
+        {
+          "level": 18,
+          "cantrips": 4,
+          "spells": 14
+        },
+        {
+          "level": 19,
+          "cantrips": 4,
+          "spells": 15
+        },
+        {
+          "level": 20,
+          "cantrips": 4,
+          "spells": 15
+        }
+      ],
+      "pactMagicSlots": [
+        {
+          "level": 1,
+          "slots": 1,
+          "slotLevel": 1
+        },
+        {
+          "level": 2,
+          "slots": 2,
+          "slotLevel": 1
+        },
+        {
+          "level": 3,
+          "slots": 2,
+          "slotLevel": 2
+        },
+        {
+          "level": 4,
+          "slots": 2,
+          "slotLevel": 2
+        },
+        {
+          "level": 5,
+          "slots": 2,
+          "slotLevel": 3
+        },
+        {
+          "level": 6,
+          "slots": 2,
+          "slotLevel": 3
+        },
+        {
+          "level": 7,
+          "slots": 2,
+          "slotLevel": 4
+        },
+        {
+          "level": 8,
+          "slots": 2,
+          "slotLevel": 4
+        },
+        {
+          "level": 9,
+          "slots": 2,
+          "slotLevel": 5
+        },
+        {
+          "level": 10,
+          "slots": 2,
+          "slotLevel": 5
+        },
+        {
+          "level": 11,
+          "slots": 3,
+          "slotLevel": 5
+        },
+        {
+          "level": 12,
+          "slots": 3,
+          "slotLevel": 5
+        },
+        {
+          "level": 13,
+          "slots": 3,
+          "slotLevel": 5
+        },
+        {
+          "level": 14,
+          "slots": 3,
+          "slotLevel": 5
+        },
+        {
+          "level": 15,
+          "slots": 3,
+          "slotLevel": 5
+        },
+        {
+          "level": 16,
+          "slots": 3,
+          "slotLevel": 5
+        },
+        {
+          "level": 17,
+          "slots": 4,
+          "slotLevel": 5
+        },
+        {
+          "level": 18,
+          "slots": 4,
+          "slotLevel": 5
+        },
+        {
+          "level": 19,
+          "slots": 4,
+          "slotLevel": 5
+        },
+        {
+          "level": 20,
+          "slots": 4,
+          "slotLevel": 5
+        }
+      ],
+      "features": [
+        {
+          "level": 1,
+          "name": "Otherworldly Patron",
+          "description": "Choose a patron: The Archfey, The Fiend, The Great Old One, or others. Your choice grants features at 1st, 6th, 10th, and 14th level."
+        },
+        {
+          "level": 1,
+          "name": "Pact Magic",
+          "description": "You can cast warlock spells using Charisma. You know a limited number of spells from the warlock spell list. Unlike other spellcasters, you have spell slots that are all the same level and you regain all slots on a short or long rest."
+        },
+        {
+          "level": 2,
+          "name": "Eldritch Invocations",
+          "description": "You learn two eldritch invocations of your choice. You learn additional invocations as you level up. When you gain a level, you can replace one invocation with another. Some invocations have prerequisites."
+        },
+        {
+          "level": 3,
+          "name": "Pact Boon",
+          "description": "Choose a pact boon: Pact of the Chain, Pact of the Blade, Pact of the Tome, or others. Your choice grants you a special benefit."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Eldritch Invocations",
+          "description": "You learn another eldritch invocation."
+        },
+        {
+          "level": 6,
+          "name": "Otherworldly Patron Feature",
+          "description": "You gain a feature from your Otherworldly Patron."
+        },
+        {
+          "level": 7,
+          "name": "Eldritch Invocations",
+          "description": "You learn another eldritch invocation."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 9,
+          "name": "Eldritch Invocations",
+          "description": "You learn another eldritch invocation."
+        },
+        {
+          "level": 10,
+          "name": "Otherworldly Patron Feature",
+          "description": "You gain a feature from your Otherworldly Patron."
+        },
+        {
+          "level": 11,
+          "name": "Mystic Arcanum (6th level)",
+          "description": "Your patron bestows upon you a magical secret called an arcanum. Choose one 6th-level spell from the warlock spell list. You can cast it once without expending a spell slot. You regain the ability to do so on a long rest."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 12,
+          "name": "Eldritch Invocations",
+          "description": "You learn another eldritch invocation."
+        },
+        {
+          "level": 13,
+          "name": "Mystic Arcanum (7th level)",
+          "description": "Choose one 7th-level spell from the warlock spell list as an arcanum."
+        },
+        {
+          "level": 14,
+          "name": "Otherworldly Patron Feature",
+          "description": "You gain a feature from your Otherworldly Patron."
+        },
+        {
+          "level": 15,
+          "name": "Mystic Arcanum (8th level)",
+          "description": "Choose one 8th-level spell from the warlock spell list as an arcanum."
+        },
+        {
+          "level": 15,
+          "name": "Eldritch Invocations",
+          "description": "You learn another eldritch invocation."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 17,
+          "name": "Mystic Arcanum (9th level)",
+          "description": "Choose one 9th-level spell from the warlock spell list as an arcanum."
+        },
+        {
+          "level": 18,
+          "name": "Eldritch Invocations",
+          "description": "You learn another eldritch invocation."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Eldritch Master",
+          "description": "You can draw on your inner reserve of mystical power. You can spend 1 minute entreating your patron for aid to regain all expended spell slots from Pact Magic. Once used, you can't do so again until you finish a long rest."
+        }
+      ],
+      "invocationsKnown": [
+        {
+          "level": 2,
+          "invocations": 2
+        },
+        {
+          "level": 5,
+          "invocations": 3
+        },
+        {
+          "level": 7,
+          "invocations": 4
+        },
+        {
+          "level": 9,
+          "invocations": 5
+        },
+        {
+          "level": 12,
+          "invocations": 6
+        },
+        {
+          "level": 15,
+          "invocations": 7
+        },
+        {
+          "level": 18,
+          "invocations": 8
+        }
+      ]
+    },
+    {
+      "name": "Wizard",
+      "hitDice": "d6",
+      "primaryAbility": [
+        "Intelligence"
+      ],
+      "savingThrowProficiencies": [
+        "Intelligence",
+        "Wisdom"
+      ],
+      "armorProficiencies": [],
+      "weaponProficiencies": [
+        "Daggers",
+        "Darts",
+        "Slings",
+        "Quarterstaffs",
+        "Light Crossbows"
+      ],
+      "toolProficiencies": [],
+      "skillChoices": {
+        "count": 2,
+        "options": [
+          "Arcana",
+          "History",
+          "Insight",
+          "Investigation",
+          "Medicine",
+          "Religion"
+        ]
+      },
+      "startingEquipment": [
+        "Choice: (a) Quarterstaff or (b) Dagger",
+        "Choice: (a) Component pouch or (b) Arcane focus",
+        "Choice: (a) Scholar's Pack or (b) Explorer's Pack",
+        "Spellbook"
+      ],
+      "spellcaster": true,
+      "spellcastingAbility": "Intelligence",
+      "spellPreparation": "prepared",
+      "spellbook": true,
+      "spellSlots": [
+        {
+          "level": 1,
+          "1st": 2,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 2,
+          "1st": 3,
+          "2nd": 0,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 3,
+          "1st": 4,
+          "2nd": 2,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 4,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 0,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 5,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 2,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 6,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 0,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 7,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 1,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 8,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 2,
+          "5th": 0,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 9,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 1,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 10,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 0,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 11,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 12,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 0,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 13,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 14,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 0,
+          "9th": 0
+        },
+        {
+          "level": 15,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 16,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 0
+        },
+        {
+          "level": 17,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 2,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 18,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 1,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 19,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 1,
+          "8th": 1,
+          "9th": 1
+        },
+        {
+          "level": 20,
+          "1st": 4,
+          "2nd": 3,
+          "3rd": 3,
+          "4th": 3,
+          "5th": 3,
+          "6th": 2,
+          "7th": 2,
+          "8th": 1,
+          "9th": 1
+        }
+      ],
+      "features": [
+        {
+          "level": 1,
+          "name": "Spellcasting",
+          "description": "You can cast wizard spells. Intelligence is your spellcasting ability. You have a spellbook containing six 1st-level wizard spells of your choice. You prepare spells from your spellbook. The number of spells you can prepare equals your Intelligence modifier + your wizard level (minimum of 1). You can add spells to your spellbook by copying them from spell scrolls or other wizards' spellbooks."
+        },
+        {
+          "level": 1,
+          "name": "Arcane Recovery",
+          "description": "Once per day during a short rest, you can recover expended spell slots. The spell slots can have a combined level equal to or less than half your wizard level (rounded up), and none can be 6th level or higher."
+        },
+        {
+          "level": 2,
+          "name": "Arcane Tradition",
+          "description": "Choose an arcane tradition: School of Abjuration, School of Conjuration, School of Divination, School of Enchantment, School of Evocation, School of Illusion, School of Necromancy, School of Transmutation, or others. Your choice grants features at 2nd, 6th, 10th, and 14th level."
+        },
+        {
+          "level": 4,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 6,
+          "name": "Arcane Tradition Feature",
+          "description": "You gain a feature from your Arcane Tradition."
+        },
+        {
+          "level": 8,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 10,
+          "name": "Arcane Tradition Feature",
+          "description": "You gain a feature from your Arcane Tradition."
+        },
+        {
+          "level": 12,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 14,
+          "name": "Arcane Tradition Feature",
+          "description": "You gain a feature from your Arcane Tradition."
+        },
+        {
+          "level": 16,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 18,
+          "name": "Spell Mastery",
+          "description": "Choose a 1st-level wizard spell and a 2nd-level wizard spell in your spellbook. You can cast those spells at their lowest level without expending a spell slot when you have them prepared. You can change these spells by spending 8 hours of study."
+        },
+        {
+          "level": 19,
+          "name": "Ability Score Improvement",
+          "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 20,
+          "name": "Signature Spells",
+          "description": "Choose two 3rd-level wizard spells in your spellbook as your signature spells. You always have these spells prepared and can cast each once at 3rd level without expending a spell slot. When you do so, you can't do so again until you finish a short or long rest. If you want to cast either at a higher level, you must expend a spell slot."
+        }
+      ]
+    }
+  ]
+}
