@@ -66,6 +66,14 @@ func (t TextInput) Render() string {
 			Italic(true)
 		displayValue = placeholderStyle.Render(t.Placeholder)
 	}
+	
+	// Add cursor when focused
+	if t.Focused {
+		cursorStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("170")).
+			Bold(true)
+		displayValue += cursorStyle.Render("▌")
+	}
 
 	value := valueStyle.Render(displayValue)
 
