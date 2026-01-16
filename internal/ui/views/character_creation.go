@@ -702,16 +702,32 @@ func (m *CharacterCreationModel) cycleStandardArrayValue(forward bool) {
 		m.standardArrayUsed[currentIdx] = false
 	}
 	
-	// Find next available value
+	// Standard array is [15, 14, 13, 12, 10, 8]
+	// Forward (right) should go 8->10->12->13->14->15 (decreasing indices)
+	// Backward (left) should go 15->14->13->12->10->8 (increasing indices)
+	
+	// Find starting point for search
 	start := 0
 	if currentIdx != -1 {
+		// Moving from a currently set value
 		if forward {
-			start = (currentIdx + 1) % len(m.standardArrayValues)
-		} else {
+			// Move to lower index (higher value)
 			start = currentIdx - 1
 			if start < 0 {
 				start = len(m.standardArrayValues) - 1
 			}
+		} else {
+			// Move to higher index (lower value)
+			start = (currentIdx + 1) % len(m.standardArrayValues)
+		}
+	} else {
+		// Starting from unset (0)
+		if forward {
+			// Start at the end (index 5, lowest value: 8)
+			start = len(m.standardArrayValues) - 1
+		} else {
+			// Start at the beginning (index 0, highest value: 15)
+			start = 0
 		}
 	}
 	
@@ -719,12 +735,14 @@ func (m *CharacterCreationModel) cycleStandardArrayValue(forward bool) {
 	for i := 0; i < len(m.standardArrayValues); i++ {
 		idx := start
 		if forward {
-			idx = (start + i) % len(m.standardArrayValues)
-		} else {
+			// Go backwards through array (decreasing index)
 			idx = start - i
 			if idx < 0 {
 				idx += len(m.standardArrayValues)
 			}
+		} else {
+			// Go forwards through array (increasing index)
+			idx = (start + i) % len(m.standardArrayValues)
 		}
 		
 		if !m.standardArrayUsed[idx] {

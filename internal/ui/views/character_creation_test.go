@@ -128,14 +128,20 @@ func TestAbilityScoreStandardArrayMode(t *testing.T) {
 		}
 	}
 
-	// Assign a value
+	// First increment from 0 should assign lowest value (8)
 	model.focusedAbility = 0
-	model.incrementAbility() // Should assign first available value
-	if model.abilityScores[0] == 0 {
-		t.Error("Expected STR to be assigned a value")
+	model.incrementAbility() // Should assign 8
+	if model.abilityScores[0] != 8 {
+		t.Errorf("Expected first increment to assign 8 (lowest), got %d", model.abilityScores[0])
 	}
 
-	// Check that value is marked as used
+	// Next increment should go to next lowest (10)
+	model.incrementAbility()
+	if model.abilityScores[0] != 10 {
+		t.Errorf("Expected second increment to assign 10, got %d", model.abilityScores[0])
+	}
+
+	// Check that values are marked as used
 	usedCount := 0
 	for _, used := range model.standardArrayUsed {
 		if used {
