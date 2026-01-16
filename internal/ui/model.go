@@ -32,6 +32,7 @@ type Model struct {
 	storage      *storage.CharacterStorage
 	loader       *data.Loader
 	err          error
+	quitting     bool // Track if we're in the process of quitting
 	
 	// View-specific models
 	characterSelectionModel *views.CharacterSelectionModel
@@ -165,6 +166,7 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if keyMsg, ok := msg.(tea.KeyMsg); ok {
 			switch keyMsg.String() {
 			case "q", "ctrl+c":
+				m.quitting = true
 				return m, tea.Quit
 			}
 		}
@@ -177,6 +179,11 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View renders the current view (required by Bubble Tea).
 func (m Model) View() string {
+	// Return empty view when quitting to avoid flashing content
+	if m.quitting {
+		return ""
+	}
+	
 	if m.err != nil {
 		return "Error: " + m.err.Error() + "\n\nPress q to quit."
 	}
