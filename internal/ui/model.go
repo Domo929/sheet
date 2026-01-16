@@ -2,6 +2,7 @@ package ui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/views"
@@ -12,6 +13,7 @@ type ViewType int
 
 const (
 	ViewCharacterSelection ViewType = iota
+	ViewCharacterCreation
 	ViewMainSheet
 	ViewInventory
 	ViewSpellbook
@@ -28,10 +30,12 @@ type Model struct {
 	height       int
 	character    *models.Character
 	storage      *storage.CharacterStorage
+	loader       *data.Loader
 	err          error
 	
 	// View-specific models
 	characterSelectionModel *views.CharacterSelectionModel
+	characterCreationModel  *views.CharacterCreationModel
 	// mainSheetModel interface{}
 	// inventoryModel interface{}
 	// etc.
@@ -45,12 +49,16 @@ func NewModel() (Model, error) {
 		return Model{}, err
 	}
 
+	// Initialize data loader
+	loader := data.NewLoader("./data")
+
 	// Initialize character selection model
 	charSelectionModel := views.NewCharacterSelectionModel(store)
 
 	return Model{
 		currentView:             ViewCharacterSelection,
 		storage:                 store,
+		loader:                  loader,
 		characterSelectionModel: charSelectionModel,
 	}, nil
 }
@@ -71,6 +79,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		// Forward to current view
 		return m.updateCurrentView(msg)
+
+	case views.StartCharacterCreationMsg:
+		// Create and initialize character creation model
+		m.characterCreationModel = views.NewCharacterCreationModel(m.storage, m.loader)
+		m.currentView = ViewCharacterCreation
+		return m, m.characterCreationModel.Init()
+
+	case views.CharacterCreatedMsg:
+		// Character created successfully, return to selection screen
+		m.currentView = ViewCharacterSelection
+		m.characterCreationModel = nil
+		// Reload character list
+		if m.characterSelectionModel != nil {
+			return m, m.characterSelectionModel.Init()
+		}
+		return m, nil
 
 	case views.CharacterLoadedMsg:
 		// Load the character from storage
@@ -117,6 +141,12 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.characterSelectionModel = updatedModel
 			cmd = c
 		}
+	case ViewCharacterCreation:
+		if m.characterCreationModel != nil {
+			updatedModel, c := m.characterCreationModel.Update(msg)
+			m.characterCreationModel = updatedModel
+			cmd = c
+		}
 	case ViewMainSheet:
 		// Will be implemented in main sheet phase
 	default:
@@ -136,6 +166,8 @@ func (m Model) View() string {
 	switch m.currentView {
 	case ViewCharacterSelection:
 		return m.renderCharacterSelection()
+	case ViewCharacterCreation:
+		return m.renderCharacterCreation()
 	case ViewMainSheet:
 		return m.renderMainSheet()
 	case ViewInventory:
@@ -161,6 +193,13 @@ func (m Model) renderCharacterSelection() string {
 		return m.characterSelectionModel.View()
 	}
 	return "Character Selection View (TODO)\n\nPress q to quit."
+}
+
+func (m Model) renderCharacterCreation() string {
+	if m.characterCreationModel != nil {
+		return m.characterCreationModel.View()
+	}
+	return "Character Creation View (TODO)\n\nPress q to quit."
 }
 
 func (m Model) renderMainSheet() string {

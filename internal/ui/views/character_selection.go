@@ -45,6 +45,9 @@ type CharacterLoadedMsg struct {
 	Path string
 }
 
+// StartCharacterCreationMsg is sent when user wants to create a new character.
+type StartCharacterCreationMsg struct{}
+
 // CharacterListLoadedMsg is sent when the character list is loaded.
 type CharacterListLoadedMsg struct {
 	Characters []storage.CharacterInfo
@@ -186,9 +189,10 @@ func (m *CharacterSelectionModel) handleAction() (*CharacterSelectionModel, tea.
 		}
 
 	case "New":
-		// TODO: Navigate to character creation view
-		m.err = fmt.Errorf("character creation not yet implemented")
-		return m, nil
+		// Navigate to character creation view
+		return m, func() tea.Msg {
+			return StartCharacterCreationMsg{}
+		}
 
 	case "Delete":
 		if len(m.characters) == 0 {
