@@ -83,6 +83,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case views.StartCharacterCreationMsg:
 		// Create and initialize character creation model
 		m.characterCreationModel = views.NewCharacterCreationModel(m.storage, m.loader)
+		// Pass current window size to the new model
+		if m.width > 0 && m.height > 0 {
+			m.characterCreationModel, _ = m.characterCreationModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
 		m.currentView = ViewCharacterCreation
 		return m, m.characterCreationModel.Init()
 

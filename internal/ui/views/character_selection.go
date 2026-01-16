@@ -226,8 +226,8 @@ func (m *CharacterSelectionModel) updateList() {
 
 // View renders the character selection screen.
 func (m *CharacterSelectionModel) View() string {
-	if m.width == 0 {
-		return "Loading..."
+	if m.width == 0 || m.height == 0 {
+		return "Initializing terminal display..."
 	}
 
 	var content strings.Builder

@@ -523,8 +523,8 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 
 // View renders the character creation screen.
 func (m *CharacterCreationModel) View() string {
-	if m.width == 0 {
-		return "Loading..."
+	if m.width == 0 || m.height == 0 {
+		return "Error: Terminal size not initialized. Please resize your terminal or restart the application."
 	}
 	
 	var content strings.Builder
