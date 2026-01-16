@@ -211,12 +211,28 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 		m.err = fmt.Errorf("character creation cancelled")
 		return m, tea.Quit
 		
-	default:
-		// Handle text input
+	case "backspace":
+		// Handle backspace for text input fields
 		if m.focusedField == 0 {
-			m.nameInput.Value += msg.String()
+			if len(m.nameInput.Value) > 0 {
+				m.nameInput.Value = m.nameInput.Value[:len(m.nameInput.Value)-1]
+			}
 		} else if m.focusedField == 1 {
-			m.playerNameInput.Value += msg.String()
+			if len(m.playerNameInput.Value) > 0 {
+				m.playerNameInput.Value = m.playerNameInput.Value[:len(m.playerNameInput.Value)-1]
+			}
+		}
+		return m, nil
+		
+	default:
+		// Handle text input - only process actual character runes
+		if msg.Type == tea.KeyRunes && (m.focusedField == 0 || m.focusedField == 1) {
+			char := string(msg.Runes)
+			if m.focusedField == 0 {
+				m.nameInput.Value += char
+			} else if m.focusedField == 1 {
+				m.playerNameInput.Value += char
+			}
 		}
 		return m, nil
 	}
