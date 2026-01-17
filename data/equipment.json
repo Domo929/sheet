@@ -4,479 +4,784 @@
       {
         "id": "club",
         "name": "Club",
-        "cost": {"gold": 0, "silver": 1},
+        "cost": {
+          "silver": 1
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d4",
         "damageType": "bludgeoning",
-        "weight": 2,
-        "properties": ["light"]
+        "properties": [
+          "light"
+        ]
       },
       {
         "id": "dagger",
         "name": "Dagger",
-        "cost": {"gold": 2},
+        "cost": {
+          "gold": 2
+        },
+        "weight": 1.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d4",
         "damageType": "piercing",
-        "weight": 1,
-        "properties": ["finesse", "light", "thrown"],
-        "range": {"normal": 20, "long": 60}
+        "properties": [
+          "finesse",
+          "light",
+          "thrown"
+        ],
+        "range": {
+          "normal": 20,
+          "long": 60
+        }
       },
       {
         "id": "greatclub",
         "name": "Greatclub",
-        "cost": {"silver": 2},
+        "cost": {
+          "silver": 2
+        },
+        "weight": 10.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d8",
         "damageType": "bludgeoning",
-        "weight": 10,
-        "properties": ["two-handed"]
+        "properties": [
+          "two-handed"
+        ]
       },
       {
         "id": "handaxe",
         "name": "Handaxe",
-        "cost": {"gold": 5},
+        "cost": {
+          "gold": 5
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d6",
         "damageType": "slashing",
-        "weight": 2,
-        "properties": ["light", "thrown"],
-        "range": {"normal": 20, "long": 60}
+        "properties": [
+          "light",
+          "thrown"
+        ],
+        "range": {
+          "normal": 20,
+          "long": 60
+        }
       },
       {
         "id": "javelin",
         "name": "Javelin",
-        "cost": {"silver": 5},
+        "cost": {
+          "silver": 5
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d6",
         "damageType": "piercing",
-        "weight": 2,
-        "properties": ["thrown"],
-        "range": {"normal": 30, "long": 120}
+        "properties": [
+          "thrown"
+        ],
+        "range": {
+          "normal": 30,
+          "long": 120
+        }
       },
       {
         "id": "light_hammer",
         "name": "Light Hammer",
-        "cost": {"gold": 2},
+        "cost": {
+          "gold": 2
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d4",
         "damageType": "bludgeoning",
-        "weight": 2,
-        "properties": ["light", "thrown"],
-        "range": {"normal": 20, "long": 60}
+        "properties": [
+          "light",
+          "thrown"
+        ],
+        "range": {
+          "normal": 20,
+          "long": 60
+        }
       },
       {
         "id": "mace",
         "name": "Mace",
-        "cost": {"gold": 5},
+        "cost": {
+          "gold": 5
+        },
+        "weight": 4.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d6",
         "damageType": "bludgeoning",
-        "weight": 4,
         "properties": []
       },
       {
         "id": "quarterstaff",
         "name": "Quarterstaff",
-        "cost": {"silver": 2},
+        "cost": {
+          "silver": 2
+        },
+        "weight": 4.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d6",
         "damageType": "bludgeoning",
-        "weight": 4,
-        "properties": ["versatile"],
+        "properties": [
+          "versatile"
+        ],
         "versatileDamage": "1d8"
       },
       {
         "id": "sickle",
         "name": "Sickle",
-        "cost": {"gold": 1},
+        "cost": {
+          "gold": 1
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d4",
         "damageType": "slashing",
-        "weight": 2,
-        "properties": ["light"]
+        "properties": [
+          "light"
+        ]
       },
       {
         "id": "spear",
         "name": "Spear",
-        "cost": {"gold": 1},
+        "cost": {
+          "gold": 1
+        },
+        "weight": 3.0,
+        "category": "Weapons",
+        "subCategory": "Simple Melee Weapons",
         "damage": "1d6",
         "damageType": "piercing",
-        "weight": 3,
-        "properties": ["thrown", "versatile"],
-        "range": {"normal": 20, "long": 60},
+        "properties": [
+          "thrown",
+          "versatile"
+        ],
+        "range": {
+          "normal": 20,
+          "long": 60
+        },
         "versatileDamage": "1d8"
       }
     ],
     "simple_ranged": [
       {
-        "id": "light_crossbow",
-        "name": "Light Crossbow",
-        "cost": {"gold": 25},
-        "damage": "1d8",
-        "damageType": "piercing",
-        "weight": 5,
-        "properties": ["ammunition", "loading", "two-handed"],
-        "range": {"normal": 80, "long": 320}
-      },
-      {
         "id": "dart",
         "name": "Dart",
-        "cost": {"copper": 5},
+        "cost": {
+          "gold": 5
+        },
+        "weight": 0.0,
+        "category": "Weapons",
+        "subCategory": "Simple Ranged Weapons",
         "damage": "1d4",
         "damageType": "piercing",
-        "weight": 0.25,
-        "properties": ["finesse", "thrown"],
-        "range": {"normal": 20, "long": 60}
+        "properties": [
+          "finesse",
+          "thrown"
+        ],
+        "range": {
+          "normal": 20,
+          "long": 60
+        }
+      },
+      {
+        "id": "crossbow_light",
+        "name": "Crossbow, Light",
+        "cost": {
+          "gold": 25
+        },
+        "weight": 5.0,
+        "category": "Weapons",
+        "subCategory": "Simple Ranged Weapons",
+        "damage": "",
+        "damageType": "",
+        "properties": []
       },
       {
         "id": "shortbow",
         "name": "Shortbow",
-        "cost": {"gold": 25},
+        "cost": {
+          "gold": 25
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Simple Ranged Weapons",
         "damage": "1d6",
         "damageType": "piercing",
-        "weight": 2,
-        "properties": ["ammunition", "two-handed"],
-        "range": {"normal": 80, "long": 320}
+        "properties": [
+          "ammunition",
+          "two-handed"
+        ],
+        "range": {
+          "normal": 80,
+          "long": 320
+        }
       },
       {
         "id": "sling",
         "name": "Sling",
-        "cost": {"silver": 1},
+        "cost": {
+          "silver": 1
+        },
+        "weight": 0.0,
+        "category": "Weapons",
+        "subCategory": "Simple Ranged Weapons",
         "damage": "1d4",
         "damageType": "bludgeoning",
-        "weight": 0,
-        "properties": ["ammunition"],
-        "range": {"normal": 30, "long": 120}
+        "properties": [
+          "ammunition"
+        ],
+        "range": {
+          "normal": 30,
+          "long": 120
+        }
       }
     ],
     "martial_melee": [
       {
         "id": "battleaxe",
         "name": "Battleaxe",
-        "cost": {"gold": 10},
+        "cost": {
+          "gold": 10
+        },
+        "weight": 4.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d8",
         "damageType": "slashing",
-        "weight": 4,
-        "properties": ["versatile"],
+        "properties": [
+          "versatile"
+        ],
         "versatileDamage": "1d10"
       },
       {
         "id": "flail",
         "name": "Flail",
-        "cost": {"gold": 10},
+        "cost": {
+          "gold": 10
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d8",
         "damageType": "bludgeoning",
-        "weight": 2,
         "properties": []
       },
       {
         "id": "glaive",
         "name": "Glaive",
-        "cost": {"gold": 20},
+        "cost": {
+          "gold": 20
+        },
+        "weight": 6.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d10",
         "damageType": "slashing",
-        "weight": 6,
-        "properties": ["heavy", "reach", "two-handed"]
+        "properties": [
+          "heavy",
+          "reach",
+          "two-handed"
+        ]
       },
       {
         "id": "greataxe",
         "name": "Greataxe",
-        "cost": {"gold": 30},
+        "cost": {
+          "gold": 30
+        },
+        "weight": 7.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d12",
         "damageType": "slashing",
-        "weight": 7,
-        "properties": ["heavy", "two-handed"]
+        "properties": [
+          "heavy",
+          "two-handed"
+        ]
       },
       {
         "id": "greatsword",
         "name": "Greatsword",
-        "cost": {"gold": 50},
+        "cost": {
+          "gold": 50
+        },
+        "weight": 6.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "2d6",
         "damageType": "slashing",
-        "weight": 6,
-        "properties": ["heavy", "two-handed"]
+        "properties": [
+          "heavy",
+          "two-handed"
+        ]
       },
       {
         "id": "halberd",
         "name": "Halberd",
-        "cost": {"gold": 20},
+        "cost": {
+          "gold": 20
+        },
+        "weight": 6.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d10",
         "damageType": "slashing",
-        "weight": 6,
-        "properties": ["heavy", "reach", "two-handed"]
+        "properties": [
+          "heavy",
+          "reach",
+          "two-handed"
+        ]
       },
       {
         "id": "lance",
         "name": "Lance",
-        "cost": {"gold": 10},
+        "cost": {
+          "gold": 10
+        },
+        "weight": 6.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d12",
         "damageType": "piercing",
-        "weight": 6,
-        "properties": ["reach", "special"]
+        "properties": [
+          "reach",
+          "special"
+        ]
       },
       {
         "id": "longsword",
         "name": "Longsword",
-        "cost": {"gold": 15},
+        "cost": {
+          "gold": 15
+        },
+        "weight": 3.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d8",
         "damageType": "slashing",
-        "weight": 3,
-        "properties": ["versatile"],
+        "properties": [
+          "versatile"
+        ],
         "versatileDamage": "1d10"
       },
       {
         "id": "maul",
         "name": "Maul",
-        "cost": {"gold": 10},
+        "cost": {
+          "gold": 10
+        },
+        "weight": 10.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "2d6",
         "damageType": "bludgeoning",
-        "weight": 10,
-        "properties": ["heavy", "two-handed"]
+        "properties": [
+          "heavy",
+          "two-handed"
+        ]
       },
       {
         "id": "morningstar",
         "name": "Morningstar",
-        "cost": {"gold": 15},
+        "cost": {
+          "gold": 15
+        },
+        "weight": 4.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d8",
         "damageType": "piercing",
-        "weight": 4,
         "properties": []
       },
       {
         "id": "pike",
         "name": "Pike",
-        "cost": {"gold": 5},
+        "cost": {
+          "gold": 5
+        },
+        "weight": 18.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d10",
         "damageType": "piercing",
-        "weight": 18,
-        "properties": ["heavy", "reach", "two-handed"]
+        "properties": [
+          "heavy",
+          "reach",
+          "two-handed"
+        ]
       },
       {
         "id": "rapier",
         "name": "Rapier",
-        "cost": {"gold": 25},
+        "cost": {
+          "gold": 25
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d8",
         "damageType": "piercing",
-        "weight": 2,
-        "properties": ["finesse"]
+        "properties": [
+          "finesse"
+        ]
       },
       {
         "id": "scimitar",
         "name": "Scimitar",
-        "cost": {"gold": 25},
+        "cost": {
+          "gold": 25
+        },
+        "weight": 3.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d6",
         "damageType": "slashing",
-        "weight": 3,
-        "properties": ["finesse", "light"]
+        "properties": [
+          "finesse",
+          "light"
+        ]
       },
       {
         "id": "shortsword",
         "name": "Shortsword",
-        "cost": {"gold": 10},
+        "cost": {
+          "gold": 10
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d6",
         "damageType": "piercing",
-        "weight": 2,
-        "properties": ["finesse", "light"]
+        "properties": [
+          "finesse",
+          "light"
+        ]
       },
       {
         "id": "trident",
         "name": "Trident",
-        "cost": {"gold": 5},
+        "cost": {
+          "gold": 5
+        },
+        "weight": 4.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d6",
         "damageType": "piercing",
-        "weight": 4,
-        "properties": ["thrown", "versatile"],
-        "range": {"normal": 20, "long": 60},
+        "properties": [
+          "thrown",
+          "versatile"
+        ],
+        "range": {
+          "normal": 20,
+          "long": 60
+        },
         "versatileDamage": "1d8"
-      },
-      {
-        "id": "war_pick",
-        "name": "War Pick",
-        "cost": {"gold": 5},
-        "damage": "1d8",
-        "damageType": "piercing",
-        "weight": 2,
-        "properties": []
       },
       {
         "id": "warhammer",
         "name": "Warhammer",
-        "cost": {"gold": 15},
+        "cost": {
+          "gold": 15
+        },
+        "weight": 5.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d8",
         "damageType": "bludgeoning",
-        "weight": 2,
-        "properties": ["versatile"],
+        "properties": [
+          "versatile"
+        ],
         "versatileDamage": "1d10"
+      },
+      {
+        "id": "war_pick",
+        "name": "War Pick",
+        "cost": {
+          "gold": 5
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
+        "damage": "1d8",
+        "damageType": "piercing",
+        "properties": []
       },
       {
         "id": "whip",
         "name": "Whip",
-        "cost": {"gold": 2},
+        "cost": {
+          "gold": 2
+        },
+        "weight": 3.0,
+        "category": "Weapons",
+        "subCategory": "Martial Melee Weapons",
         "damage": "1d4",
         "damageType": "slashing",
-        "weight": 3,
-        "properties": ["finesse", "reach"]
+        "properties": [
+          "finesse",
+          "reach"
+        ]
       }
     ],
     "martial_ranged": [
       {
         "id": "blowgun",
         "name": "Blowgun",
-        "cost": {"gold": 10},
+        "cost": {
+          "gold": 10
+        },
+        "weight": 1.0,
+        "category": "Weapons",
+        "subCategory": "Martial Ranged Weapons",
         "damage": "1",
         "damageType": "piercing",
-        "weight": 1,
-        "properties": ["ammunition", "loading"],
-        "range": {"normal": 25, "long": 100}
+        "properties": [
+          "ammunition",
+          "loading"
+        ],
+        "range": {
+          "normal": 25,
+          "long": 100
+        }
       },
       {
-        "id": "hand_crossbow",
-        "name": "Hand Crossbow",
-        "cost": {"gold": 75},
-        "damage": "1d6",
-        "damageType": "piercing",
-        "weight": 3,
-        "properties": ["ammunition", "light", "loading"],
-        "range": {"normal": 30, "long": 120}
+        "id": "crossbow_hand",
+        "name": "Crossbow, Hand",
+        "cost": {
+          "gold": 75
+        },
+        "weight": 3.0,
+        "category": "Weapons",
+        "subCategory": "Martial Ranged Weapons",
+        "damage": "",
+        "damageType": "",
+        "properties": []
       },
       {
-        "id": "heavy_crossbow",
-        "name": "Heavy Crossbow",
-        "cost": {"gold": 50},
-        "damage": "1d10",
-        "damageType": "piercing",
-        "weight": 18,
-        "properties": ["ammunition", "heavy", "loading", "two-handed"],
-        "range": {"normal": 100, "long": 400}
+        "id": "crossbow_heavy",
+        "name": "Crossbow, Heavy",
+        "cost": {
+          "gold": 50
+        },
+        "weight": 18.0,
+        "category": "Weapons",
+        "subCategory": "Martial Ranged Weapons",
+        "damage": "",
+        "damageType": "",
+        "properties": []
       },
       {
         "id": "longbow",
         "name": "Longbow",
-        "cost": {"gold": 50},
+        "cost": {
+          "gold": 50
+        },
+        "weight": 2.0,
+        "category": "Weapons",
+        "subCategory": "Martial Ranged Weapons",
         "damage": "1d8",
         "damageType": "piercing",
-        "weight": 2,
-        "properties": ["ammunition", "heavy", "two-handed"],
-        "range": {"normal": 150, "long": 600}
+        "properties": [
+          "ammunition",
+          "heavy",
+          "two-handed"
+        ],
+        "range": {
+          "normal": 150,
+          "long": 600
+        }
       },
       {
-        "id": "net",
-        "name": "Net",
-        "cost": {"gold": 1},
-        "damage": "0",
-        "damageType": "special",
-        "weight": 3,
-        "properties": ["special", "thrown"],
-        "range": {"normal": 5, "long": 15}
+        "id": "musket",
+        "name": "Musket",
+        "cost": {
+          "gold": 500
+        },
+        "weight": 10.0,
+        "category": "Weapons",
+        "subCategory": "Martial Ranged Weapons",
+        "damage": "",
+        "damageType": "",
+        "properties": []
+      },
+      {
+        "id": "pistol",
+        "name": "Pistol",
+        "cost": {
+          "gold": 250
+        },
+        "weight": 3.0,
+        "category": "Weapons",
+        "subCategory": "Martial Ranged Weapons",
+        "damage": "",
+        "damageType": "",
+        "properties": []
       }
     ]
   },
   "armor": {
     "light": [
       {
-        "id": "padded",
-        "name": "Padded",
-        "cost": {"gold": 5},
-        "armorClass": "11 + Dex modifier",
-        "weight": 8,
-        "stealthDisadvantage": true
+        "id": "padded_armor",
+        "name": "Padded Armor",
+        "cost": {
+          "gold": 5
+        },
+        "weight": 8.0,
+        "category": "Armor",
+        "subCategory": "Light Armor"
       },
       {
-        "id": "leather",
-        "name": "Leather",
-        "cost": {"gold": 10},
-        "armorClass": "11 + Dex modifier",
-        "weight": 10,
-        "stealthDisadvantage": false
+        "id": "leather_armor",
+        "name": "Leather Armor",
+        "cost": {
+          "gold": 10
+        },
+        "weight": 10.0,
+        "category": "Armor",
+        "subCategory": "Light Armor"
       },
       {
-        "id": "studded_leather",
-        "name": "Studded Leather",
-        "cost": {"gold": 45},
-        "armorClass": "12 + Dex modifier",
-        "weight": 13,
-        "stealthDisadvantage": false
+        "id": "studded_leather_armor",
+        "name": "Studded Leather Armor",
+        "cost": {
+          "gold": 45
+        },
+        "weight": 13.0,
+        "category": "Armor",
+        "subCategory": "Light Armor"
       }
     ],
     "medium": [
       {
-        "id": "hide",
-        "name": "Hide",
-        "cost": {"gold": 10},
-        "armorClass": "12 + Dex modifier (max 2)",
-        "weight": 12,
-        "stealthDisadvantage": false
+        "id": "hide_armor",
+        "name": "Hide Armor",
+        "cost": {
+          "gold": 10
+        },
+        "weight": 12.0,
+        "category": "Armor",
+        "subCategory": "Medium Armor"
       },
       {
         "id": "chain_shirt",
         "name": "Chain Shirt",
-        "cost": {"gold": 50},
-        "armorClass": "13 + Dex modifier (max 2)",
-        "weight": 20,
-        "stealthDisadvantage": false
+        "cost": {
+          "gold": 50
+        },
+        "weight": 20.0,
+        "category": "Armor",
+        "subCategory": "Medium Armor",
+        "armorClass": "13 + Dex modifier (max 2)"
       },
       {
         "id": "scale_mail",
         "name": "Scale Mail",
-        "cost": {"gold": 50},
+        "cost": {
+          "gold": 50
+        },
+        "weight": 45.0,
+        "category": "Armor",
+        "subCategory": "Medium Armor",
         "armorClass": "14 + Dex modifier (max 2)",
-        "weight": 45,
         "stealthDisadvantage": true
       },
       {
         "id": "breastplate",
         "name": "Breastplate",
-        "cost": {"gold": 400},
-        "armorClass": "14 + Dex modifier (max 2)",
-        "weight": 20,
-        "stealthDisadvantage": false
+        "cost": {
+          "gold": 400
+        },
+        "weight": 20.0,
+        "category": "Armor",
+        "subCategory": "Medium Armor",
+        "armorClass": "14 + Dex modifier (max 2)"
       },
       {
-        "id": "half_plate",
-        "name": "Half Plate",
-        "cost": {"gold": 750},
-        "armorClass": "15 + Dex modifier (max 2)",
-        "weight": 40,
-        "stealthDisadvantage": true
+        "id": "half_plate_armor",
+        "name": "Half Plate Armor",
+        "cost": {
+          "gold": 750
+        },
+        "weight": 40.0,
+        "category": "Armor",
+        "subCategory": "Medium Armor"
       }
     ],
     "heavy": [
       {
         "id": "ring_mail",
         "name": "Ring Mail",
-        "cost": {"gold": 30},
+        "cost": {
+          "gold": 30
+        },
+        "weight": 40.0,
+        "category": "Armor",
+        "subCategory": "Heavy Armor",
         "armorClass": "14",
-        "weight": 40,
-        "stealthDisadvantage": true,
-        "strengthRequired": 0
+        "stealthDisadvantage": true
       },
       {
         "id": "chain_mail",
         "name": "Chain Mail",
-        "cost": {"gold": 75},
+        "cost": {
+          "gold": 75
+        },
+        "weight": 55.0,
+        "category": "Armor",
+        "subCategory": "Heavy Armor",
         "armorClass": "16",
-        "weight": 55,
         "stealthDisadvantage": true,
         "strengthRequired": 13
       },
       {
-        "id": "splint",
-        "name": "Splint",
-        "cost": {"gold": 200},
-        "armorClass": "17",
-        "weight": 60,
-        "stealthDisadvantage": true,
-        "strengthRequired": 15
+        "id": "splint_armor",
+        "name": "Splint Armor",
+        "cost": {
+          "gold": 200
+        },
+        "weight": 60.0,
+        "category": "Armor",
+        "subCategory": "Heavy Armor"
       },
       {
-        "id": "plate",
-        "name": "Plate",
-        "cost": {"gold": 1500},
-        "armorClass": "18",
-        "weight": 65,
-        "stealthDisadvantage": true,
-        "strengthRequired": 15
+        "id": "plate_armor",
+        "name": "Plate Armor",
+        "cost": {
+          "gold": 1500
+        },
+        "weight": 65.0,
+        "category": "Armor",
+        "subCategory": "Heavy Armor"
       }
     ],
     "shield": [
       {
         "id": "shield",
         "name": "Shield",
-        "cost": {"gold": 10},
-        "armorClass": "+2",
-        "weight": 6
+        "cost": {
+          "gold": 10
+        },
+        "weight": 6.0,
+        "category": "Armor",
+        "subCategory": "Shield",
+        "armorClass": "+2"
       }
     ]
   },
@@ -484,8 +789,12 @@
     {
       "id": "burglars_pack",
       "name": "Burglar's Pack",
-      "cost": {"gold": 16},
-      "weight": 47.5,
+      "cost": {
+        "gold": 16
+      },
+      "weight": 42.0,
+      "category": "Adventuring Gear",
+      "subCategory": null,
       "contents": [
         "Backpack",
         "Ball bearings (bag of 1,000)",
@@ -506,8 +815,12 @@
     {
       "id": "diplomats_pack",
       "name": "Diplomat's Pack",
-      "cost": {"gold": 39},
-      "weight": 39,
+      "cost": {
+        "gold": 39
+      },
+      "weight": 39.0,
+      "category": "Adventuring Gear",
+      "subCategory": null,
       "contents": [
         "Chest",
         "2 cases for maps and scrolls",
@@ -525,8 +838,12 @@
     {
       "id": "dungeoneers_pack",
       "name": "Dungeoneer's Pack",
-      "cost": {"gold": 12},
-      "weight": 61.5,
+      "cost": {
+        "gold": 12
+      },
+      "weight": 55.0,
+      "category": "Adventuring Gear",
+      "subCategory": null,
       "contents": [
         "Backpack",
         "Crowbar",
@@ -542,8 +859,12 @@
     {
       "id": "entertainers_pack",
       "name": "Entertainer's Pack",
-      "cost": {"gold": 40},
-      "weight": 38.5,
+      "cost": {
+        "gold": 40
+      },
+      "weight": 58.5,
+      "category": "Adventuring Gear",
+      "subCategory": null,
       "contents": [
         "Backpack",
         "Bedroll",
@@ -557,8 +878,12 @@
     {
       "id": "explorers_pack",
       "name": "Explorer's Pack",
-      "cost": {"gold": 10},
-      "weight": 59,
+      "cost": {
+        "gold": 10
+      },
+      "weight": 55.0,
+      "category": "Adventuring Gear",
+      "subCategory": null,
       "contents": [
         "Backpack",
         "Bedroll",
@@ -573,8 +898,12 @@
     {
       "id": "priests_pack",
       "name": "Priest's Pack",
-      "cost": {"gold": 19},
-      "weight": 29,
+      "cost": {
+        "gold": 33
+      },
+      "weight": 29.0,
+      "category": "Adventuring Gear",
+      "subCategory": null,
       "contents": [
         "Backpack",
         "Blanket",
@@ -591,8 +920,12 @@
     {
       "id": "scholars_pack",
       "name": "Scholar's Pack",
-      "cost": {"gold": 40},
-      "weight": 22,
+      "cost": {
+        "gold": 40
+      },
+      "weight": 22.0,
+      "category": "Adventuring Gear",
+      "subCategory": null,
       "contents": [
         "Backpack",
         "Book of lore",
@@ -606,46 +939,1735 @@
   ],
   "gear": [
     {
+      "id": "acid_vial",
+      "name": "Acid (vial)",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "alchemists_fire",
+      "name": "Alchemist's Fire",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "arrows_20",
+      "name": "Arrows (20)",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Ammunition"
+    },
+    {
+      "id": "crossbow_bolts_20",
+      "name": "Crossbow, Bolts (20)",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 1.5,
+      "category": "Adventuring Gear",
+      "subCategory": "Ammunition"
+    },
+    {
+      "id": "bullets_firearm_10",
+      "name": "Bullets, Firearm (10)",
+      "cost": {
+        "gold": 3
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Ammunition"
+    },
+    {
+      "id": "bullets_sling_20",
+      "name": "Bullets, Sling (20)",
+      "cost": {
+        "copper": 4
+      },
+      "weight": 1.5,
+      "category": "Adventuring Gear",
+      "subCategory": "Ammunition"
+    },
+    {
+      "id": "blowgun_needles_50",
+      "name": "Blowgun, Needles (50)",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Ammunition"
+    },
+    {
+      "id": "antitoxin_vial",
+      "name": "Antitoxin (vial)",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "crystal",
+      "name": "Crystal",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Arcane Focuses"
+    },
+    {
+      "id": "orb",
+      "name": "Orb",
+      "cost": {
+        "gold": 20
+      },
+      "weight": 3.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Arcane Focuses"
+    },
+    {
+      "id": "rod",
+      "name": "Rod",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Arcane Focuses"
+    },
+    {
+      "id": "staff_also_a_quarterstaff",
+      "name": "Staff (also a Quarterstaff)",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 4.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Arcane Focuses"
+    },
+    {
+      "id": "wand",
+      "name": "Wand",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Arcane Focuses"
+    },
+    {
       "id": "backpack",
       "name": "Backpack",
-      "cost": {"gold": 2},
-      "weight": 5
+      "cost": {
+        "gold": 2
+      },
+      "weight": 5.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "ball_bearings",
+      "name": "Ball Bearings",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "barrel",
+      "name": "Barrel",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 70.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "basket",
+      "name": "Basket",
+      "cost": {
+        "silver": 4
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear"
     },
     {
       "id": "bedroll",
       "name": "Bedroll",
-      "cost": {"gold": 1},
-      "weight": 7
+      "cost": {
+        "gold": 1
+      },
+      "weight": 7.0,
+      "category": "Adventuring Gear"
     },
     {
-      "id": "hempen_rope_50ft",
-      "name": "Rope, hempen (50 feet)",
-      "cost": {"gold": 1},
-      "weight": 10
+      "id": "bell",
+      "name": "Bell",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
     },
     {
-      "id": "torch",
-      "name": "Torch",
-      "cost": {"copper": 1},
-      "weight": 1
+      "id": "blanket",
+      "name": "Blanket",
+      "cost": {
+        "silver": 5
+      },
+      "weight": 3.0,
+      "category": "Adventuring Gear"
     },
     {
-      "id": "rations_1day",
-      "name": "Rations (1 day)",
-      "cost": {"silver": 5},
-      "weight": 2
+      "id": "block_and_tackle",
+      "name": "Block and Tackle",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 5.0,
+      "category": "Adventuring Gear"
     },
     {
-      "id": "waterskin",
-      "name": "Waterskin",
-      "cost": {"silver": 2},
-      "weight": 5
+      "id": "book",
+      "name": "Book",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 5.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "bottle_glass",
+      "name": "Bottle, Glass",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "bucket",
+      "name": "Bucket",
+      "cost": {
+        "copper": 5
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "caltrops",
+      "name": "Caltrops",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "candle",
+      "name": "Candle",
+      "cost": {
+        "copper": 1
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "case_crossbow_bolt",
+      "name": "Case, Crossbow Bolt",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "case_map_or_scroll",
+      "name": "Case, Map or Scroll",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "chain_10_feet",
+      "name": "Chain (10 feet)",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 10.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "chest",
+      "name": "Chest",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 25.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "climbers_kit",
+      "name": "Climber's Kit",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 12.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "clothes_fine",
+      "name": "Clothes, Fine",
+      "cost": {
+        "gold": 15
+      },
+      "weight": 6.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "clothes_travelers",
+      "name": "Clothes, Traveler's",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 4.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "component_pouch",
+      "name": "Component Pouch",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "costume",
+      "name": "Costume",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 4.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "crowbar",
+      "name": "Crowbar",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 5.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "sprig_of_mistletoe",
+      "name": "Sprig of Mistletoe",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Drudic Focus"
+    },
+    {
+      "id": "wooden_staff_also_a_quarterstaff",
+      "name": "Wooden Staff (also a Quarterstaff)",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 4.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Drudic Focus"
+    },
+    {
+      "id": "yew_wand",
+      "name": "Yew Wand",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Drudic Focus"
+    },
+    {
+      "id": "flask",
+      "name": "Flask",
+      "cost": {
+        "copper": 2
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "grappling_hook",
+      "name": "Grappling Hook",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 4.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "healers_kit",
+      "name": "Healer's Kit",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 3.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "amulet_worn_or_held",
+      "name": "Amulet (worn or held)",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Holy Symbol"
+    },
+    {
+      "id": "emblem_borne_on_fabric_or_a_shield",
+      "name": "Emblem (borne on fabric or a Shield)",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Holy Symbol"
+    },
+    {
+      "id": "reliquary_held",
+      "name": "Reliquary (held)",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear",
+      "subCategory": "Holy Symbol"
+    },
+    {
+      "id": "holy_water",
+      "name": "Holy Water",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "hunting_trap",
+      "name": "Hunting Trap",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 25.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "ink",
+      "name": "Ink",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "ink_pen",
+      "name": "Ink Pen",
+      "cost": {
+        "copper": 2
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "jug",
+      "name": "Jug",
+      "cost": {
+        "copper": 2
+      },
+      "weight": 4.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "ladder_10_feet",
+      "name": "Ladder (10 feet)",
+      "cost": {
+        "silver": 1
+      },
+      "weight": 25.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "lamp",
+      "name": "Lamp",
+      "cost": {
+        "silver": 5
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "lantern_bullseye",
+      "name": "Lantern, Bullseye",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "lantern_hooded",
+      "name": "Lantern, Hooded",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "lock",
+      "name": "Lock",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "magnifying_glass",
+      "name": "Magnifying Glass",
+      "cost": {
+        "gold": 100
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "manacles",
+      "name": "Manacles",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 6.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "map",
+      "name": "Map",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "mirror",
+      "name": "Mirror",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "net",
+      "name": "Net",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 3.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "oil",
+      "name": "Oil",
+      "cost": {
+        "silver": 1
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "paper",
+      "name": "Paper",
+      "cost": {
+        "silver": 2
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "parchment",
+      "name": "Parchment",
+      "cost": {
+        "silver": 1
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "perfume",
+      "name": "Perfume",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "poison_basic",
+      "name": "Poison, Basic",
+      "cost": {
+        "gold": 100
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "pole_10_feet",
+      "name": "Pole (10 feet)",
+      "cost": {
+        "copper": 5
+      },
+      "weight": 7.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "pot_iron",
+      "name": "Pot, Iron",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 10.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "potion_of_healing",
+      "name": "Potion of Healing",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "pouch",
+      "name": "Pouch",
+      "cost": {
+        "silver": 5
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "quiver",
+      "name": "Quiver",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "ram_portable",
+      "name": "Ram, Portable",
+      "cost": {
+        "gold": 4
+      },
+      "weight": 35.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "rations",
+      "name": "Rations",
+      "cost": {
+        "silver": 5
+      },
+      "weight": 2.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "robe",
+      "name": "Robe",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 4.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "rope_50_feet",
+      "name": "Rope (50 feet)",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 5.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "sack",
+      "name": "Sack",
+      "cost": {
+        "copper": 1
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "shovel",
+      "name": "Shovel",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 5.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "signal_whistle",
+      "name": "Signal Whistle",
+      "cost": {
+        "copper": 5
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "spell_scroll_cantrip",
+      "name": "Spell Scroll (Cantrip)",
+      "cost": {
+        "gold": 30
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "spell_scroll_level_1",
+      "name": "Spell Scroll (Level 1)",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "spikes_iron",
+      "name": "Spikes, Iron",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 5.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "spyglass",
+      "name": "Spyglass",
+      "cost": {
+        "gold": 1000
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "string",
+      "name": "String",
+      "cost": {
+        "silver": 1
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "tent",
+      "name": "Tent",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 20.0,
+      "category": "Adventuring Gear"
     },
     {
       "id": "tinderbox",
       "name": "Tinderbox",
-      "cost": {"silver": 5},
-      "weight": 1
+      "cost": {
+        "silver": 5
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "torch",
+      "name": "Torch",
+      "cost": {
+        "copper": 1
+      },
+      "weight": 1.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "vial",
+      "name": "Vial",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 0.0,
+      "category": "Adventuring Gear"
+    },
+    {
+      "id": "waterskin",
+      "name": "Waterskin",
+      "cost": {
+        "silver": 2
+      },
+      "weight": 5.0,
+      "category": "Adventuring Gear"
+    }
+  ],
+  "tools": [
+    {
+      "id": "alchemists_supplies",
+      "name": "Alchemist's Supplies",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 8.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "brewers_supplies",
+      "name": "Brewer's Supplies",
+      "cost": {
+        "gold": 20
+      },
+      "weight": 9.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "calligraphers_supplies",
+      "name": "Calligrapher's Supplies",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 5.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "carpenters_tools",
+      "name": "Carpenter's Tools",
+      "cost": {
+        "gold": 8
+      },
+      "weight": 6.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "cartographers_tools",
+      "name": "Cartographer's Tools",
+      "cost": {
+        "gold": 15
+      },
+      "weight": 6.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "cobblers_tools",
+      "name": "Cobbler's Tools",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 5.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "cooks_utensils",
+      "name": "Cook's Utensils",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 8.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "glassblowers_tools",
+      "name": "Glassblower's Tools",
+      "cost": {
+        "gold": 30
+      },
+      "weight": 5.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "jewelers_tools",
+      "name": "Jeweler's Tools",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 2.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "leatherworkers_tools",
+      "name": "Leatherworker's Tools",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 5.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "masons_tools",
+      "name": "Mason's Tools",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 8.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "painters_supplies",
+      "name": "Painter's Supplies",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 5.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "potters_tools",
+      "name": "Potter's Tools",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 3.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "smiths_tools",
+      "name": "Smith's Tools",
+      "cost": {
+        "gold": 20
+      },
+      "weight": 8.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "tinkers_tools",
+      "name": "Tinker's Tools",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 10.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "weavers_tools",
+      "name": "Weaver's Tools",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 5.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "woodcarvers_tools",
+      "name": "Woodcarver's Tools",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 5.0,
+      "category": "Tools",
+      "subCategory": "Artisan's Tools"
+    },
+    {
+      "id": "disguise_kit",
+      "name": "Disguise Kit",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 3.0,
+      "category": "Tools"
+    },
+    {
+      "id": "forgery_kit",
+      "name": "Forgery Kit",
+      "cost": {
+        "gold": 15
+      },
+      "weight": 5.0,
+      "category": "Tools"
+    },
+    {
+      "id": "dice",
+      "name": "Dice",
+      "cost": {
+        "silver": 1
+      },
+      "weight": 0.0,
+      "category": "Tools",
+      "subCategory": "Gaming Set"
+    },
+    {
+      "id": "dragonchess",
+      "name": "Dragonchess",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 0.0,
+      "category": "Tools",
+      "subCategory": "Gaming Set"
+    },
+    {
+      "id": "playing_cards",
+      "name": "Playing Cards",
+      "cost": {
+        "silver": 5
+      },
+      "weight": 0.0,
+      "category": "Tools",
+      "subCategory": "Gaming Set"
+    },
+    {
+      "id": "threedragon_ante",
+      "name": "Three-Dragon Ante",
+      "cost": {
+        "gold": 1
+      },
+      "weight": 0.0,
+      "category": "Tools",
+      "subCategory": "Gaming Set"
+    },
+    {
+      "id": "herbalism_kit",
+      "name": "Herbalism Kit",
+      "cost": {
+        "gold": 5
+      },
+      "weight": 3.0,
+      "category": "Tools"
+    },
+    {
+      "id": "bagpipes",
+      "name": "Bagpipes",
+      "cost": {
+        "gold": 30
+      },
+      "weight": 6.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "drum",
+      "name": "Drum",
+      "cost": {
+        "gold": 6
+      },
+      "weight": 3.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "dulcimer",
+      "name": "Dulcimer",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 10.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "flute",
+      "name": "Flute",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 1.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "horn",
+      "name": "Horn",
+      "cost": {
+        "gold": 3
+      },
+      "weight": 2.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "lute",
+      "name": "Lute",
+      "cost": {
+        "gold": 12
+      },
+      "weight": 2.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "lyre",
+      "name": "Lyre",
+      "cost": {
+        "gold": 20
+      },
+      "weight": 2.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "pan_flute",
+      "name": "Pan Flute",
+      "cost": {
+        "gold": 12
+      },
+      "weight": 2.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "shawm",
+      "name": "Shawm",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 1.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "viol",
+      "name": "Viol",
+      "cost": {
+        "gold": 30
+      },
+      "weight": 1.0,
+      "category": "Tools",
+      "subCategory": "Musical Instrument"
+    },
+    {
+      "id": "navigators_tools",
+      "name": "Navigator's Tools",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 2.0,
+      "category": "Tools"
+    },
+    {
+      "id": "poisoners_kit",
+      "name": "Poisoner's Kit",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 2.0,
+      "category": "Tools"
+    },
+    {
+      "id": "thieves_tools",
+      "name": "Thieves' Tools",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 1.0,
+      "category": "Tools"
+    }
+  ],
+  "services": [
+    {
+      "id": "coach_ride_between_towns_per_mile",
+      "name": "Coach Ride, Between Towns (per mile)",
+      "cost": {
+        "copper": 3
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Travel"
+    },
+    {
+      "id": "coach_ride_within_city_per_mile",
+      "name": "Coach Ride, Within City (per mile)",
+      "cost": {
+        "copper": 1
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Travel"
+    },
+    {
+      "id": "roadgate_toll",
+      "name": "Road/Gate, Toll",
+      "cost": {
+        "copper": 1
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Travel"
+    },
+    {
+      "id": "ships_passage_per_mile",
+      "name": "Ship's Passage (per mile)",
+      "cost": {
+        "silver": 1
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Travel"
+    },
+    {
+      "id": "hirelings_skilled_per_day",
+      "name": "Hirelings, Skilled (per day)",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Hirelings"
+    },
+    {
+      "id": "hirelings_unskilled_per_day",
+      "name": "Hirelings, Unskilled (per day)",
+      "cost": {
+        "silver": 2
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Hirelings"
+    },
+    {
+      "id": "hirelings_messenger_per_mile",
+      "name": "Hirelings, Messenger (per mile)",
+      "cost": {
+        "copper": 2
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Hirelings"
+    },
+    {
+      "id": "cantrip",
+      "name": "Cantrip",
+      "cost": {
+        "gold": 30
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Spellcasting"
+    },
+    {
+      "id": "level_1",
+      "name": "Level 1",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Spellcasting"
+    },
+    {
+      "id": "level_2",
+      "name": "Level 2",
+      "cost": {
+        "gold": 200
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Spellcasting"
+    },
+    {
+      "id": "level_3",
+      "name": "Level 3",
+      "cost": {
+        "gold": 300
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Spellcasting"
+    },
+    {
+      "id": "level_45",
+      "name": "Level 4-5",
+      "cost": {
+        "gold": 2000
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Spellcasting"
+    },
+    {
+      "id": "level_68",
+      "name": "Level 6-8",
+      "cost": {
+        "gold": 20000
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Spellcasting"
+    },
+    {
+      "id": "level_9",
+      "name": "Level 9",
+      "cost": {
+        "gold": 100000
+      },
+      "weight": 0.0,
+      "category": "Services",
+      "subCategory": "Spellcasting"
+    }
+  ],
+  "foodDrinkLodging": [
+    {
+      "id": "ale_mug",
+      "name": "Ale (mug)",
+      "cost": {
+        "copper": 4
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Drink"
+    },
+    {
+      "id": "bread_loaf",
+      "name": "Bread (loaf)",
+      "cost": {
+        "copper": 2
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Food"
+    },
+    {
+      "id": "cheese_wedge",
+      "name": "Cheese (wedge)",
+      "cost": {
+        "silver": 1
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Food"
+    },
+    {
+      "id": "inn_stay_squalid",
+      "name": "Inn Stay, Squalid",
+      "cost": {
+        "copper": 7
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Lodging"
+    },
+    {
+      "id": "inn_stay_poor",
+      "name": "Inn Stay, Poor",
+      "cost": {
+        "silver": 1
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Lodging"
+    },
+    {
+      "id": "inn_stay_modest",
+      "name": "Inn Stay, Modest",
+      "cost": {
+        "silver": 5
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Lodging"
+    },
+    {
+      "id": "inn_stay_comfortable",
+      "name": "Inn Stay, Comfortable",
+      "cost": {
+        "silver": 8
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Lodging"
+    },
+    {
+      "id": "inn_stay_wealthy",
+      "name": "Inn Stay, Wealthy",
+      "cost": {
+        "gold": 2
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Lodging"
+    },
+    {
+      "id": "inn_stay_aristocratic",
+      "name": "Inn Stay, Aristocratic",
+      "cost": {
+        "gold": 4
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Lodging"
+    },
+    {
+      "id": "meal_squalid",
+      "name": "Meal, Squalid",
+      "cost": {
+        "copper": 1
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Food"
+    },
+    {
+      "id": "meal_poor",
+      "name": "Meal, Poor",
+      "cost": {
+        "copper": 2
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Food"
+    },
+    {
+      "id": "meal_modest",
+      "name": "Meal, Modest",
+      "cost": {
+        "silver": 1
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Food"
+    },
+    {
+      "id": "meal_comfortable",
+      "name": "Meal, Comfortable",
+      "cost": {
+        "silver": 2
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Food"
+    },
+    {
+      "id": "meal_wealthy",
+      "name": "Meal, Wealthy",
+      "cost": {
+        "silver": 3
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Food"
+    },
+    {
+      "id": "meal_aristocratic",
+      "name": "Meal, Aristocratic",
+      "cost": {
+        "silver": 6
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Food"
+    },
+    {
+      "id": "wine_common_bottle",
+      "name": "Wine, Common (bottle)",
+      "cost": {
+        "silver": 2
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Drink"
+    },
+    {
+      "id": "wine_fine_bottle",
+      "name": "Wine, Fine (bottle)",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 0.0,
+      "category": "Food, Drink, Lodging",
+      "subCategory": "Drink"
+    }
+  ],
+  "transportation": [
+    {
+      "id": "camel",
+      "name": "Camel",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Mounts and Other Animals"
+    },
+    {
+      "id": "elephant",
+      "name": "Elephant",
+      "cost": {
+        "gold": 200
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Mounts and Other Animals"
+    },
+    {
+      "id": "horse_draft",
+      "name": "Horse, Draft",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Mounts and Other Animals"
+    },
+    {
+      "id": "horse_riding",
+      "name": "Horse, Riding",
+      "cost": {
+        "gold": 75
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Mounts and Other Animals"
+    },
+    {
+      "id": "mastiff",
+      "name": "Mastiff",
+      "cost": {
+        "gold": 25
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Mounts and Other Animals"
+    },
+    {
+      "id": "mule",
+      "name": "Mule",
+      "cost": {
+        "gold": 8
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Mounts and Other Animals"
+    },
+    {
+      "id": "pony",
+      "name": "Pony",
+      "cost": {
+        "gold": 30
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Mounts and Other Animals"
+    },
+    {
+      "id": "warhorse",
+      "name": "Warhorse",
+      "cost": {
+        "gold": 400
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Mounts and Other Animals"
+    },
+    {
+      "id": "carriage",
+      "name": "Carriage",
+      "cost": {
+        "gold": 100
+      },
+      "weight": 600.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "cart",
+      "name": "Cart",
+      "cost": {
+        "gold": 15
+      },
+      "weight": 200.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "chariot",
+      "name": "Chariot",
+      "cost": {
+        "gold": 250
+      },
+      "weight": 100.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "feed_aminal",
+      "name": "Feed, Aminal",
+      "cost": {
+        "copper": 5
+      },
+      "weight": 10.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "sanddle_exotic",
+      "name": "Sanddle, Exotic",
+      "cost": {
+        "gold": 60
+      },
+      "weight": 40.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "sanddle_military",
+      "name": "Sanddle, Military",
+      "cost": {
+        "gold": 20
+      },
+      "weight": 30.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "sanddle_riding",
+      "name": "Sanddle, Riding",
+      "cost": {
+        "gold": 10
+      },
+      "weight": 25.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "sled",
+      "name": "Sled",
+      "cost": {
+        "gold": 20
+      },
+      "weight": 300.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "stabling",
+      "name": "Stabling",
+      "cost": {
+        "silver": 5
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "wagon",
+      "name": "Wagon",
+      "cost": {
+        "gold": 35
+      },
+      "weight": 400.0,
+      "category": "Transportation",
+      "subCategory": "Track, Harness, and Drawn Vehicles"
+    },
+    {
+      "id": "airship",
+      "name": "Airship",
+      "cost": {
+        "gold": 40000
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Airborne and Waterborne Vehicles"
+    },
+    {
+      "id": "galley",
+      "name": "Galley",
+      "cost": {
+        "gold": 30000
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Airborne and Waterborne Vehicles"
+    },
+    {
+      "id": "keelboat",
+      "name": "Keelboat",
+      "cost": {
+        "gold": 3000
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Airborne and Waterborne Vehicles"
+    },
+    {
+      "id": "longship",
+      "name": "Longship",
+      "cost": {
+        "gold": 10000
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Airborne and Waterborne Vehicles"
+    },
+    {
+      "id": "rowboat",
+      "name": "Rowboat",
+      "cost": {
+        "gold": 50
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Airborne and Waterborne Vehicles"
+    },
+    {
+      "id": "sailing_ship",
+      "name": "Sailing Ship",
+      "cost": {
+        "gold": 10000
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Airborne and Waterborne Vehicles"
+    },
+    {
+      "id": "warship",
+      "name": "Warship",
+      "cost": {
+        "gold": 25000
+      },
+      "weight": 0.0,
+      "category": "Transportation",
+      "subCategory": "Airborne and Waterborne Vehicles"
     }
   ]
 }
