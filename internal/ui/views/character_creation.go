@@ -2219,6 +2219,36 @@ func (m *CharacterCreationModel) renderReview() string {
 	
 	content.WriteString("\n")
 	
+	// Proficiencies
+	content.WriteString(labelStyle.Render("Proficiencies:"))
+	content.WriteString("\n")
+	
+	// Skills
+	selectedSkills := m.proficiencyManager.GetSelectedSkills()
+	if len(selectedSkills) > 0 {
+		content.WriteString("  Skills: ")
+		content.WriteString(strings.Join(selectedSkills, ", "))
+		content.WriteString("\n")
+	}
+	
+	// Tools
+	selectedTools := m.proficiencyManager.GetSelectedTools()
+	if len(selectedTools) > 0 {
+		content.WriteString("  Tools: ")
+		content.WriteString(strings.Join(selectedTools, ", "))
+		content.WriteString("\n")
+	}
+	
+	// Languages
+	selectedLanguages := m.proficiencyManager.GetSelectedLanguages()
+	if len(selectedLanguages) > 0 {
+		content.WriteString("  Languages: ")
+		content.WriteString(strings.Join(selectedLanguages, ", "))
+		content.WriteString("\n")
+	}
+	
+	content.WriteString("\n")
+	
 	// Starting Equipment
 	content.WriteString(labelStyle.Render("Starting Equipment:"))
 	content.WriteString("\n")
