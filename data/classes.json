@@ -36,7 +36,54 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (A) Studded Leather Armor, Dagger, Thieves' Tools, Tinker's Tools, Dungeoneer's Pack, and 16 GP; or (B) 150 GP"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Studded Leather Armor",
+                  "quantity": 1,
+                  "category": "armor"
+                },
+                {
+                  "name": "Dagger",
+                  "quantity": 1,
+                  "category": "weapon"
+                },
+                {
+                  "name": "Thieves' Tools",
+                  "quantity": 1,
+                  "category": "tool"
+                },
+                {
+                  "name": "Tinker's Tools",
+                  "quantity": 1,
+                  "category": "tool"
+                },
+                {
+                  "name": "Dungeoneer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                },
+                {
+                  "name": "16 GP",
+                  "quantity": 1,
+                  "category": "gear"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "150 GP",
+                  "quantity": 1,
+                  "category": "gear"
+                }
+              ]
+            }
+          ]
+        }
       ],
       "spellcaster": true,
       "spellcastingAbility": "Intelligence",
