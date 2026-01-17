@@ -261,6 +261,12 @@ func (m *MainSheetModel) renderHeader(width int) string {
 		Padding(0, 2).
 		Width(width - 2)
 
+	// Proficiency legend icons
+	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
+	expertIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("◆")
+	legendStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+	legend := legendStyle.Render(fmt.Sprintf("%s Proficient  %s Expertise", profIcon, expertIcon))
+
 	headerContent := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		headerLeft,
@@ -268,7 +274,14 @@ func (m *MainSheetModel) renderHeader(width int) string {
 		headerRight,
 	)
 
-	return headerStyle.Render(headerContent)
+	// Add legend below header content
+	fullHeader := lipgloss.JoinVertical(
+		lipgloss.Left,
+		headerContent,
+		legend,
+	)
+
+	return headerStyle.Render(fullHeader)
 }
 
 func (m *MainSheetModel) renderAbilities(width int) string {
@@ -464,11 +477,6 @@ func (m *MainSheetModel) renderSkills(width int) string {
 		)
 		lines = append(lines, line)
 	}
-
-	// Legend
-	lines = append(lines, "")
-	legendStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
-	lines = append(lines, legendStyle.Render(fmt.Sprintf("%s Prof  %s Expert", profIcon, expertIcon)))
 
 	return panelStyle.Render(strings.Join(lines, "\n"))
 }

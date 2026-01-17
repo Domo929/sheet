@@ -206,9 +206,12 @@ func TestMainSheetModelViewSkills(t *testing.T) {
 		t.Error("view should contain Passive Perception")
 	}
 
-	// Check legend is present
-	if !strings.Contains(view, "Prof") {
-		t.Error("view should contain proficiency legend")
+	// Check legend is present in header
+	if !strings.Contains(view, "Proficient") {
+		t.Error("view should contain proficiency legend in header")
+	}
+	if !strings.Contains(view, "Expertise") {
+		t.Error("view should contain expertise legend in header")
 	}
 }
 
