@@ -386,8 +386,12 @@ func (m *MainSheetModel) renderSkills(width int) string {
 		Bold(true).
 		Foreground(lipgloss.Color("99"))
 
-	modStyle := lipgloss.NewStyle().
+	labelStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("244"))
+
+	modStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("252"))
 
 	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
 	expertIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("◆")
@@ -427,6 +431,13 @@ func (m *MainSheetModel) renderSkills(width int) string {
 
 	var lines []string
 	lines = append(lines, titleStyle.Render("Skills"))
+
+	// Passive Perception - important enough to highlight
+	passivePerception := 10 + char.GetSkillModifier(models.SkillPerception)
+	lines = append(lines, fmt.Sprintf("%s %s",
+		labelStyle.Render("Passive Perception:"),
+		modStyle.Render(fmt.Sprintf("%d", passivePerception)),
+	))
 	lines = append(lines, "")
 
 	for _, skillName := range models.AllSkills() {
@@ -445,14 +456,19 @@ func (m *MainSheetModel) renderSkills(width int) string {
 		displayName := skillNames[skillName]
 		abilityAbbr := skillAbilityAbbr[ability]
 
-		line := fmt.Sprintf("%s %s %-15s %s",
+		line := fmt.Sprintf("%s %3s %-15s %s",
 			icon,
-			modStyle.Render(fmt.Sprintf("(%s)", abilityAbbr)),
+			modStr,
 			displayName,
-			modStyle.Render(modStr),
+			labelStyle.Render(fmt.Sprintf("(%s)", abilityAbbr)),
 		)
 		lines = append(lines, line)
 	}
+
+	// Legend
+	lines = append(lines, "")
+	legendStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
+	lines = append(lines, legendStyle.Render(fmt.Sprintf("%s Prof  %s Expert", profIcon, expertIcon)))
 
 	return panelStyle.Render(strings.Join(lines, "\n"))
 }
