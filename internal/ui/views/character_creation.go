@@ -668,7 +668,7 @@ func (m *CharacterCreationModel) allEquipmentChoicesMade() bool {
 			selectedIdx := m.equipmentChoices[i]
 			if selectedIdx >= 0 && selectedIdx < len(equip.Options) {
 				for _, item := range equip.Options[selectedIdx].Items {
-					if m.isAnyItemPattern(item.Name) {
+					if m.needsItemSubSelection(item) {
 						// Check if we have a sub-selection for this choice
 						if m.equipmentSubSelections == nil || m.equipmentSubSelections[i] == "" {
 							return false // Needs sub-selection but none made
@@ -680,6 +680,11 @@ func (m *CharacterCreationModel) allEquipmentChoicesMade() bool {
 		// Fixed items don't need selection
 	}
 	return true
+}
+
+// needsItemSubSelection checks if an item needs a sub-selection (has a filter).
+func (m *CharacterCreationModel) needsItemSubSelection(item data.EquipmentItem) bool {
+	return item.Filter != nil
 }
 
 // needsSubSelection checks if the currently focused choice needs a sub-selection.
@@ -698,19 +703,14 @@ func (m *CharacterCreationModel) needsSubSelection() bool {
 		return false
 	}
 	
-	// Check if any item in the selected option is an "any [category]" pattern
+	// Check if any item in the selected option has a filter
 	for _, item := range equip.Options[selectedIdx].Items {
-		if m.isAnyItemPattern(item.Name) {
+		if m.needsItemSubSelection(item) {
 			return true
 		}
 	}
 	
 	return false
-}
-
-// isAnyItemPattern checks if an item name is an "any [category]" pattern.
-func (m *CharacterCreationModel) isAnyItemPattern(name string) bool {
-	return strings.HasPrefix(strings.ToLower(name), "any ")
 }
 
 // enterSubSelection enters the sub-selection mode for choosing a specific item.
@@ -729,11 +729,11 @@ func (m *CharacterCreationModel) enterSubSelection() {
 		return
 	}
 	
-	// Find the "any [category]" item
+	// Find the item with a filter
 	for _, item := range equip.Options[selectedIdx].Items {
-		if m.isAnyItemPattern(item.Name) {
-			// Parse the pattern and get available items
-			m.equipmentSubItems = m.getItemsForPattern(item.Name)
+		if m.needsItemSubSelection(item) {
+			// Get available items based on filter
+			m.equipmentSubItems = m.getItemsForFilter(item.Filter)
 			if len(m.equipmentSubItems) > 0 {
 				m.inEquipmentSubSelection = true
 				m.focusedSubItem = 0
@@ -743,40 +743,94 @@ func (m *CharacterCreationModel) enterSubSelection() {
 	}
 }
 
-// getItemsForPattern returns a list of item names matching an "any [category]" pattern.
-func (m *CharacterCreationModel) getItemsForPattern(pattern string) []string {
+// getItemsForFilter returns a list of item names matching an equipment filter.
+func (m *CharacterCreationModel) getItemsForFilter(filter *data.EquipmentFilter) []string {
+	if filter == nil {
+		return nil
+	}
+	
 	equipment, err := m.loader.GetEquipment()
 	if err != nil || equipment == nil {
 		return nil
 	}
 	
-	lowerPattern := strings.ToLower(pattern)
 	var items []string
 	
-	// Match different patterns
-	if strings.Contains(lowerPattern, "any simple weapon") {
-		weapons := equipment.Weapons.GetSimpleWeapons()
-		for _, w := range weapons {
-			items = append(items, w.Name)
+	// Handle weapon filters
+	if filter.WeaponType != "" {
+		var weapons []data.Weapon
+		
+		if filter.WeaponType == "simple" {
+			if filter.WeaponStyle == "melee" {
+				weapons = equipment.Weapons.SimpleMelee
+			} else if filter.WeaponStyle == "ranged" {
+				weapons = equipment.Weapons.SimpleRanged
+			} else {
+				weapons = equipment.Weapons.GetSimpleWeapons()
+			}
+		} else if filter.WeaponType == "martial" {
+			if filter.WeaponStyle == "melee" {
+				weapons = equipment.Weapons.MartialMelee
+			} else if filter.WeaponStyle == "ranged" {
+				weapons = equipment.Weapons.MartialRanged
+			} else {
+				weapons = equipment.Weapons.GetMartialWeapons()
+			}
 		}
-	} else if strings.Contains(lowerPattern, "any martial melee weapon") {
-		weapons := equipment.Weapons.MartialMelee
-		for _, w := range weapons {
-			items = append(items, w.Name)
-		}
-	} else if strings.Contains(lowerPattern, "any martial weapon") {
-		weapons := equipment.Weapons.GetMartialWeapons()
-		for _, w := range weapons {
-			items = append(items, w.Name)
-		}
-	} else if strings.Contains(lowerPattern, "any simple melee weapon") {
-		weapons := equipment.Weapons.SimpleMelee
+		
 		for _, w := range weapons {
 			items = append(items, w.Name)
 		}
 	}
 	
+	// Handle armor filters
+	if filter.ArmorType != "" {
+		var armorItems []data.ArmorItem
+		
+		switch filter.ArmorType {
+		case "light":
+			armorItems = equipment.Armor.Light
+		case "medium":
+			armorItems = equipment.Armor.Medium
+		case "heavy":
+			armorItems = equipment.Armor.Heavy
+		case "shield":
+			armorItems = equipment.Armor.Shield
+		}
+		
+		for _, a := range armorItems {
+			items = append(items, a.Name)
+		}
+	}
+	
 	return items
+}
+
+// getFilterDisplayName generates a user-friendly display name from an equipment filter.
+func (m *CharacterCreationModel) getFilterDisplayName(filter *data.EquipmentFilter) string {
+	if filter == nil {
+		return ""
+	}
+	
+	// Build display string
+	var parts []string
+	
+	if filter.WeaponType != "" {
+		parts = append(parts, "any")
+		parts = append(parts, filter.WeaponType)
+		if filter.WeaponStyle != "" {
+			parts = append(parts, filter.WeaponStyle)
+		}
+		parts = append(parts, "weapon")
+	}
+	
+	if filter.ArmorType != "" {
+		parts = append(parts, "any")
+		parts = append(parts, filter.ArmorType)
+		parts = append(parts, "armor")
+	}
+	
+	return strings.Join(parts, " ")
 }
 
 // getSelectedEquipment returns all selected equipment items.
@@ -796,8 +850,8 @@ func (m *CharacterCreationModel) getSelectedEquipment() []data.EquipmentItem {
 			if selectedIdx >= 0 && selectedIdx < len(equip.Options) {
 				// Add all items from the selected option
 				for _, item := range equip.Options[selectedIdx].Items {
-					// If this is an "any [category]" item, use the sub-selection
-					if m.isAnyItemPattern(item.Name) {
+					// If this item has a filter, use the sub-selection
+					if m.needsItemSubSelection(item) {
 						if m.equipmentSubSelections != nil && m.equipmentSubSelections[i] != "" {
 							items = append(items, data.EquipmentItem{
 								Name:     m.equipmentSubSelections[i],
@@ -805,7 +859,7 @@ func (m *CharacterCreationModel) getSelectedEquipment() []data.EquipmentItem {
 								Category: item.Category,
 							})
 						}
-						// If pattern but no selection yet, skip (shouldn't happen if validation works)
+						// If filter but no selection yet, skip (shouldn't happen if validation works)
 					} else {
 						// Normal item, add as-is
 						items = append(items, item)
@@ -1912,10 +1966,13 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 						itemStrs := []string{}
 						for _, item := range opt.Items {
 							displayName := item.Name
-							// If this is the selected option and it's an "any" pattern with a sub-selection
-							if j == selectedIdx && m.isAnyItemPattern(item.Name) {
-								if m.equipmentSubSelections != nil && m.equipmentSubSelections[i] != "" {
+							// If this item has a filter, show descriptive text or sub-selection
+							if m.needsItemSubSelection(item) {
+								if j == selectedIdx && m.equipmentSubSelections != nil && m.equipmentSubSelections[i] != "" {
 									displayName = m.equipmentSubSelections[i]
+								} else {
+									// Generate display name from filter
+									displayName = m.getFilterDisplayName(item.Filter)
 								}
 							}
 							
@@ -1933,7 +1990,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 							// Show if it needs sub-selection
 							needsSub := false
 							for _, item := range opt.Items {
-								if m.isAnyItemPattern(item.Name) {
+								if m.needsItemSubSelection(item) {
 									needsSub = true
 									break
 								}

@@ -58,9 +58,17 @@ type EquipmentChoice struct {
 
 // EquipmentItem represents a specific equipment item with quantity.
 type EquipmentItem struct {
-	Name     string `json:"name"`     // "Greataxe", "Explorer's Pack", etc.
-	Quantity int    `json:"quantity"` // Number of items
-	Category string `json:"category"` // "weapon", "armor", "pack", "gear", "tool"
+	Name     string           `json:"name"`              // "Greataxe", "Explorer's Pack", etc. (or empty if using filter)
+	Quantity int              `json:"quantity"`          // Number of items
+	Category string           `json:"category"`          // "weapon", "armor", "pack", "gear", "tool"
+	Filter   *EquipmentFilter `json:"filter,omitempty"`  // Optional filter for dynamic selection (e.g., "any martial melee weapon")
+}
+
+// EquipmentFilter specifies criteria for dynamic equipment selection.
+type EquipmentFilter struct {
+	WeaponType   string `json:"weaponType,omitempty"`   // "simple" or "martial"
+	WeaponStyle  string `json:"weaponStyle,omitempty"`  // "melee" or "ranged"
+	ArmorType    string `json:"armorType,omitempty"`    // "light", "medium", "heavy", "shield"
 }
 
 // EquipmentOption represents one option in an equipment choice.

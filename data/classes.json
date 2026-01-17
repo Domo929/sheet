@@ -47,9 +47,13 @@
             {
               "items": [
                 {
-                  "name": "any martial melee weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "martial",
+                    "weaponStyle": "melee"
+                  }
                 }
               ]
             }
@@ -70,9 +74,12 @@
             {
               "items": [
                 {
-                  "name": "any simple weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
                 }
               ]
             }
@@ -361,9 +368,12 @@
             {
               "items": [
                 {
-                  "name": "any simple weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
                 }
               ]
             }
@@ -979,9 +989,12 @@
             {
               "items": [
                 {
-                  "name": "any simple weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
                 }
               ]
             }
@@ -1436,9 +1449,12 @@
             {
               "items": [
                 {
-                  "name": "any simple weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
                 }
               ]
             }
@@ -1459,9 +1475,13 @@
             {
               "items": [
                 {
-                  "name": "any simple melee weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple",
+                    "weaponStyle": "melee"
+                  }
                 }
               ]
             }
@@ -2096,9 +2116,12 @@
             {
               "items": [
                 {
-                  "name": "any simple weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
                 }
               ]
             }
@@ -2385,9 +2408,13 @@
             {
               "items": [
                 {
-                  "name": "any simple melee weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple",
+                    "weaponStyle": "melee"
+                  }
                 }
               ]
             }
@@ -3495,9 +3522,12 @@
             {
               "items": [
                 {
-                  "name": "any simple weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
                 }
               ]
             }
@@ -4105,9 +4135,12 @@
             {
               "items": [
                 {
-                  "name": "any simple weapon",
+                  "name": "",
                   "quantity": 1,
-                  "category": "weapon"
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
                 }
               ]
             }
