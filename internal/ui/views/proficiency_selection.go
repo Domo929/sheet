@@ -144,14 +144,23 @@ func (psm ProficiencySelectionManager) View() string {
 	switch psm.currentSection {
 	case ProfSectionSkills:
 		if psm.skillsRequired > 0 {
-			b.WriteString(psm.skillSelector.View())
+			// Render selector without help text
+			b.WriteString(psm.skillSelector.ViewWithoutHelp())
 
 			// Show background skills
 			if len(psm.backgroundSkills) > 0 {
-				b.WriteString("\n\nFrom Background:\n")
+				b.WriteString("\n")
+				b.WriteString("From Background:\n")
 				for _, skill := range psm.backgroundSkills {
 					b.WriteString("  • " + skill + "\n")
 				}
+			}
+			
+			// Help text at the end
+			helpText := psm.skillSelector.HelpText()
+			if helpText != "" {
+				b.WriteString("\n")
+				b.WriteString(helpText)
 			}
 		} else {
 			b.WriteString("No skill choices needed from class.\n")
@@ -269,6 +278,32 @@ func (psm ProficiencySelectionManager) GetSelectedLanguages() []string {
 		return []string{}
 	}
 	return psm.languageSelector.GetSelectedOptions()
+}
+
+// GetAllSkills returns all skill proficiencies (class-selected + background-granted).
+func (psm ProficiencySelectionManager) GetAllSkills() []string {
+	all := make([]string, 0)
+	all = append(all, psm.GetSelectedSkills()...)
+	all = append(all, psm.backgroundSkills...)
+	return all
+}
+
+// GetAllTools returns all tool proficiencies (selected + background-granted).
+func (psm ProficiencySelectionManager) GetAllTools() []string {
+	all := make([]string, 0)
+	all = append(all, psm.GetSelectedTools()...)
+	if psm.backgroundTool != "" {
+		all = append(all, psm.backgroundTool)
+	}
+	return all
+}
+
+// GetAllLanguages returns all language proficiencies (selected + racial).
+func (psm ProficiencySelectionManager) GetAllLanguages() []string {
+	all := make([]string, 0)
+	all = append(all, psm.GetSelectedLanguages()...)
+	all = append(all, psm.racialLanguages...)
+	return all
 }
 
 // ApplyToCharacter applies the selected proficiencies to the character.

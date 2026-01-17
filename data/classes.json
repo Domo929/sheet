@@ -342,10 +342,75 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Greataxe or (b) any martial melee weapon",
-        "Choice: (a) two handaxes or (b) any simple weapon",
-        "Explorer's Pack",
-        "Four javelins"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Greataxe",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "martial",
+                    "weaponStyle": "melee"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Handaxes",
+                  "quantity": 2,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Explorer's Pack",
+            "quantity": 1,
+            "category": "pack"
+          }
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Javelins",
+            "quantity": 4,
+            "category": "weapon"
+          }
+        }
       ],
       "spellcaster": false,
       "features": [
@@ -718,10 +783,86 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Rapier, (b) Longsword, or (c) any simple weapon",
-        "Choice: (a) Diplomat's Pack or (b) Entertainer's Pack",
-        "Choice: (a) Lute or (b) any other musical instrument",
-        "Leather armor and a dagger"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Rapier, (b) Longsword,",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Diplomat's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Entertainer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Lute",
+                  "quantity": 1,
+                  "category": "gear"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "any other musical instrument",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Leather armor and a dagger",
+            "quantity": 1,
+            "category": "weapon"
+          }
+        }
       ],
       "spellcaster": true,
       "spellcastingAbility": "Charisma",
@@ -1354,11 +1495,109 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Mace or (b) Warhammer (if proficient)",
-        "Choice: (a) Scale mail, (b) Leather armor, or (c) Chain mail (if proficient)",
-        "Choice: (a) Light crossbow and 20 bolts or (b) any simple weapon",
-        "Choice: (a) Priest's Pack or (b) Explorer's Pack",
-        "Shield and holy symbol"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Mace",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Warhammer (if proficient)",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Scale mail, (b) Leather armor,",
+                  "quantity": 1,
+                  "category": "armor"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Chain mail (if proficient)",
+                  "quantity": 1,
+                  "category": "armor"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Light crossbow and 20 bolts",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Priest's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Explorer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Shield and holy symbol",
+            "quantity": 1,
+            "category": "armor"
+          }
+        }
       ],
       "spellcaster": true,
       "spellcastingAbility": "Wisdom",
@@ -1924,9 +2163,67 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Wooden shield or (b) any simple weapon",
-        "Choice: (a) Scimitar or (b) any simple melee weapon",
-        "Leather armor, explorer's pack, and druidic focus"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Wooden shield",
+                  "quantity": 1,
+                  "category": "armor"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Scimitar",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple",
+                    "weaponStyle": "melee"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Leather armor, explorer's pack, and druidic focus",
+            "quantity": 1,
+            "category": "pack"
+          }
+        }
       ],
       "spellcaster": true,
       "spellcastingAbility": "Wisdom",
@@ -2425,10 +2722,98 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Chain mail or (b) Leather armor, longbow, and 20 arrows",
-        "Choice: (a) Martial weapon and shield or (b) two martial weapons",
-        "Choice: (a) Light crossbow and 20 bolts or (b) two handaxes",
-        "Choice: (a) Dungeoneer's Pack or (b) Explorer's Pack"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Chain mail",
+                  "quantity": 1,
+                  "category": "armor"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Leather armor, longbow, and 20 arrows",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Martial weapon and shield",
+                  "quantity": 1,
+                  "category": "armor"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "martial weapons",
+                  "quantity": 2,
+                  "category": "gear"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Light crossbow and 20 bolts",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Handaxes",
+                  "quantity": 2,
+                  "category": "weapon"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Dungeoneer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Explorer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        }
       ],
       "spellcaster": false,
       "features": [
@@ -2757,9 +3142,63 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Shortsword or (b) any simple weapon",
-        "Choice: (a) Dungeoneer's Pack or (b) Explorer's Pack",
-        "10 darts"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Shortsword",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Dungeoneer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Explorer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Darts",
+            "quantity": 10,
+            "category": "weapon"
+          }
+        }
       ],
       "spellcaster": false,
       "features": [
@@ -3097,10 +3536,87 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Martial weapon and shield or (b) two martial weapons",
-        "Choice: (a) Five javelins or (b) any simple melee weapon",
-        "Choice: (a) Priest's Pack or (b) Explorer's Pack",
-        "Chain mail and a holy symbol"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Martial weapon and shield",
+                  "quantity": 1,
+                  "category": "armor"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "martial weapons",
+                  "quantity": 2,
+                  "category": "gear"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Javelins",
+                  "quantity": 5,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple",
+                    "weaponStyle": "melee"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Priest's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Explorer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Chain mail and a holy symbol",
+            "quantity": 1,
+            "category": "armor"
+          }
+        }
       ],
       "spellcaster": true,
       "spellcastingAbility": "Charisma",
@@ -3582,10 +4098,83 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Scale mail or (b) Leather armor",
-        "Choice: (a) Two shortswords or (b) two simple melee weapons",
-        "Choice: (a) Dungeoneer's Pack or (b) Explorer's Pack",
-        "Longbow and a quiver of 20 arrows"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Scale mail",
+                  "quantity": 1,
+                  "category": "armor"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Leather armor",
+                  "quantity": 1,
+                  "category": "armor"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Shortswords",
+                  "quantity": 2,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "simple melee weapons",
+                  "quantity": 2,
+                  "category": "gear"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Dungeoneer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Explorer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Longbow and a quiver of 20 arrows",
+            "quantity": 1,
+            "category": "weapon"
+          }
+        }
       ],
       "spellcaster": true,
       "spellcastingAbility": "Wisdom",
@@ -4163,10 +4752,83 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Rapier or (b) Shortsword",
-        "Choice: (a) Shortbow and quiver of 20 arrows or (b) Shortsword",
-        "Choice: (a) Burglar's Pack, (b) Dungeoneer's Pack, or (c) Explorer's Pack",
-        "Leather armor, two daggers, and thieves' tools"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Rapier",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Shortsword",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Shortbow and quiver of 20 arrows",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Shortsword",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Burglar's Pack, (b) Dungeoneer's Pack,",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Explorer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Leather armor, two daggers, and thieves' tools",
+            "quantity": 1,
+            "category": "weapon"
+          }
+        }
       ],
       "spellcaster": false,
       "features": [
@@ -4517,10 +5179,86 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Light crossbow and 20 bolts or (b) any simple weapon",
-        "Choice: (a) Component pouch or (b) Arcane focus",
-        "Choice: (a) Dungeoneer's Pack or (b) Explorer's Pack",
-        "Two daggers"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Light crossbow and 20 bolts",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Component pouch",
+                  "quantity": 1,
+                  "category": "gear"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Arcane focus",
+                  "quantity": 1,
+                  "category": "gear"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Dungeoneer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Explorer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Daggers",
+            "quantity": 2,
+            "category": "weapon"
+          }
+        }
       ],
       "spellcaster": true,
       "spellcastingAbility": "Charisma",
@@ -5221,10 +5959,86 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Light crossbow and 20 bolts or (b) any simple weapon",
-        "Choice: (a) Component pouch or (b) Arcane focus",
-        "Choice: (a) Scholar's Pack or (b) Dungeoneer's Pack",
-        "Leather armor, any simple weapon, and two daggers"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Light crossbow and 20 bolts",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "",
+                  "quantity": 1,
+                  "category": "weapon",
+                  "filter": {
+                    "weaponType": "simple"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Component pouch",
+                  "quantity": 1,
+                  "category": "gear"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Arcane focus",
+                  "quantity": 1,
+                  "category": "gear"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Scholar's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Dungeoneer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Leather armor, any simple weapon, and two daggers",
+            "quantity": 1,
+            "category": "weapon"
+          }
+        }
       ],
       "spellcaster": true,
       "spellcastingAbility": "Charisma",
@@ -5752,10 +6566,83 @@
         ]
       },
       "startingEquipment": [
-        "Choice: (a) Quarterstaff or (b) Dagger",
-        "Choice: (a) Component pouch or (b) Arcane focus",
-        "Choice: (a) Scholar's Pack or (b) Explorer's Pack",
-        "Spellbook"
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Quarterstaff",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Dagger",
+                  "quantity": 1,
+                  "category": "weapon"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Component pouch",
+                  "quantity": 1,
+                  "category": "gear"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Arcane focus",
+                  "quantity": 1,
+                  "category": "gear"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "options": [
+            {
+              "items": [
+                {
+                  "name": "Scholar's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            },
+            {
+              "items": [
+                {
+                  "name": "Explorer's Pack",
+                  "quantity": 1,
+                  "category": "pack"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "fixed",
+          "item": {
+            "name": "Spellbook",
+            "quantity": 1,
+            "category": "gear"
+          }
+        }
       ],
       "spellcaster": true,
       "spellcastingAbility": "Intelligence",
