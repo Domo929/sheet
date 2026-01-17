@@ -520,6 +520,14 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 // handleProficiencyKeys handles keys for the proficiency selection step.
 func (m *CharacterCreationModel) handleProficiencyKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
 	switch msg.String() {
+	case "enter":
+		// If proficiencies are complete, continue to finalization
+		if m.proficiencyManager.IsComplete() {
+			return m.finalizeCharacter()
+		}
+		// Otherwise, do nothing (user needs to complete selections)
+		return m, nil
+
 	case "tab":
 		// Try to move to next section
 		m.proficiencyManager.NextSection()
@@ -534,15 +542,8 @@ func (m *CharacterCreationModel) handleProficiencyKeys(msg tea.KeyMsg) (*Charact
 		// Go back to abilities
 		return m.moveToStep(StepAbilities)
 
-	case "ctrl+enter":
-		// If proficiencies are complete, finalize character
-		if m.proficiencyManager.IsComplete() {
-			return m.finalizeCharacter()
-		}
-		return m, nil
-
 	default:
-		// Pass keys (including enter and space) to the proficiency manager
+		// Pass keys (including space for toggle) to the proficiency manager
 		m.proficiencyManager.Update(msg)
 		return m, nil
 	}
@@ -1537,9 +1538,9 @@ func (m *CharacterCreationModel) renderProficiencies() string {
 	// Help text
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	if m.proficiencyManager.IsComplete() {
-		content.WriteString(helpStyle.Render("↑/↓: Navigate | Space/Enter: Select | Tab: Next section | Ctrl+Enter: Continue | Esc: Back"))
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | Space: Select/Deselect | Tab: Next section | Enter: Continue | Esc: Back"))
 	} else {
-		content.WriteString(helpStyle.Render("↑/↓: Navigate | Space/Enter: Select | Tab: Next section | Esc: Back"))
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | Space: Select/Deselect | Tab: Next section | Esc: Back"))
 	}
 
 	return content.String()

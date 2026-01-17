@@ -117,17 +117,6 @@ func TestProficiencySelectorSelection(t *testing.T) {
 	}
 }
 
-func TestProficiencySelectorEnterKey(t *testing.T) {
-	options := []string{"Option 1", "Option 2"}
-	ps := NewProficiencySelector("Test", options, 1)
-
-	// Test enter key also works for selection
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	if ps.SelectedCount() != 1 {
-		t.Errorf("expected 1 selection with enter key, got %d", ps.SelectedCount())
-	}
-}
-
 func TestProficiencySelectorGetters(t *testing.T) {
 	options := []string{"Skill A", "Skill B", "Skill C"}
 	ps := NewProficiencySelector("Test", options, 2)

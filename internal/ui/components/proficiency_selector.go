@@ -63,8 +63,8 @@ func (ps *ProficiencySelector) Update(msg tea.Msg) (ProficiencySelector, tea.Cmd
 			if ps.cursor < len(ps.options)-1 {
 				ps.cursor++
 			}
-		case " ", "enter":
-			// Toggle selection
+		case " ":
+			// Toggle selection with space
 			if ps.selected[ps.cursor] {
 				delete(ps.selected, ps.cursor)
 			} else if ps.SelectedCount() < ps.maxSelect {
@@ -117,7 +117,7 @@ func (ps ProficiencySelector) View() string {
 	// Help text
 	b.WriteString("\n")
 	if ps.focused {
-		help := "↑/↓: navigate • space/enter: select • tab: next section"
+		help := "↑/↓: navigate • space: select/deselect • tab: next section"
 		b.WriteString(ps.helpStyle.Render(help))
 	}
 
