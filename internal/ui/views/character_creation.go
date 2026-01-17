@@ -1051,8 +1051,8 @@ func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreati
 	case StepBackground:
 		return m, m.loadBackgrounds()
 	case StepEquipment:
-		// Initialize equipment choices
-		if m.selectedClass != nil {
+		// Initialize equipment choices only if not already initialized
+		if m.selectedClass != nil && m.equipmentChoices == nil {
 			m.equipmentChoices = make([]int, len(m.selectedClass.StartingEquipment))
 			for i, equip := range m.selectedClass.StartingEquipment {
 				if equip.Type == "fixed" {
@@ -1064,6 +1064,7 @@ func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreati
 				}
 			}
 			m.focusedEquipmentChoice = 0
+			m.focusedEquipmentOption = 0
 		}
 	}
 	
