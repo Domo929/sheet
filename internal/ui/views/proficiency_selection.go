@@ -144,14 +144,23 @@ func (psm ProficiencySelectionManager) View() string {
 	switch psm.currentSection {
 	case ProfSectionSkills:
 		if psm.skillsRequired > 0 {
-			b.WriteString(psm.skillSelector.View())
+			// Render selector without help text
+			b.WriteString(psm.skillSelector.ViewWithoutHelp())
 
 			// Show background skills
 			if len(psm.backgroundSkills) > 0 {
-				b.WriteString("\n\nFrom Background:\n")
+				b.WriteString("\n")
+				b.WriteString("From Background:\n")
 				for _, skill := range psm.backgroundSkills {
 					b.WriteString("  • " + skill + "\n")
 				}
+			}
+			
+			// Help text at the end
+			helpText := psm.skillSelector.HelpText()
+			if helpText != "" {
+				b.WriteString("\n")
+				b.WriteString(helpText)
 			}
 		} else {
 			b.WriteString("No skill choices needed from class.\n")

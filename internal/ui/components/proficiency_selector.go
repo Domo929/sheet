@@ -145,6 +145,55 @@ func (ps ProficiencySelector) View() string {
 	return b.String()
 }
 
+// ViewWithoutHelp renders the selector without the help text at the bottom.
+func (ps ProficiencySelector) ViewWithoutHelp() string {
+	var b strings.Builder
+
+	// Title
+	b.WriteString(ps.titleStyle.Render(ps.title))
+	b.WriteString("\n")
+
+	// Selection count
+	selectedCount := ps.SelectedCount()
+	countText := fmt.Sprintf("(%d/%d selected)", selectedCount, ps.maxSelect)
+	if selectedCount >= ps.maxSelect {
+		countText = ps.selectedStyle.Render(countText)
+	} else {
+		countText = ps.helpStyle.Render(countText)
+	}
+	b.WriteString(countText)
+	b.WriteString("\n\n")
+
+	// Options
+	for i, option := range ps.options {
+		cursor := "  "
+		if ps.focused && i == ps.cursor {
+			cursor = ps.cursorStyle.Render("> ")
+		}
+
+		checkbox := "[ ]"
+		style := ps.optionStyle
+		if ps.selected[i] {
+			checkbox = "[✓]"
+			style = ps.selectedStyle
+		}
+
+		line := fmt.Sprintf("%s %s %s", cursor, checkbox, option)
+		b.WriteString(style.Render(line))
+		b.WriteString("\n")
+	}
+
+	return b.String()
+}
+
+// HelpText returns the help text for the selector.
+func (ps ProficiencySelector) HelpText() string {
+	if ps.focused {
+		return ps.helpStyle.Render("↑/↓: navigate • space: select/deselect • tab: next section")
+	}
+	return ""
+}
+
 // SetFocused sets the focused state of the selector.
 func (ps *ProficiencySelector) SetFocused(focused bool) {
 	ps.focused = focused
