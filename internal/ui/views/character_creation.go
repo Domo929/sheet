@@ -1477,6 +1477,65 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 	m.character.AbilityScores.Wisdom.Base += bonuses[4]
 	m.character.AbilityScores.Charisma.Base += bonuses[5]
 	
+	// Set saving throw proficiencies from class
+	if m.selectedClass != nil {
+		for _, save := range m.selectedClass.SavingThrowProficiencies {
+			switch strings.ToLower(save) {
+			case "str", "strength":
+				m.character.SavingThrows.SetProficiency(models.AbilityStrength, true)
+			case "dex", "dexterity":
+				m.character.SavingThrows.SetProficiency(models.AbilityDexterity, true)
+			case "con", "constitution":
+				m.character.SavingThrows.SetProficiency(models.AbilityConstitution, true)
+			case "int", "intelligence":
+				m.character.SavingThrows.SetProficiency(models.AbilityIntelligence, true)
+			case "wis", "wisdom":
+				m.character.SavingThrows.SetProficiency(models.AbilityWisdom, true)
+			case "cha", "charisma":
+				m.character.SavingThrows.SetProficiency(models.AbilityCharisma, true)
+			}
+		}
+	}
+	
+	// Set skill proficiencies from selections
+	selectedSkills := m.proficiencyManager.GetAllSkills()
+	for _, skillName := range selectedSkills {
+		m.character.Skills.SetProficiency(skillNameToKey(skillName), models.Proficient)
+	}
+	
+	// Set combat stats
+	hitDieType := 8 // default
+	if m.selectedClass != nil {
+		// Parse hit dice string like "d10" or "1d10"
+		hitDiceStr := m.selectedClass.HitDice
+		if strings.Contains(hitDiceStr, "d") {
+			parts := strings.Split(hitDiceStr, "d")
+			if len(parts) == 2 {
+				var dieType int
+				fmt.Sscanf(parts[1], "%d", &dieType)
+				if dieType > 0 {
+					hitDieType = dieType
+				}
+			}
+		}
+	}
+	
+	// Calculate starting HP: max hit die + CON modifier
+	conMod := m.character.AbilityScores.Constitution.Modifier()
+	startingHP := hitDieType + conMod
+	if startingHP < 1 {
+		startingHP = 1
+	}
+	
+	// Get speed from race (default 30 if not specified)
+	speed := 30
+	if m.selectedRace != nil && m.selectedRace.Speed > 0 {
+		speed = m.selectedRace.Speed
+	}
+	
+	m.character.CombatStats = models.NewCombatStats(startingHP, hitDieType, 1, speed)
+	m.character.CombatStats.ArmorClass = 10 + m.character.AbilityScores.Dexterity.Modifier() // Base AC
+	
 	// Add starting gold
 	m.character.Inventory.Currency.AddGold(m.startingGold)
 	

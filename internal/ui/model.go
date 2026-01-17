@@ -37,7 +37,7 @@ type Model struct {
 	// View-specific models
 	characterSelectionModel *views.CharacterSelectionModel
 	characterCreationModel  *views.CharacterCreationModel
-	// mainSheetModel interface{}
+	mainSheetModel          *views.MainSheetModel
 	// inventoryModel interface{}
 	// etc.
 }
@@ -110,6 +110,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.characterCreationModel = nil
 		return m, nil
 
+	case views.BackToSelectionMsg:
+		// User wants to return to character selection from main sheet
+		m.currentView = ViewCharacterSelection
+		m.mainSheetModel = nil
+		m.character = nil
+		// Reload character list
+		if m.characterSelectionModel != nil {
+			return m, m.characterSelectionModel.Init()
+		}
+		return m, nil
+
 	case views.CharacterLoadedMsg:
 		// Load the character from storage
 		char, err := m.storage.LoadByPath(msg.Path)
@@ -118,8 +129,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.character = char
+		m.mainSheetModel = views.NewMainSheetModel(char, m.storage)
+		// Pass current window size to the new model
+		if m.width > 0 && m.height > 0 {
+			m.mainSheetModel, _ = m.mainSheetModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
 		m.currentView = ViewMainSheet
-		return m, nil
+		return m, m.mainSheetModel.Init()
 
 	case NavigateMsg:
 		m.currentView = msg.View
@@ -132,8 +151,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.character = char
+		m.mainSheetModel = views.NewMainSheetModel(char, m.storage)
+		// Pass current window size to the new model
+		if m.width > 0 && m.height > 0 {
+			m.mainSheetModel, _ = m.mainSheetModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
 		m.currentView = ViewMainSheet
-		return m, nil
+		return m, m.mainSheetModel.Init()
 
 	case ErrorMsg:
 		m.err = msg.Err
@@ -162,12 +189,17 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = c
 		}
 	case ViewMainSheet:
-		// Handle keys for main sheet view (stub)
-		if keyMsg, ok := msg.(tea.KeyMsg); ok {
-			switch keyMsg.String() {
-			case "q", "ctrl+c":
-				m.quitting = true
-				return m, tea.Quit
+		if m.mainSheetModel != nil {
+			updatedModel, c := m.mainSheetModel.Update(msg)
+			m.mainSheetModel = updatedModel
+			cmd = c
+
+			// Check for navigation back to selection
+			if keyMsg, ok := msg.(tea.KeyMsg); ok {
+				if keyMsg.String() == "q" || keyMsg.String() == "ctrl+c" {
+					m.quitting = true
+					return m, tea.Quit
+				}
 			}
 		}
 	default:
@@ -229,6 +261,9 @@ func (m Model) renderCharacterCreation() string {
 }
 
 func (m Model) renderMainSheet() string {
+	if m.mainSheetModel != nil {
+		return m.mainSheetModel.View()
+	}
 	if m.character == nil {
 		return "No character loaded"
 	}
