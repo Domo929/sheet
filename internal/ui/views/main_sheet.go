@@ -13,12 +13,13 @@ import (
 
 // MainSheetModel is the model for the main character sheet view.
 type MainSheetModel struct {
-	character *models.Character
-	storage   *storage.CharacterStorage
-	width     int
-	height    int
-	focusArea FocusArea
-	keys      mainSheetKeyMap
+	character     *models.Character
+	storage       *storage.CharacterStorage
+	width         int
+	height        int
+	focusArea     FocusArea
+	keys          mainSheetKeyMap
+	statusMessage string
 }
 
 // FocusArea represents which panel is currently focused.
@@ -109,6 +110,9 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// Clear status message on any key press
+		m.statusMessage = ""
+		
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
@@ -124,6 +128,21 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			return m, nil
 		case key.Matches(msg, m.keys.Navigation):
 			return m, func() tea.Msg { return BackToSelectionMsg{} }
+		case key.Matches(msg, m.keys.Inventory):
+			m.statusMessage = "Inventory view coming soon..."
+			return m, nil
+		case key.Matches(msg, m.keys.Spellbook):
+			m.statusMessage = "Spellbook view coming soon..."
+			return m, nil
+		case key.Matches(msg, m.keys.Info):
+			m.statusMessage = "Character info view coming soon..."
+			return m, nil
+		case key.Matches(msg, m.keys.Combat):
+			m.statusMessage = "Combat tracker coming soon..."
+			return m, nil
+		case key.Matches(msg, m.keys.Rest):
+			m.statusMessage = "Rest options coming soon..."
+			return m, nil
 		}
 	}
 
@@ -566,7 +585,18 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Foreground(lipgloss.Color("244")).
 		Width(width)
 
-	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • c: character info • r: rest • q: quit"
+	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • c: character info • r: rest • esc: back • q: quit"
+
+	// Show status message if present
+	if m.statusMessage != "" {
+		statusStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("214")).
+			Bold(true)
+		return lipgloss.JoinVertical(lipgloss.Left,
+			statusStyle.Render(m.statusMessage),
+			footerStyle.Render(help),
+		)
+	}
 
 	return footerStyle.Render(help)
 }
