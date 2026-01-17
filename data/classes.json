@@ -189,8 +189,7 @@
               "description": "You gain the following benefits.\nAlchemical Eruption. When you cast an Artificer spell that deals Acid, Fire, or Poison damage to a target, you can also deal 2d8 Force damage to that target. You can use this benefit only once on each of your turns.\nChemical Resistance. You gain Resistance to Acid damage and Poison damage. You also gain Immunity to the Poisoned condition.\nConjured Cauldron. You can cast Tasha\u2019s Bubbling Cauldron without expending a spell slot, without preparing the spell, and without Material components, provided you use Alchemist\u2019s Supplies as the Spellcasting Focus. Once you use this feature, you can\u2019t use it again until you finish a Long Rest."
             }
           ],
-          "description": "Source: Eberron - Forge of the Artificer\nCraft Magic Elixirs and Potions An Alchemist is an expert at combining reagents to produce magical effects. Alchemists use their creations to give life and to leech it away.",
-          "url": "http://dnd2024.wikidot.com/artificer:alchemist"
+          "description": "Craft Magic Elixirs and Potions An Alchemist is an expert at combining reagents to produce magical effects. Alchemists use their creations to give life and to leech it away."
         },
         {
           "name": "Armorer",
@@ -231,8 +230,7 @@
               "description": "Your Arcane Armor gains additional benefits based on its model, as detailed below.\nDreadnaught. The damage die of your Force Demolisher increases to 2d6 Force damage.\nIn addition, when you use your Giant Stature, your reach increases by 10 feet, your size can increase to Large or Huge (your choice), and you have Advantage on Strength checks and Strength saving throws for the duration.\nGuardian. The damage die of your Thunder Pulse increases to 1d10 Thunder damage.\nIn addition, when a Huge or smaller creature you can see ends its turn within 30 feet of you, you can take a Reaction to magically force that creature to make a Strength saving throw against your spell save DC. On a failed save, you pull the creature up to 25 feet directly toward you to an unoccupied space. If you pull the target to a space within 5 feet of yourself, you can make a melee weapon attack against it as part of this Reaction.\nYou can take this Reaction a number of times equal to your Intelligence modifier (minimum of once), and you regain all expended uses when you finish a Long Rest.\nInfiltrator. The damage die of your Lightning Launcher increases to 2d6 Lightning damage. Any creature that takes Lightning damage from your Lightning Launcher glimmers with magical light until the start of your next turn. The glimmering creature sheds Dim Light in a 5-foot radius, and it has Disadvantage on attack rolls against you, as the light jolts it if it attacks you.\nAdditionally, as a Bonus Action, you can gain a Fly Speed equal to twice your Speed until the end of the current turn. You can take this Bonus Action a number of times equal to your Intelligence modifier (minimum of once), and you regain all expended uses when you finish a Long Rest."
             }
           ],
-          "description": "Source: Eberron - Forge of the Artificer\nCraft Magic Armor to Enhance Your Abilities An Armorer modifies armor to function almost like a second skin. The armor is enhanced to hone the Armorer\u2019s magic, unleash potent attacks, and generate a formidable defense.",
-          "url": "http://dnd2024.wikidot.com/artificer:armorer"
+          "description": "Craft Magic Armor to Enhance Your Abilities An Armorer modifies armor to function almost like a second skin. The armor is enhanced to hone the Armorer\u2019s magic, unleash potent attacks, and generate a formidable defense."
         },
         {
           "name": "Artillerist",
@@ -268,8 +266,7 @@
               "description": "You\u2019re a master at forming well-defended emplacements using your Eldritch Cannon. You gain the following benefits.\nDouble Firepower . You can now have two cannons at the same time, and you can create two with the same Magic action. (If you expend a spell slot to create the first cannon, you must expend another spell slot to create the second.) You can activate both of them with the same Bonus Action, ordering them to use the same activation option or different ones. You can\u2019t create a third cannon while you have two.\nShimmering Field Projection. You and your allies have Half Cover while within 10 feet of your Eldritch Cannon."
             }
           ],
-          "description": "Source: Eberron - Forge of the Artificer\nWield Destructive Power from Afar An Artillerist specializes in using magic to hurl energy, projectiles, and explosions on a battlefield.",
-          "url": "http://dnd2024.wikidot.com/artificer:artillerist"
+          "description": "Wield Destructive Power from Afar An Artillerist specializes in using magic to hurl energy, projectiles, and explosions on a battlefield."
         },
         {
           "name": "Battle Smith",
@@ -310,8 +307,7 @@
               "description": "Your Arcane Jolt and Steel Defender have become more powerful, granting these benefits.\nImproved Jolt. The extra damage and healing of your Arcane Jolt both increase to 4d6.\nImproved Deflection. Whenever your Steel Defender uses its Deflect Attack, the attacker takes Force damage equal to 1d4 plus your Intelligence modifier."
             }
           ],
-          "description": "Source: Eberron - Forge of the Artificer\nCommand a Construct Guardian A Battle Smith is a combination of protector and medic, an expert at defending others and repairing both materiel and personnel. To aid in their work, Battle Smiths are accompanied by a Steel Defender, a protective companion of their own creation.",
-          "url": "http://dnd2024.wikidot.com/artificer:battle-smith"
+          "description": "Command a Construct Guardian A Battle Smith is a combination of protector and medic, an expert at defending others and repairing both materiel and personnel. To aid in their work, Battle Smiths are accompanied by a Steel Defender, a protective companion of their own creation."
         },
         {
           "name": "Cartographer",
@@ -352,8 +348,7 @@
               "description": "Your Adventurer\u2019s Atlas improves, gaining the following benefits.\nSafe Haven. When a map holder would be reduced to 0 Hit Points but not killed outright, that creature can destroy its map. The creature\u2019s Hit Points instead change to a number equal to twice your Artificer level, and the creature is teleported to an unoccupied space within 5 feet of you or another map holder of its choice.\nUnerring Path. If you are one of the map holders for your Adventurer\u2019s Atlas, you can cast Find the Path without expending a spell slot, without preparing the spell, and without needing spell components. Once you use this benefit, you can\u2019t use it again until you finish a Long Rest."
             }
           ],
-          "description": "Source: Eberron - Forge of the Artificer\nChart Advantageous Courses through Turmoil Cartographers are the premier navigators and reconnaissance agents. Using their creations, Cartographers can highlight threats, safeguard allies, and carve portals to distant locations.",
-          "url": "http://dnd2024.wikidot.com/artificer:cartographer"
+          "description": "Chart Advantageous Courses through Turmoil Cartographers are the premier navigators and reconnaissance agents. Using their creations, Cartographers can highlight threats, safeguard allies, and carve portals to distant locations."
         }
       ]
     },
@@ -704,8 +699,7 @@
               "description": "As a Bonus Action, you can strike terror into others with your menacing presence and primal power. When you do so, each creature of your choice in a 30-foot Emanation originating from you must make a Wisdom saving throw (DC 8 plus your Strength modifier and Proficiency Bonus). On a failed save, a creature has the Frightened condition for 1 minute. At the end of each of the Frightened creature's turns, the creature repeats the save, ending the effect on itself on a success.\nOnce you use this feature, you can't use it again until you finish a Long Rest unless you expend a use of your Rage (no action required) to restore your use of it."
             }
           ],
-          "description": "Source: Player's Handbook\nChannel Rage into Violent Fury Barbarians who walk the Path of the Berserker direct their Rage primarily toward violence. Their path is one of untrammeled fury, and they thrill in the chaos of battle as they allow their Rage to seize and empower them.",
-          "url": "http://dnd2024.wikidot.com/barbarian:path-of-the-berserker"
+          "description": "Channel Rage into Violent Fury Barbarians who walk the Path of the Berserker direct their Rage primarily toward violence. Their path is one of untrammeled fury, and they thrill in the chaos of battle as they allow their Rage to seize and empower them."
         },
         {
           "name": "Path Of The Wild Heart",
@@ -736,8 +730,7 @@
               "description": "Whenever you activate your Rage, you gain one of the following options of your choice.\nFalcon. While your Rage is active, you have a Fly Speed equal to your Speed if you aren\u2019t wearing any armor.\nLion. While your Rage is active, any of your enemies within 5 feet of you have Disadvantage on attack rolls against targets other than you or another Barbarian who has this option active.\nRam. While your Rage is active, you can cause a Large or smaller creature to have the Prone condition when you hit it with a melee attack."
             }
           ],
-          "description": "Source: Player's Handbook\nWalk in Community with the Animal World Barbarians who follow the Path of the Wild Heart view themselves as kin to animals. These Barbarians learn magical means to communicate with animals, and their Rage heightens their connection to animals as it fills them with supernatural might.",
-          "url": "http://dnd2024.wikidot.com/barbarian:path-of-the-wild-heart"
+          "description": "Walk in Community with the Animal World Barbarians who follow the Path of the Wild Heart view themselves as kin to animals. These Barbarians learn magical means to communicate with animals, and their Rage heightens their connection to animals as it fills them with supernatural might."
         },
         {
           "name": "Path Of The World Tree",
@@ -763,8 +756,7 @@
               "description": "When you activate your Rage and as a Bonus Action while your Rage is active, you can teleport up to 60 feet to an unoccupied space you can see. In addition, once per Rage, you can increase the range of that teleport to 150 feet. When you do so, you can also bring up to six willing creatures who are within 10 feet of you. Each creature teleports to an unoccupied space of your choice within 10 feet of your destination space."
             }
           ],
-          "description": "Source: Player's Handbook\nTrace the Roots and Branches of the Multiverse Barbarians who follow the Path of the World Tree connect with the cosmic tree Yggdrasil through their Rage. This tree grows among the Outer Planes, connecting them to each other and the Material Plane. These Barbarians draw on the tree\u2019s magic for vitality and as a means of dimensional travel.",
-          "url": "http://dnd2024.wikidot.com/barbarian:path-of-the-world-tree"
+          "description": "Trace the Roots and Branches of the Multiverse Barbarians who follow the Path of the World Tree connect with the cosmic tree Yggdrasil through their Rage. This tree grows among the Outer Planes, connecting them to each other and the Material Plane. These Barbarians draw on the tree\u2019s magic for vitality and as a means of dimensional travel."
         },
         {
           "name": "Path Of The Zealot",
@@ -795,8 +787,7 @@
               "description": "When you activate your Rage, you can assume the form of a divine warrior. This form lasts for 1 minute or until you drop to 0 Hit Points. Once you use this feature, you can't do so again until you finish a Long Rest.\nWhile in this form, you gain the benefits below.\nFlight. You have a Fly Speed equal to your Speed and can hover.\nResistance. You have Resistance to Necrotic, Psychic, and Radiant damage.\nRevivification. When a creature within 30 feet of you would drop to 0 Hit Points, you can take a Reaction to expend a use of your Rage to instead change the target\u2019s Hit Points to a number equal to your Barbarian level."
             }
           ],
-          "description": "Source: Player's Handbook\nRage in Ecstatic Union with a God Barbarians who walk the Path of the Zealot receive boons from a god or pantheon. These Barbarians experience their Rage as an ecstatic episode of divine union that infuses them with power. They are often allies to the priests and other followers of their god or pantheon.",
-          "url": "http://dnd2024.wikidot.com/barbarian:path-of-the-zealot"
+          "description": "Rage in Ecstatic Union with a God Barbarians who walk the Path of the Zealot receive boons from a god or pantheon. These Barbarians experience their Rage as an ecstatic episode of divine union that infuses them with power. They are often allies to the priests and other followers of their god or pantheon."
         }
       ]
     },
@@ -1399,8 +1390,7 @@
               "description": "When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed on the saving throw and only half damage if you fail. If any creatures within 5 feet of you are making the same Dexterity saving throw, you can share this benefit with them for that save.\nYou can\u2019t use this feature if you have the Incapacitated condition."
             }
           ],
-          "description": "Source: Player's Handbook\nMove in Harmony with the Cosmos Bards of the College of Dance know that the Words of Creation can't be contained within speech or song; the words are uttered by the movements of celestial bodies and flow through the motions of the smallest creatures. These Bards practice a way of being in harmony with the whirling cosmos that emphasizes agility, speed, and grace.",
-          "url": "http://dnd2024.wikidot.com/bard:college-of-dance"
+          "description": "Move in Harmony with the Cosmos Bards of the College of Dance know that the Words of Creation can't be contained within speech or song; the words are uttered by the movements of celestial bodies and flow through the motions of the smallest creatures. These Bards practice a way of being in harmony with the whirling cosmos that emphasizes agility, speed, and grace."
         },
         {
           "name": "College of Glamour",
@@ -1426,8 +1416,7 @@
               "description": "As a Bonus Action, you can assume a magically majestic presence for 1 minute or until you have the Incapacitated condition. For the duration, whenever any creature hits you with an attack roll for the first time on a turn, the attacker must succeed on a Charisma saving throw against your spell save DC, or the attack misses instead, as the creature recoils from your majesty.\nOnce you assume this majestic presence, you can't do so again until you finish a Short or Long Rest."
             }
           ],
-          "description": "Source: Player's Handbook\nWeave Beguiling Fey Magic The College of Glamour traces its origins to the beguiling magic of the Feywild. Bards who study this magic weave threads of beauty and terror into their songs and stories, and the mightiest among them can cloak themselves in otherworldly majesty. Their performances stir up wistful longing for forgotten innocence, evoke unconscious memories of longheld fears, and tug at the emotions of even the most hard-hearted listeners.",
-          "url": "http://dnd2024.wikidot.com/bard:college-of-glamour"
+          "description": "Weave Beguiling Fey Magic The College of Glamour traces its origins to the beguiling magic of the Feywild. Bards who study this magic weave threads of beauty and terror into their songs and stories, and the mightiest among them can cloak themselves in otherworldly majesty. Their performances stir up wistful longing for forgotten innocence, evoke unconscious memories of longheld fears, and tug at the emotions of even the most hard-hearted listeners."
         },
         {
           "name": "College of Lore",
@@ -1453,8 +1442,7 @@
               "description": "When you make an ability check or attack roll and fail, you can expend one use of Bardic Inspiration; roll the Bardic Inspiration die, and add the number rolled to the d20, potentially turning a failure into a success. On a failure, the Bardic Inspiration isn\u2019t expended."
             }
           ],
-          "description": "Source: Player's Handbook\nPlumb the Depths of Magical Knowledge Bards of the College of Lore collect spells and secrets from diverse sources, such as scholarly tomes, mystical rites, and peasant tales. The college\u2019s members gather in libraries and universities to share their lore with one another. They also meet at festivals or affairs of state, where they can expose corruption, unravel lies, and poke fun at self-important figures of authority.",
-          "url": "http://dnd2024.wikidot.com/bard:college-of-lore"
+          "description": "Plumb the Depths of Magical Knowledge Bards of the College of Lore collect spells and secrets from diverse sources, such as scholarly tomes, mystical rites, and peasant tales. The college\u2019s members gather in libraries and universities to share their lore with one another. They also meet at festivals or affairs of state, where they can expose corruption, unravel lies, and poke fun at self-important figures of authority."
         },
         {
           "name": "College of the Moon",
@@ -1480,8 +1468,7 @@
               "description": "You become suffused with the might of the moon, improving your Moon\u2019s Inspiration in the following ways.\nShadow of the New Moon. When you use Inspired Eclipse, the creature who received the Bardic Inspiration die can also have the Invisible condition and immediately take a Reaction to teleport up to 30 feet to an unoccupied space it can see. The creature remains Invisible until the start of its next turn.\nVibrance of the Full Moon. When you use Lunar Vitality, you can roll 1d6 and use the number rolled in place of expending a Bardic Inspiration die."
             }
           ],
-          "description": "Source: Forgotten Realms - Heroes of Faerun\nInspire Allies with Primal Tales\nThe College of the Moon traces its origins to the ancient druidic circles of the Moonshae Isles, who entrusted the first Bards of this tradition with chronicling the stories of the islands and their people. Bards of this college draw from the isles\u2019 fey magic and the primal power of the moonwells to bolster their allies, protect the natural world, and inspire their bardic works.",
-          "url": "http://dnd2024.wikidot.com/bard:college-of-the-moon"
+          "description": "Inspire Allies with Primal Tales\nThe College of the Moon traces its origins to the ancient druidic circles of the Moonshae Isles, who entrusted the first Bards of this tradition with chronicling the stories of the islands and their people. Bards of this college draw from the isles\u2019 fey magic and the primal power of the moonwells to bolster their allies, protect the natural world, and inspire their bardic works."
         },
         {
           "name": "College of Valor",
@@ -1507,8 +1494,7 @@
               "description": "After you cast a spell that has a casting time of an action, you can make one attack with a weapon as a Bonus Action."
             }
           ],
-          "description": "Source: Player's Handbook\nSing the Deeds of Ancient Heroes Bards of the College of Valor are daring storytellers whose tales preserve the memory of the great heroes of the past. These Bards sing the deeds of the mighty in vaulted halls or to crowds gathered around great bonfires. They travel to witness great events firsthand and to ensure that the memory of these events doesn\u2019t pass away. With their songs, they inspire new generations to reach the same heights of accomplishment as the heroes of old.",
-          "url": "http://dnd2024.wikidot.com/bard:college-of-valor"
+          "description": "Sing the Deeds of Ancient Heroes Bards of the College of Valor are daring storytellers whose tales preserve the memory of the great heroes of the past. These Bards sing the deeds of the mighty in vaulted halls or to crowds gathered around great bonfires. They travel to witness great events firsthand and to ensure that the memory of these events doesn\u2019t pass away. With their songs, they inspire new generations to reach the same heights of accomplishment as the heroes of old."
         }
       ]
     },
@@ -2033,8 +2019,7 @@
               "description": "As a Bonus Action, you magically expand your mind to the future. For 1 hour, you have Advantage on D20 Tests. Once you use this feature, you can\u2019t use it again until you finish a Long Rest. You can also restore your use of this feature by expending a level 6+ spell slot (no action required)."
             }
           ],
-          "description": "Source: Forgotten Realms - Heroes of Faerun\nUnearth Secrets and Master the Mind\nThe Knowledge Domain values learning and understanding above all. Clerics who tap into this domain study esoteric lore, collect old tomes, delve into secret places, and examine the processes of the mind. To them, knowledge is more valuable than material wealth, and learning is an act of worship. Libraries, universities, and other educational institutions also draw on the power of the Knowledge Domain.\nGods of knowledge vary from masters of arcane magic to patrons of craft and invention. In Faer\u00fbn, Clerics of the Knowledge Domain worship deities of learning and ingenuity such as Oghma and Gond, among many others.",
-          "url": "http://dnd2024.wikidot.com/cleric:knowledge-domain"
+          "description": "Unearth Secrets and Master the Mind\nThe Knowledge Domain values learning and understanding above all. Clerics who tap into this domain study esoteric lore, collect old tomes, delve into secret places, and examine the processes of the mind. To them, knowledge is more valuable than material wealth, and learning is an act of worship. Libraries, universities, and other educational institutions also draw on the power of the Knowledge Domain.\nGods of knowledge vary from masters of arcane magic to patrons of craft and invention. In Faer\u00fbn, Clerics of the Knowledge Domain worship deities of learning and ingenuity such as Oghma and Gond, among many others."
         },
         {
           "name": "Life Domain",
@@ -2065,8 +2050,7 @@
               "description": "When you would normally roll one or more dice to restore Hit Points to a creature with a spell or Channel Divinity, don\u2019t roll those dice for the healing; instead use the highest number possible for each die. For example, instead of restoring 2d6 Hit Points to a creature with a spell, you restore 12."
             }
           ],
-          "description": "Source: Player's Handbook\nSoothe the Hurts of the World\nThe Life Domain focuses on the positive energy that helps sustain all life in the multiverse. Clerics who tap into this domain are masters of healing, using that life force to cure many hurts.\nExistence itself relies on the positive energy associated with this domain, so a Cleric of almost any religious tradition might choose it. This domain is particularly associated with agricultural deities, gods of healing or endurance, and gods of home and community. Religious orders of healing also seek the magic of this domain.",
-          "url": "http://dnd2024.wikidot.com/cleric:life-domain"
+          "description": "Soothe the Hurts of the World\nThe Life Domain focuses on the positive energy that helps sustain all life in the multiverse. Clerics who tap into this domain are masters of healing, using that life force to cure many hurts.\nExistence itself relies on the positive energy associated with this domain, so a Cleric of almost any religious tradition might choose it. This domain is particularly associated with agricultural deities, gods of healing or endurance, and gods of home and community. Religious orders of healing also seek the magic of this domain."
         },
         {
           "name": "Light Domain",
@@ -2097,8 +2081,7 @@
               "description": "As a Magic action, you cause yourself to emit an aura of sunlight that lasts for 1 minute or until you dismiss it (no action required). You emit Bright Light in a 60-foot radius and Dim Light for an additional 30 feet. Your enemies in the Bright Light have Disadvantage on saving throws against your Radiance of the Dawn and any spell that deals Fire or Radiant damage.\nYou can use this feature a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a Long Rest."
             }
           ],
-          "description": "Source: Player's Handbook\nBring Light to Banish Darkness\nThe Light Domain emphasizes the divine power to bring about blazing fire and revelation. Clerics who wield this power are enlightened souls infused with radiance and the power of their deities\u2019 discerning vision, charged with chasing away lies and burning away darkness.\nThe Light Domain is associated with gods of truth, vigilance, beauty, insight, and renewal. Some of these gods are identified with the sun or as charioteers who guide the sun across the sky. Others are sentinels who pierce deception. Some are deities of beauty and artistry who teach that art is a vehicle for the soul\u2019s improvement.",
-          "url": "http://dnd2024.wikidot.com/cleric:light-domain"
+          "description": "Bring Light to Banish Darkness\nThe Light Domain emphasizes the divine power to bring about blazing fire and revelation. Clerics who wield this power are enlightened souls infused with radiance and the power of their deities\u2019 discerning vision, charged with chasing away lies and burning away darkness.\nThe Light Domain is associated with gods of truth, vigilance, beauty, insight, and renewal. Some of these gods are identified with the sun or as charioteers who guide the sun across the sky. Others are sentinels who pierce deception. Some are deities of beauty and artistry who teach that art is a vehicle for the soul\u2019s improvement."
         },
         {
           "name": "Trickery Domain",
@@ -2129,8 +2112,7 @@
               "description": "The illusion of your Invoke Duplicity has grown more powerful in the following ways.\nShared Distraction. When you and your allies make attack rolls against a creature within 5 feet of the illusion, the attack rolls have Advantage.\nHealing Illusion. When the illusion ends, you or a creature of your choice within 5 feet of it regains a number of Hit Points equal to your Cleric level."
             }
           ],
-          "description": "Source: Player's Handbook\nMake Mischief and Challenge Authority\nThe Trickery Domain offers magic of deception, illusion, and stealth. Clerics who wield this magic are a disruptive force in the world, puncturing pride, mocking tyrants, freeing captives, and flouting hollow traditions. They prefer subterfuge and pranks to direct confrontation.\nGods of trickery are mischief-makers and instigators who stand as a constant challenge to the accepted order among both gods and mortals. They embody the forces of change and social upheaval, and they\u2019re patrons of thieves, scoundrels, gamblers, rebels, and liberators. Religious orders that operate in secret, especially those that seek to undermine oppressive governments or hierarchies, also draw on the power of the Trickery Domain.",
-          "url": "http://dnd2024.wikidot.com/cleric:trickery-domain"
+          "description": "Make Mischief and Challenge Authority\nThe Trickery Domain offers magic of deception, illusion, and stealth. Clerics who wield this magic are a disruptive force in the world, puncturing pride, mocking tyrants, freeing captives, and flouting hollow traditions. They prefer subterfuge and pranks to direct confrontation.\nGods of trickery are mischief-makers and instigators who stand as a constant challenge to the accepted order among both gods and mortals. They embody the forces of change and social upheaval, and they\u2019re patrons of thieves, scoundrels, gamblers, rebels, and liberators. Religious orders that operate in secret, especially those that seek to undermine oppressive governments or hierarchies, also draw on the power of the Trickery Domain."
         },
         {
           "name": "War Domain",
@@ -2161,8 +2143,7 @@
               "description": "You gain Resistance to Bludgeoning, Piercing, and Slashing damage."
             }
           ],
-          "description": "Source: Player's Handbook\nInspire Valor and Smite Foes\nWar has many manifestations. It can make heroes of ordinary people. It can be desperate and horrific, with acts of cruelty and cowardice eclipsing instances of excellence and courage. Clerics who tap into the magic of the War Domain excel in battle, inspiring others to fight the good fight or offering acts of violence as prayers.\nGods of the War Domain watch over warriors and reward them for their great deeds. They include champions of honor and chivalry as well as gods of destruction and pillage. Other war gods take a more neutral stance, promoting war in all its manifestations and supporting warriors in any circumstance.",
-          "url": "http://dnd2024.wikidot.com/cleric:war-domain"
+          "description": "Inspire Valor and Smite Foes\nWar has many manifestations. It can make heroes of ordinary people. It can be desperate and horrific, with acts of cruelty and cowardice eclipsing instances of excellence and courage. Clerics who tap into the magic of the War Domain excel in battle, inspiring others to fight the good fight or offering acts of violence as prayers.\nGods of the War Domain watch over warriors and reward them for their great deeds. They include champions of honor and chivalry as well as gods of destruction and pillage. Other war gods take a more neutral stance, promoting war in all its manifestations and supporting warriors in any circumstance."
         }
       ]
     },
@@ -2634,8 +2615,7 @@
               "description": "As a Magic action, you can expend a use of your Wild Shape and cause spectral trees and vines to appear in a 15-foot Cube on the ground within 120 feet of yourself. They last there for 1 minute or until you have the Incapacitated condition or die. You and your allies have Half Cover while in that area, and your allies gain the current Resistance of your Nature\u2019s Ward while there.\nAs a Bonus Action, you can move the Cube up to 60 feet to ground within 120 feet of yourself."
             }
           ],
-          "description": "Source: Player's Handbook\nCelebrate Connection to the Natural World\nThe Circle of the Land comprises mystics and sages who safeguard ancient knowledge and rites. These Druids meet within sacred circles of trees or standing stones to whisper primal secrets in Druidic. The circle\u2019s wisest members preside as the chief priests of their communities.",
-          "url": "http://dnd2024.wikidot.com/druid:circle-of-the-land"
+          "description": "Celebrate Connection to the Natural World\nThe Circle of the Land comprises mystics and sages who safeguard ancient knowledge and rites. These Druids meet within sacred circles of trees or standing stones to whisper primal secrets in Druidic. The circle\u2019s wisest members preside as the chief priests of their communities."
         },
         {
           "name": "Circle of the Moon",
@@ -2666,8 +2646,7 @@
               "description": "The power of the moon suffuses you, granting you the following benefits.\nImproved Lunar Radiance. Once per turn, you can deal an extra 2d10 Radiant damage to a target you hit with a Wild Shape form\u2019s attack.\nShared Moonlight. Whenever you use Moonlight Step, you can also teleport one willing creature. That creature must be within 10 feet of you, and you teleport it to an unoccupied space you can see within 10 feet of your destination space."
             }
           ],
-          "description": "Source: Player's Handbook\nAdopt Animal Forms to Guard the Wilds\nDruids of the Circle of the Moon draw on lunar magic to transform themselves. Their order gathers under the moon to share news and perform rituals.\nChangeable as the moon, a Druid of this circle might prowl as a great cat one night, soar over the treetops as an eagle the next day, and then crash through undergrowth as a bear to drive off a trespassing monster. The wild is in the Druid\u2019s blood.",
-          "url": "http://dnd2024.wikidot.com/druid:circle-of-the-moon"
+          "description": "Adopt Animal Forms to Guard the Wilds\nDruids of the Circle of the Moon draw on lunar magic to transform themselves. Their order gathers under the moon to share news and perform rituals.\nChangeable as the moon, a Druid of this circle might prowl as a great cat one night, soar over the treetops as an eagle the next day, and then crash through undergrowth as a bear to drive off a trespassing monster. The wild is in the Druid\u2019s blood."
         },
         {
           "name": "Circle of the Sea",
@@ -2698,8 +2677,7 @@
               "description": "Instead of manifesting the Emanation of Wrath of the Sea around yourself, you can manifest it around one willing creature within 60 feet of yourself. That creature gains all the benefits of the Emanation and uses your spell save DC and Wisdom modifier for it.\nIn addition, you can manifest the Emanation around both the other creature and yourself if you expend two uses of your Wild Shape instead of one when manifesting it."
             }
           ],
-          "description": "Source: Player's Handbook\nBecome One with Tides and Storms\nDruids of the Circle of the Sea draw on the tempestuous forces of oceans and storms. Some view themselves as embodiments of nature\u2019s wrath, seeking vengeance against those who despoil nature. Others seek mystical unity with nature by attuning themselves to the ebb and flow of the tides, following the rush of currents and waves and listening to the inscrutable whispers and roars of the winds.",
-          "url": "http://dnd2024.wikidot.com/druid:circle-of-the-sea"
+          "description": "Become One with Tides and Storms\nDruids of the Circle of the Sea draw on the tempestuous forces of oceans and storms. Some view themselves as embodiments of nature\u2019s wrath, seeking vengeance against those who despoil nature. Others seek mystical unity with nature by attuning themselves to the ebb and flow of the tides, following the rush of currents and waves and listening to the inscrutable whispers and roars of the winds."
         },
         {
           "name": "Circle of the Stars",
@@ -2730,8 +2708,7 @@
               "description": "While in your Starry Form, you become partially incorporeal, giving you Resistance to Bludgeoning, Piercing, and Slashing damage."
             }
           ],
-          "description": "Source: Player's Handbook\nHarness Secrets Hidden in Constellations\nThe Circle of the Stars has tracked heavenly patterns since time immemorial, discovering secrets hidden amid the constellations. By understanding these secrets, the Druids of this circle seek to harness the powers of the cosmos.",
-          "url": "http://dnd2024.wikidot.com/druid:circle-of-the-stars"
+          "description": "Harness Secrets Hidden in Constellations\nThe Circle of the Stars has tracked heavenly patterns since time immemorial, discovering secrets hidden amid the constellations. By understanding these secrets, the Druids of this circle seek to harness the powers of the cosmos."
         }
       ]
     },
@@ -3010,8 +2987,7 @@
               "description": "You gain the following benefits.\nBolstered Rally. The area of effect for both Group Recovery and Rallying Surge is now a 60-foot Emanation.\nUnshakable Bravery. You have Immunity to the Charmed and Frightened conditions."
             }
           ],
-          "description": "Source: Forgotten Realms - Heroes of Faerun\nRally Fellow Heroes with Inspiring Leadership\nBannerets are paragons of valor and leadership who protect the innocent and rally fellow adventurers to the causes of justice and freedom. Many are knights serving in Cormyr, the Silver Marches, Damara, Chessenta, or other lands across Faer\u00fbn. They wander the realms as knights errant, taking the fight against evil beyond their kingdom\u2019s borders.\nA Banneret relies on judgment, bravery, and fidelity to the code of chivalry to guide them in defeating evildoers. A lone Banneret is a skilled warrior, but when leading a band of allies one of these warriors can transform even a poorly equipped militia into a ferocious war band.",
-          "url": "http://dnd2024.wikidot.com/fighter:banneret"
+          "description": "Rally Fellow Heroes with Inspiring Leadership\nBannerets are paragons of valor and leadership who protect the innocent and rally fellow adventurers to the causes of justice and freedom. Many are knights serving in Cormyr, the Silver Marches, Damara, Chessenta, or other lands across Faer\u00fbn. They wander the realms as knights errant, taking the fight against evil beyond their kingdom\u2019s borders.\nA Banneret relies on judgment, bravery, and fidelity to the code of chivalry to guide them in defeating evildoers. A lone Banneret is a skilled warrior, but when leading a band of allies one of these warriors can transform even a poorly equipped militia into a ferocious war band."
         },
         {
           "name": "Battle Master",
@@ -3047,8 +3023,7 @@
               "description": "Your Superiority Die becomes a d12."
             }
           ],
-          "description": "Source: Player's Handbook\nMaster Sophisticated Battle Maneuvers\nBattle Masters are students of the art of battle, learning martial techniques passed down through generations. The most accomplished Battle Masters are well-rounded figures who combine their carefully honed combat skills with academic study in the fields of history, theory, and the arts.",
-          "url": "http://dnd2024.wikidot.com/fighter:battle-master"
+          "description": "Master Sophisticated Battle Maneuvers\nBattle Masters are students of the art of battle, learning martial techniques passed down through generations. The most accomplished Battle Masters are well-rounded figures who combine their carefully honed combat skills with academic study in the fields of history, theory, and the arts."
         },
         {
           "name": "Champion",
@@ -3084,8 +3059,7 @@
               "description": "You attain the pinnacle of resilience in battle, giving you these benefits.\nDefy Death. You have Advantage on Death Saving Throws. Moreover, when you roll 18-20 on a Death Saving Throw, you gain the benefit of rolling a 20 on it.\nHeroic Rally. At the start of each of your turns, you regain Hit Points equal to 5 plus your Constitution modifier if you are Bloodied and have at least 1 Hit Point."
             }
           ],
-          "description": "Source: Player's Handbook\nPursue Physical Excellence in Combat\nA Champion focuses on the development of martial prowess in a relentless pursuit of victory. Champions combine rigorous training with physical excellence to deal devastating blows, withstand peril, and garner glory. Whether in athletic contests or bloody battle, Champions strive for the crown of the victor.",
-          "url": "http://dnd2024.wikidot.com/fighter:champion"
+          "description": "Pursue Physical Excellence in Combat\nA Champion focuses on the development of martial prowess in a relentless pursuit of victory. Champions combine rigorous training with physical excellence to deal devastating blows, withstand peril, and garner glory. Whether in athletic contests or bloody battle, Champions strive for the crown of the victor."
         },
         {
           "name": "Eldritch Knight",
@@ -3121,8 +3095,7 @@
               "description": "When you take the Attack action on your turn, you can replace two of the attacks with a casting of one of your level 1 or level 2 Wizard spells that has a casting time of an action."
             }
           ],
-          "description": "Source: Player's Handbook\nSupport Combat Skills with Arcane Magic\nEldritch Knights combine the martial mastery common to all Fighters with a careful study of magic. Their spells both complement and extend their combat skills, providing additional protection to shore up their armor and also allowing them to engage many foes at once with explosive magic.",
-          "url": "http://dnd2024.wikidot.com/fighter:eldritch-knight"
+          "description": "Support Combat Skills with Arcane Magic\nEldritch Knights combine the martial mastery common to all Fighters with a careful study of magic. Their spells both complement and extend their combat skills, providing additional protection to shore up their armor and also allowing them to engage many foes at once with explosive magic."
         },
         {
           "name": "Psi Warrior",
@@ -3153,8 +3126,7 @@
               "description": "You always have the telekinesis spell prepared. With this feature, you can cast it without a spell slot or components, and your spellcasting ability for it is Intelligence. On each of your turns while you maintain Concentration on it, including the turn when you cast it, you can make one attack with a weapon as a Bonus Action.\nOnce you cast the spell with this feature, you can\u2019t do so in this way again until you finish a Long Rest unless you expend a Psionic Energy Die (no action required) to restore your use of it."
             }
           ],
-          "description": "Source: Player's Handbook\nAugment Physical Might with Psionic Power\nPsi Warriors awaken the power of their minds to augment their physical might. They harness this psionic power to infuse their weapon strikes, lash out with telekinetic energy, and create barriers of mental force.",
-          "url": "http://dnd2024.wikidot.com/fighter:psi-warrior"
+          "description": "Augment Physical Might with Psionic Power\nPsi Warriors awaken the power of their minds to augment their physical might. They harness this psionic power to infuse their weapon strikes, lash out with telekinetic energy, and create barriers of mental force."
         }
       ]
     },
@@ -3460,8 +3432,7 @@
               "description": "Your mastery of life energy opens the door to the ultimate mercy. As a Magic action, you can touch the corpse of a creature that died within the past 24 hours and expend 5 Focus Points. The creature then returns to life with a number of Hit Points equal to 4d10 plus your Wisdom modifier. If the creature died with any of the following conditions, the creature revives with the conditions removed: Blinded, Deafened, Paralyzed, Poisoned, and Stunned.\nOnce you use this feature, you can\u2019t use it again until you finish a Long Rest."
             }
           ],
-          "description": "Source: Player's Handbook\nManipulate Forces of Life and Death\nWarriors of Mercy manipulate the life force of others. These Monks are wandering physicians, but they bring a swift end to their enemies. They often wear masks, presenting themselves as faceless bringers of life and death.",
-          "url": "http://dnd2024.wikidot.com/monk:warrior-of-mercy"
+          "description": "Manipulate Forces of Life and Death\nWarriors of Mercy manipulate the life force of others. These Monks are wandering physicians, but they bring a swift end to their enemies. They often wear masks, presenting themselves as faceless bringers of life and death."
         },
         {
           "name": "Warrior of Shadow",
@@ -3487,8 +3458,7 @@
               "description": "As a Magic action while entirely within Dim Light or Darkness, you can expend 3 Focus Points to shroud yourself with shadows for 1 minute, until you have the Incapacitated condition, or until you end your turn in Bright Light. While shrouded by these shadows, you gain the following benefits.\nInvisibility. You have the Invisible condition.\nPartially Incorporeal. You can move through occupied spaces as if they were Difficult Terrain. If you end your turn in such a space, you are shunted to the last unoccupied space you were in.\nShadow Flurry. You can use your Flurry of Blows without expending any Focus Points."
             }
           ],
-          "description": "Source: Player's Handbook\nHarness Shadow Power for Stealth and Subterfuge\nWarriors of Shadow practice stealth and subterfuge, harnessing the power of the Shadowfell. They are at home in darkness, able to draw gloom around themselves to hide, leap from shadow to shadow, and take on a wraithlike form.",
-          "url": "http://dnd2024.wikidot.com/monk:warrior-of-shadow"
+          "description": "Harness Shadow Power for Stealth and Subterfuge\nWarriors of Shadow practice stealth and subterfuge, harnessing the power of the Shadowfell. They are at home in darkness, able to draw gloom around themselves to hide, leap from shadow to shadow, and take on a wraithlike form."
         },
         {
           "name": "Warrior of the Elements",
@@ -3519,8 +3489,7 @@
               "description": "While your Elemental Attunement is active, you also gain the following benefits.\nDamage Resistance. You gain Resistance to one of the following damage types of your choice: Acid, Cold, Fire, Lightning, or Thunder. At the start of each of your turns, you can change this choice.\nDestructive Stride. When you use your Step of the Wind, your Speed increases by 20 feet until the end of the turn. For that duration, any creature of your choice takes damage equal to one roll of your Martial Arts die when you enter a space within 5 feet of it. The damage type is your choice of Acid, Cold, Fire, Lightning, or Thunder. A creature can take this damage only once per turn.\nEmpowered Strikes. Once on each of your turns, you can deal extra damage to a target equal to one roll of your Martial Arts die when you hit it with an Unarmed Strike. The extra damage is the same type dealt by that strike."
             }
           ],
-          "description": "Source: Player's Handbook\nWield Strikes and Bursts of Elemental Power\nWarriors of the Elements tap into the power of the Elemental Planes. Harnessing their supernatural focus, these Monks momentarily tame the energy of the Elemental Chaos to empower themselves in and out of battle.",
-          "url": "http://dnd2024.wikidot.com/monk:warrior-of-the-elements"
+          "description": "Wield Strikes and Bursts of Elemental Power\nWarriors of the Elements tap into the power of the Elemental Planes. Harnessing their supernatural focus, these Monks momentarily tame the energy of the Elemental Chaos to empower themselves in and out of battle."
         },
         {
           "name": "Warrior of the Open Hand",
@@ -3546,8 +3515,7 @@
               "description": "You gain the ability to set up lethal vibrations in someone\u2019s body. When you hit a creature with an Unarmed Strike, you can expend 4 Focus Points to start these imperceptible vibrations, which last for a number of days equal to your Monk level. The vibrations are harmless unless you take an action to end them. Alternatively, when you take the Attack action on your turn, you can forgo one of the attacks to end the vibrations. To end them, you and the target must be on the same plane of existence. When you end them, the target must make a Constitution saving throw, taking 10d12 Force damage on a failed save or half as much damage on a successful one.\nYou can have only one creature under the effect of this feature at a time. You can end the vibrations harmlessly (no action required)."
             }
           ],
-          "description": "Source: Player's Handbook\nMaster Unarmed Combat Techniques\nWarriors of the Open Hand are masters of unarmed combat. They learn techniques to push and trip their opponents and manipulate their own energy to protect themselves from harm.",
-          "url": "http://dnd2024.wikidot.com/monk:warrior-of-the-open-hand"
+          "description": "Master Unarmed Combat Techniques\nWarriors of the Open Hand are masters of unarmed combat. They learn techniques to push and trip their opponents and manipulate their own energy to protect themselves from harm."
         }
       ]
     },
@@ -3967,8 +3935,7 @@
               "description": "As a Bonus Action, you can imbue your Aura of Protection with holy power, granting the benefits below for 10 minutes or until you end them (no action required). Once you use this feature, you can't use it again until you finish a Long Rest. You can also restore your use of it by expending a level 5 spell slot (no action required).\nHoly Ward. You have Advantage on any saving throw you are forced to make by a Fiend or an Undead.\nRadiant Damage. Whenever an enemy starts its turn in the aura, that creature takes Radiant damage equal to your Charisma modifier plus your Proficiency Bonus.\nSunlight. The aura is filled with Bright Light that is sunlight."
             }
           ],
-          "description": "Source: Player's Handbook\nUphold the Ideals of Justice and Order\nThe Oath of Devotion binds Paladins to the ideals of Justice and Order. These Paladins meet the archetype of the knight in shining armor. They hold themselves to the highest standards of conduct, and some - for better or worse - hold the rest of the world to the same standards.\nMany who swear this oath are devoted to gods of law and good and use their gods' tenets as the measure of personal devotion. Others holed angels as their ideals and incorporate images of angelic wings into their helmets or coats of arms.\nThese Paladins share the following tenets:\nLet your word be your promise. Protect the weak and never fear to act. Let your honorable deeds be an example.",
-          "url": "http://dnd2024.wikidot.com/paladin:oath-of-devotion"
+          "description": "Uphold the Ideals of Justice and Order\nThe Oath of Devotion binds Paladins to the ideals of Justice and Order. These Paladins meet the archetype of the knight in shining armor. They hold themselves to the highest standards of conduct, and some - for better or worse - hold the rest of the world to the same standards.\nMany who swear this oath are devoted to gods of law and good and use their gods' tenets as the measure of personal devotion. Others holed angels as their ideals and incorporate images of angelic wings into their helmets or coats of arms.\nThese Paladins share the following tenets:\nLet your word be your promise. Protect the weak and never fear to act. Let your honorable deeds be an example."
         },
         {
           "name": "Oath of Glory",
@@ -4004,8 +3971,7 @@
               "description": "You can empower yourself with the legends - whether true or exaggerated - of your great deeds. As a Bonus Action, you gain the benefits below for 10 minutes. Once you use this feature, you can't use it again until you finish a Long Rest. You can also restore your use of it by expending a level 5 spell slot (no action required).\nCharismatic. You are blessed with an otherworldly presence and have Advantage on all Charisma checks.\nSaving Throw Reroll. If you fail a saving throw, you can take a Reaction to reroll it. You must use this new roll.\nUnerring Strike. Once on each of your turns when you make an attack roll with a weapon and miss, you can cause that attack to hit instead."
             }
           ],
-          "description": "Source: Player's Handbook\nStrive for the Heights of Heroism\nPaladins who take the Oath of Glory believe they and their companions are destined to achieve glory through deeds of heroism. They train diligently and encourage their companions, so that they're all ready when destiny calls.\nThese Paladins share the following tenets:\nEndeavor to be known by your deeds. Face hardships with courage. Inspire others to strive for glory.",
-          "url": "http://dnd2024.wikidot.com/paladin:oath-of-glory"
+          "description": "Strive for the Heights of Heroism\nPaladins who take the Oath of Glory believe they and their companions are destined to achieve glory through deeds of heroism. They train diligently and encourage their companions, so that they're all ready when destiny calls.\nThese Paladins share the following tenets:\nEndeavor to be known by your deeds. Face hardships with courage. Inspire others to strive for glory."
         },
         {
           "name": "Oath of the Ancients",
@@ -4036,8 +4002,7 @@
               "description": "As a Bonus Action, you can imbue your Aura of Protection with primal power, granting the benefits below for 1 minute or until you end them (no action required). Once you use this feature, you can't use it again until you finish a Long Rest. You can also restore your use of it by expending a level 5 spell slot (no action required).\nDiminish Defiance. Enemies in the aura have Disadvantage on saving throws against your spells and Channel Divinity options.\nRegeneration. At the start of each of your turns, you regain 10 Hit Points.\nSwift Spells. Whenever you cast a spell that has a casting time of an action, you can cast it using a Bonus Action instead."
             }
           ],
-          "description": "Source: Player's Handbook\nPreserve Life and Light in the World\nThe Oath of the Ancients is as old as the first elves. Paladins who swear this oath cherish the light; they love the beautiful and life-giving things of the world more than any principles of honor, courage and justice. They often adorn their armor and clothing with images of growing things - leaves, antlers, or flowers - to reflect their commitment to preserving life and light.\nThese Paladins share the following tenets:\nKindle the light of hope. Shelter life. Delight in art and laughter.",
-          "url": "http://dnd2024.wikidot.com/paladin:oath-of-the-ancients"
+          "description": "Preserve Life and Light in the World\nThe Oath of the Ancients is as old as the first elves. Paladins who swear this oath cherish the light; they love the beautiful and life-giving things of the world more than any principles of honor, courage and justice. They often adorn their armor and clothing with images of growing things - leaves, antlers, or flowers - to reflect their commitment to preserving life and light.\nThese Paladins share the following tenets:\nKindle the light of hope. Shelter life. Delight in art and laughter."
         },
         {
           "name": "Oath of the Noble Genies",
@@ -4073,8 +4038,7 @@
               "description": "As a Bonus Action, you gain the benefits below for 10 minutes or until you end them (no action required). Once you use this feature, you can\u2019t use it again until you finish a Long Rest. You can also restore your use of it by expending a level 5 spell slot (no action required).\nFlight. You have a Fly Speed of 60 feet and can hover.\nMinor Wish. When you or an ally in your Aura of Protection fails a D20 Test, you can take a Reaction to make you or that ally succeed instead."
             }
           ],
-          "description": "Source: Forgotten Realms - Heroes of Faerun\nBrandish the Elemental Splendor of Genies\nPaladins sworn to the Oath of the Noble Genies revere the forces of the Elemental Planes. Through taking this oath, Paladins draw power from the four different types of genies\u2014dao, masters of earth; djinn, masters of air; efreet, masters of fire; and marids, masters of water. In Faer\u00fbn, many Paladins who swear this oath hail from Calimshan, a land teeming with genies.\nPaladins who swear this oath often undertake quests that take them all over the Realms and across the multiverse\u2014including the Elemental Planes. These paladins share the following tenets:\nSow the seeds of creation amid the ashes of destruction. Lead with splendor and grace. Respect the elements, and fear their wrath.",
-          "url": "http://dnd2024.wikidot.com/paladin:oath-of-the-noble-genies"
+          "description": "Brandish the Elemental Splendor of Genies\nPaladins sworn to the Oath of the Noble Genies revere the forces of the Elemental Planes. Through taking this oath, Paladins draw power from the four different types of genies\u2014dao, masters of earth; djinn, masters of air; efreet, masters of fire; and marids, masters of water. In Faer\u00fbn, many Paladins who swear this oath hail from Calimshan, a land teeming with genies.\nPaladins who swear this oath often undertake quests that take them all over the Realms and across the multiverse\u2014including the Elemental Planes. These paladins share the following tenets:\nSow the seeds of creation amid the ashes of destruction. Lead with splendor and grace. Respect the elements, and fear their wrath."
         },
         {
           "name": "Oath of Vengeance",
@@ -4105,8 +4069,7 @@
               "description": "As a Bonus Action, you gain the benefits below for 10 minutes or until you end them (no action required). Once you use this feature, you can't use it again until you finish a Long Rest. You can also restore your use of it by expending a level 5 spell slot (no action required).\nFlight. You sprout spectral wings on your back and have a Fly Speed of 60 feet, and can hover.\nFrightful Aura. Whenever an enemy starts its turn in your Aura of Protection, that creature must succeed on a Wisdom saving throw or have the Frightened condition for 1 minute or until it takes any damage. Attack rolls against the Frightened creature have Advantage."
             }
           ],
-          "description": "Source: Player's Handbook\nPunish Evildoers at Any Cost\nThe Oath of Vengeance is a solemn commitment to punish those who have committed grievously evil acts. When evil armies slaughter helpless villagers, when a tyrant defies the will of the gods, when a thieves' guild grows too violent, when a dragon rampages though the countryside - at times like these, Paladins arise and swear the Oath of Vengeance to set right what has gone wrong.\nThese Paladins share the following tenets:\nShow the wicked no mercy. Fight injustice and its causes. Aid those harmed by injustice.",
-          "url": "http://dnd2024.wikidot.com/paladin:oath-of-vengeance"
+          "description": "Punish Evildoers at Any Cost\nThe Oath of Vengeance is a solemn commitment to punish those who have committed grievously evil acts. When evil armies slaughter helpless villagers, when a tyrant defies the will of the gods, when a thieves' guild grows too violent, when a dragon rampages though the countryside - at times like these, Paladins arise and swear the Oath of Vengeance to set right what has gone wrong.\nThese Paladins share the following tenets:\nShow the wicked no mercy. Fight injustice and its causes. Aid those harmed by injustice."
         }
       ]
     },
@@ -4611,8 +4574,7 @@
               "description": "When you cast a spell targeting yourself, you can also affect your Primal Companion beast with the spell if the beast is within 30 feet of you."
             }
           ],
-          "description": "Source: Player's Handbook\nBond with a Primal Beast A Beast Master forms a mystical bond with a special animal, drawing on primal magic and a deep connection to the natural world.",
-          "url": "http://dnd2024.wikidot.com/ranger:beast-master"
+          "description": "Bond with a Primal Beast A Beast Master forms a mystical bond with a special animal, drawing on primal magic and a deep connection to the natural world."
         },
         {
           "name": "Fey Wanderer",
@@ -4648,8 +4610,7 @@
               "description": "You can cast Misty Step without expending a spell slot. You can do so a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a Long Rest.\nIn addition, whenever you cast Misty Step , you can bring along one willing creature you can see within 5 feet of yourself. That creature teleports to an unoccupied space of your choice within 5 feet of your destination space."
             }
           ],
-          "description": "Source: Player's Handbook\nWield Fey Mirth and Fury A fey mystique surrounds you, thanks to the boon of an archfey or a location in the Feywild that transformed you. However you gained fey magic, you are now a Fey Wanderer. Your joyful laughter brightens the hearts of the downtrodden, and your martial prowess strikes terror in your foes, for great is the mirth of the fey and dreadful is their fury.",
-          "url": "http://dnd2024.wikidot.com/ranger:fey-wanderer"
+          "description": "Wield Fey Mirth and Fury A fey mystique surrounds you, thanks to the boon of an archfey or a location in the Feywild that transformed you. However you gained fey magic, you are now a Fey Wanderer. Your joyful laughter brightens the hearts of the downtrodden, and your martial prowess strikes terror in your foes, for great is the mirth of the fey and dreadful is their fury."
         },
         {
           "name": "Gloom Stalker",
@@ -4685,8 +4646,7 @@
               "description": "When a creature makes an attack roll against you, you can take a Reaction to impose Disadvantage on that roll. Whether the attack hits or misses, you can teleport up to 30 feet to an unoccupied space that you can see."
             }
           ],
-          "description": "Source: Player's Handbook\nDraw on Shadow Magic to Fight Your Foes\nGloom Stalkers are at home in the darkest places, wielding magic drawn from the Shadowfell to combat enemies that lurk in darkness.",
-          "url": "http://dnd2024.wikidot.com/ranger:gloom-stalker"
+          "description": "Draw on Shadow Magic to Fight Your Foes\nGloom Stalkers are at home in the darkest places, wielding magic drawn from the Shadowfell to combat enemies that lurk in darkness."
         },
         {
           "name": "Hunter",
@@ -4717,8 +4677,7 @@
               "description": "When you take damage, you can take a Reaction to give yourself Resistance to that damage and any other damage of the same type until the end of the current turn."
             }
           ],
-          "description": "Source: Player's Handbook\nProtect Nature and People from Destruction You stalk prey in the wilds and elsewhere, using your abilities as a Hunter to protect nature and people everywhere from forces that would destroy them.",
-          "url": "http://dnd2024.wikidot.com/ranger:hunter"
+          "description": "Protect Nature and People from Destruction You stalk prey in the wilds and elsewhere, using your abilities as a Hunter to protect nature and people everywhere from forces that would destroy them."
         },
         {
           "name": "Winter Walker",
@@ -4754,8 +4713,7 @@
               "description": "When you cast Hunter\u2019s Mark , you can adopt a ghostly, snowy form. This form lasts until the spell ends, and while you are in this form, you gain the following benefits. Once you use this feature, you can\u2019t use it again until you finish a Long Rest unless you expend a level 4+ spell slot (no action required).\nFrozen Soul. You have Immunity to Cold damage. When you first adopt this form and at the start of each of your subsequent turns, each creature of your choice in a 15-foot Emanation originating from you takes 2d4 Cold damage.\nPartially Incorporeal. You have Immunity to the Grappled, Prone, and Restrained conditions. You can move through creatures and objects as if they were Difficult Terrain, but you take 1d10 Force damage if you end your turn inside a creature or an object. If the form ends while you are inside a creature or an object, you are shunted to the nearest unoccupied space."
             }
           ],
-          "description": "Source: Forgotten Realms - Heroes of Faerun\nWithstand the Horrors of Frigid Wastelands\nWinter Walkers hone their craft in the bleak and frozen wilds of places like Icewind Dale. These ruthless, rimed Rangers hunt monsters that haunt arctic wastelands, eventually becoming frigid terrors themselves. Winter Walkers are well versed in the phenomena of Icewind Dale, including the latent magic of fallen Netherese cities, endemic monsters like yetis and crag cats, and the rising threat of Underdark invaders. Due to their cold pragmatism, terrifying magic, and mastery of the region, Winter Walkers are regarded with equal parts respect and fear. Ten-Towns citizens say that Winter Walkers\u2019 frequent exposure to malignant entities gives them their fearsome powers. Many Reghed nomads, on the other hand, believe that nature spirits bestow on Winter Walkers a unique curse.",
-          "url": "http://dnd2024.wikidot.com/ranger:winter-walker"
+          "description": "Withstand the Horrors of Frigid Wastelands\nWinter Walkers hone their craft in the bleak and frozen wilds of places like Icewind Dale. These ruthless, rimed Rangers hunt monsters that haunt arctic wastelands, eventually becoming frigid terrors themselves. Winter Walkers are well versed in the phenomena of Icewind Dale, including the latent magic of fallen Netherese cities, endemic monsters like yetis and crag cats, and the rising threat of Underdark invaders. Due to their cold pragmatism, terrifying magic, and mastery of the region, Winter Walkers are regarded with equal parts respect and fear. Ten-Towns citizens say that Winter Walkers\u2019 frequent exposure to malignant entities gives them their fearsome powers. Many Reghed nomads, on the other hand, believe that nature spirits bestow on Winter Walkers a unique curse."
         }
       ]
     },
@@ -5062,8 +5020,7 @@
               "description": "You gain the ability to magically steal the knowledge of how to cast a spell from another spellcaster.\nImmediately after a creature casts a spell that targets you or includes you in its area of effect, you can take a Reaction to force the creature to make an Intelligence saving throw. The DC equals your spell save DC. On a failed save, you negate the spell's effect against you, and you steal the knowledge of the spell if it is at least level 1 and of a level you can cast (it doesn't need to be a Wizard spell). For the next 8 hours, you have the spell prepared. The creature can't cast it until 8 hours have passed.\nOnce you steal a spell with this feature, you can't use this feature again until you finish a Long Rest."
             }
           ],
-          "description": "Source: Player's Handbook\nEnhance Stealth with Arcane Spells Some Rogues enhance their fine-honed skills of stealth and agility with spells, learning magical tricks to aid them in their trade. Some Arcane Tricksters use their talents as pickpockets and burglars, while others are pranksters.",
-          "url": "http://dnd2024.wikidot.com/rogue:arcane-trickster"
+          "description": "Enhance Stealth with Arcane Spells Some Rogues enhance their fine-honed skills of stealth and agility with spells, learning magical tricks to aid them in their trade. Some Arcane Tricksters use their talents as pickpockets and burglars, while others are pranksters."
         },
         {
           "name": "Assassin",
@@ -5094,8 +5051,7 @@
               "description": "When you hit with your Sneak Attack on the first round of a combat, the target must succeed on a Constitution saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus), or the attack's damage is doubled against the target."
             }
           ],
-          "description": "Source: Player's Handbook\nPractice the Grim Art of Death An Assassin's training focuses on using stealth, poison, and disguise to eliminate foes with deadly efficiency. While some Rogues who follow this path are hired killers, spies, or bounty hunters, the capabilities of this subclass are equally useful for adventurers facing a variety of monstrous enemies.",
-          "url": "http://dnd2024.wikidot.com/rogue:assassin"
+          "description": "Practice the Grim Art of Death An Assassin's training focuses on using stealth, poison, and disguise to eliminate foes with deadly efficiency. While some Rogues who follow this path are hired killers, spies, or bounty hunters, the capabilities of this subclass are equally useful for adventurers facing a variety of monstrous enemies."
         },
         {
           "name": "Scion of the Three",
@@ -5126,8 +5082,7 @@
               "description": "You gain the following benefits.\nCutthroat. You regain one expended use of Bloodthirst when you finish a Short Rest.\nMurderous Intent. When you roll for your Sneak Attack damage, you can treat a roll of a 1 or 2 on the die as a 3."
             }
           ],
-          "description": "Source: Forgotten Realms - Heroes of Faerun\nBecome a Gruesome Agent of Malice\nA Scion of the Three draws power from a group of malevolent gods known in Baldur\u2019s Gate as the Dead Three: Bane, a god of tyranny; Bhaal, a god of violence and murder; and Myrkul, a god of death. While some Rogues of this subclass pledge themselves ardently to those three macabre gods, others are thrust on this path by a curse. Either way, a scion\u2019s power manifests as various occult gifts, as well as an uncanny talent for striking and terrifying foes.\nScions of the Three are most common in Baldur\u2019s Gate, where the Dead Three lived as mortals before ascending to godhood. Underground cults to Bane, Bhaal, and Myrkul often count Scions of the Three among their most useful agents. Outside Baldur\u2019s Gate, secular thieves\u2019 guilds such as the Shadow Thieves of Amn or the Xanathar Guild in Waterdeep might call on a Scion of the Three to undertake an especially violent contract.",
-          "url": "http://dnd2024.wikidot.com/rogue:scion-of-the-three"
+          "description": "Become a Gruesome Agent of Malice\nA Scion of the Three draws power from a group of malevolent gods known in Baldur\u2019s Gate as the Dead Three: Bane, a god of tyranny; Bhaal, a god of violence and murder; and Myrkul, a god of death. While some Rogues of this subclass pledge themselves ardently to those three macabre gods, others are thrust on this path by a curse. Either way, a scion\u2019s power manifests as various occult gifts, as well as an uncanny talent for striking and terrifying foes.\nScions of the Three are most common in Baldur\u2019s Gate, where the Dead Three lived as mortals before ascending to godhood. Underground cults to Bane, Bhaal, and Myrkul often count Scions of the Three among their most useful agents. Outside Baldur\u2019s Gate, secular thieves\u2019 guilds such as the Shadow Thieves of Amn or the Xanathar Guild in Waterdeep might call on a Scion of the Three to undertake an especially violent contract."
         },
         {
           "name": "Soulknife",
@@ -5158,8 +5113,7 @@
               "description": "You can sweep your Psychic Blades through a creature's mind. When you use you Psychic Blades to deal Sneak Attack damage to a creature, you can force that target to make a Wisdom saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus). If the save fails, the target has the Stunned condition for 1 minute. The Stunned target repeats the save at the end of each of its turns, ending the effect on itself with a success.\nOnce you use this feature, you can't do so again until you finish a Long Rest unless you expend three Psionic Energy Dice (no action required) to restore your use of it."
             }
           ],
-          "description": "Source: Player's Handbook\nStrike Foes with Psionic Blades A Soulknife strikes with the mind, cutting through barriers both physical and psychic. These Rogues discover psionic power within themselves and channel it to do their roguish work. As a Soulknife your psionic abilities might have haunted you since childhood, revealing their full potential only as you experienced the stress of adventure. Or you might have sought out an order of psychic adepts and spent years learning how to manifest your power.",
-          "url": "http://dnd2024.wikidot.com/rogue:soulknife"
+          "description": "Strike Foes with Psionic Blades A Soulknife strikes with the mind, cutting through barriers both physical and psychic. These Rogues discover psionic power within themselves and channel it to do their roguish work. As a Soulknife your psionic abilities might have haunted you since childhood, revealing their full potential only as you experienced the stress of adventure. Or you might have sought out an order of psychic adepts and spent years learning how to manifest your power."
         },
         {
           "name": "Thief",
@@ -5190,8 +5144,7 @@
               "description": "You are adept at laying ambushes and quickly escaping danger. You can take two turns during the first round of any combat. You take your first turn at your normal Initiative and your second turn at your Initiative minus 10."
             }
           ],
-          "description": "Source: Player's Handbook\nHunt for Treasure as a Classic Adventurer A mix of burglar, treasure hunter, and explorer, you are the epitome of an adventurer. In addition to improving your agility and stealth, you gain abilities useful for delving into ruins and getting maximum benefit from the magic items you find there.",
-          "url": "http://dnd2024.wikidot.com/rogue:thief"
+          "description": "Hunt for Treasure as a Classic Adventurer A mix of burglar, treasure hunter, and explorer, you are the epitome of an adventurer. In addition to improving your agility and stealth, you gain abilities useful for delving into ruins and getting maximum benefit from the magic items you find there."
         }
       ]
     },
@@ -5843,8 +5796,7 @@
               "description": "You can unleash a space-warping anomaly. As a Magic action, you teleport to an unoccupied space you can see within 120 feet of yourself. Immediately after you disappear, each creature within 30 feet of the space you left must make a Strength saving throw against your spell save DC. On a failed save, a creature takes 3d10 Force damage and is pulled straight toward the space you left, ending in an unoccupied space as close to your former space as possible. On a successful save, the creature takes half as much damage only.\nOnce you use this feature, you can\u2019t do so again until you finish a Long Rest unless you spend 5 Sorcery Points (no action required) to restore your use of it."
             }
           ],
-          "description": "Source: Player's Handbook\nWield Unnatural Psionic Power\nAn alien influence has wrapped its tendrils around your mind, giving you psionic power. You can now touch other minds with that power and alter the world around you. Will this power shine from you as a hopeful beacon to others? Or will you be a terror to those who feel the stab of your mind?\nPerhaps a psychic wind from the Astral Plane carried psionic energy to you, or you were exposed to the Far Realm\u2019s warping influence. Alternatively, you were implanted with a mind flayer tadpole, but your transformation into a mind flayer never occurred; now the tadpole\u2019s psionic power is yours. However you acquired this power, your mind is aflame with it.",
-          "url": "http://dnd2024.wikidot.com/sorcerer:aberrant-sorcery"
+          "description": "Wield Unnatural Psionic Power\nAn alien influence has wrapped its tendrils around your mind, giving you psionic power. You can now touch other minds with that power and alter the world around you. Will this power shine from you as a hopeful beacon to others? Or will you be a terror to those who feel the stab of your mind?\nPerhaps a psychic wind from the Astral Plane carried psionic energy to you, or you were exposed to the Far Realm\u2019s warping influence. Alternatively, you were implanted with a mind flayer tadpole, but your transformation into a mind flayer never occurred; now the tadpole\u2019s psionic power is yours. However you acquired this power, your mind is aflame with it."
         },
         {
           "name": "Clockwork Sorcery",
@@ -5875,8 +5827,7 @@
               "description": "You momentarily summon spirits of order to expunge disorder around you. As a Magic action, you summon the spirits in a 30-foot Cube originating from you. The spirits look like modrons or other Constructs of your choice. The spirits are intangible and invulnerable, and they create the effects below within the Cube before vanishing. Once you use this action, you can\u2019t use it again until you finish a Long Rest unless you spend 7 Sorcery Points (no action required) to restore your use of it.\nHeal. The spirits restore up to 100 Hit Points, divided as you choose among any number of creatures of your choice in the Cube.\nRepair. Any damaged objects entirely in the Cube are repaired instantly.\nDispel. Every spell of level 6 and lower ends on creatures and objects of your choice in the Cube."
             }
           ],
-          "description": "Source: Player's Handbook\nChannel Cosmic Forces of Order\nThe cosmic force of order has suffused you with magic. That power arises from Mechanus or a realm like it\u2014a plane of existence shaped entirely by clockwork efficiency. You or someone from your lineage might have become entangled in the machinations of modrons, the orderly beings who inhabit Mechanus. Perhaps your ancestor even took part in the Great Modron March. Whatever its origin within you, the power of order can seem strange to others, but for you, it\u2019s part of a vast and glorious system.",
-          "url": "http://dnd2024.wikidot.com/sorcerer:clockwork-sorcery"
+          "description": "Channel Cosmic Forces of Order\nThe cosmic force of order has suffused you with magic. That power arises from Mechanus or a realm like it\u2014a plane of existence shaped entirely by clockwork efficiency. You or someone from your lineage might have become entangled in the machinations of modrons, the orderly beings who inhabit Mechanus. Perhaps your ancestor even took part in the Great Modron March. Whatever its origin within you, the power of order can seem strange to others, but for you, it\u2019s part of a vast and glorious system."
         },
         {
           "name": "Draconic Sorcery",
@@ -5907,8 +5858,7 @@
               "description": "You can cast Summon Dragon without a Material component. You can also cast it once without a spell slot, and you regain the ability to cast it in this way when you finish a Long Rest.\nWhenever you start casting the spell, you can modify it so that it doesn\u2019t require Concentration. If you do so, the spell\u2019s duration becomes 1 minute for that casting."
             }
           ],
-          "description": "Source: Player's Handbook\nBreathe the Magic of Dragons\nYour innate magic comes from the gift of a dragon. Perhaps an ancient dragon facing death bequeathed some of its magical power to you or your ancestor. You might have absorbed magic from a site infused with dragons\u2019 power. Or perhaps you handled a treasure taken from a dragon\u2019s hoard that was steeped in draconic power. Or you might have a dragon for an ancestor.",
-          "url": "http://dnd2024.wikidot.com/sorcerer:draconic-sorcery"
+          "description": "Breathe the Magic of Dragons\nYour innate magic comes from the gift of a dragon. Perhaps an ancient dragon facing death bequeathed some of its magical power to you or your ancestor. You might have absorbed magic from a site infused with dragons\u2019 power. Or perhaps you handled a treasure taken from a dragon\u2019s hoard that was steeped in draconic power. Or you might have a dragon for an ancestor."
         },
         {
           "name": "Spellfire Sorcery",
@@ -5939,8 +5889,7 @@
               "description": "When you use Innate Sorcery, you can alter it and infuse yourself with the essence of spellfire, gaining the following benefits while this use of Innate Sorcery is active. Once you use this feature to alter Innate Sorcery, you can\u2019t use it again until you finish a Long Rest unless you spend 5 Sorcery Points (no action required) to restore your use of it.\nBurning Life Force. Once per turn when you are hit by an attack roll, you can expend a number of Hit Point Dice, up to a maximum equal to your Charisma modifier (minimum of one). Roll the expended dice, and reduce the amount of damage from that attack equal to the total rolled.\nFlight. You gain a Fly Speed of 60 feet and can hover.\nSpell Avoidance. When you\u2019re subjected to a spell or magical effect that allows you to make a saving throw to take only half damage, you instead take no damage if you succeed on the save and only half damage if you fail. You can\u2019t use this benefit if you have the Incapacitated condition."
             }
           ],
-          "description": "Source: Forgotten Realms - Heroes of Faerun\nWield Raw Magic\nYour innate power stems from the source of magic itself: the Weave. This connection manifests as a rare ability known as spellfire, and you surge with radiant bursts of this raw magic. Your talent with spellfire allows you to heal allies, sear enemies, and absorb powerful spells.\nWielders of spellfire tend to have a penchant for wandering. Many travel between cosmopolitan settlements, such as those along the Sword Coast, and wield their magic in service of the common good. Others realize their own strange powers by roaming equally strange lands, from the magic-blasted wastes of the desert of Anauroch to the god-touched wilds of the Old Empires. Wherever they go in the Realms, spellfire Sorcerers are courted by factions with interests in the arcane arts, such as the Harpers, Cult of the Dragon, and Red Wizards.",
-          "url": "http://dnd2024.wikidot.com/sorcerer:spellfire-sorcery"
+          "description": "Wield Raw Magic\nYour innate power stems from the source of magic itself: the Weave. This connection manifests as a rare ability known as spellfire, and you surge with radiant bursts of this raw magic. Your talent with spellfire allows you to heal allies, sear enemies, and absorb powerful spells.\nWielders of spellfire tend to have a penchant for wandering. Many travel between cosmopolitan settlements, such as those along the Sword Coast, and wield their magic in service of the common good. Others realize their own strange powers by roaming equally strange lands, from the magic-blasted wastes of the desert of Anauroch to the god-touched wilds of the Old Empires. Wherever they go in the Realms, spellfire Sorcerers are courted by factions with interests in the arcane arts, such as the Harpers, Cult of the Dragon, and Red Wizards."
         },
         {
           "name": "Wild Magic Sorcery",
@@ -5971,8 +5920,7 @@
               "description": "Immediately after you cast a Sorcerer spell with a spell slot, you can create an effect of your choice from the Wild Magic Surge table instead of rolling on that table. You can choose any effect in the table except for the final row, and if the chosen effect involves a roll, you must make it.\nOnce you use this feature, you can\u2019t do so again until you finish a Long Rest.\n[TABLE 0]"
             }
           ],
-          "description": "Source: Player's Handbook\nUnleash Chaotic Magic\nYour innate magic stems from the forces of chaos that underlie the order of creation. You or an ancestor might have endured exposure to raw magic, perhaps through a planar portal leading to Limbo or the Elemental Planes. Perhaps you were blessed by a fey being or marked by a demon. Or your magic could be a fluke with no apparent cause. Whatever its source, this magic churns within you, waiting for any outlet.",
-          "url": "http://dnd2024.wikidot.com/sorcerer:wild-magic-sorcery"
+          "description": "Unleash Chaotic Magic\nYour innate magic stems from the forces of chaos that underlie the order of creation. You or an ancestor might have endured exposure to raw magic, perhaps through a planar portal leading to Limbo or the Elemental Planes. Perhaps you were blessed by a fey being or marked by a demon. Or your magic could be a fluke with no apparent cause. Whatever its source, this magic churns within you, waiting for any outlet."
         }
       ]
     },
@@ -6471,8 +6419,7 @@
               "description": "Your patron grants you the ability to weave your magic with teleportation. Immediately after you cast an Enchantment or Illusion spell using an action and a spell slot, you can cast Misty Step as part of the same action and without expending a spell slot."
             }
           ],
-          "description": "Source: Player's Handbook\nBargain with Whimsical Fey\nYour pact draws on the power of the Feywild. When you choose this subclass, you might make a deal with an archfey, such as the Prince of Frost; the Queen of Air and Darkness, ruler of the Gloaming Court; Titania of the Summer Court; or an ancient hag. Or you might call on a spectrum of Fey, weaving a web of favors and debts. Whoever they are, your patron is often inscrutable and whimsical.",
-          "url": "http://dnd2024.wikidot.com/warlock:archfey-patron"
+          "description": "Bargain with Whimsical Fey\nYour pact draws on the power of the Feywild. When you choose this subclass, you might make a deal with an archfey, such as the Prince of Frost; the Queen of Air and Darkness, ruler of the Gloaming Court; Titania of the Summer Court; or an ancient hag. Or you might call on a spectrum of Fey, weaving a web of favors and debts. Whoever they are, your patron is often inscrutable and whimsical."
         },
         {
           "name": "Celestial Patron",
@@ -6503,8 +6450,7 @@
               "description": "When you or an ally within 60 feet of you is about to make a Death Saving Throw, you can unleash radiant energy to save the creature. The creature regains Hit Points equal to half its Hit Point maximum and can end the Prone condition on itself. Each creature of your choice that is within 30 feet of the creature takes Radiant damage equal to 2d8 plus your Charisma modifier, and each has the Blinded condition until the end of the current turn.\nOnce you use this feature, you can\u2019t use it again until you finish a Long Rest."
             }
           ],
-          "description": "Source: Player's Handbook\nCall on the Power of the Heavens\nYour pact draws on the Upper Planes, the realms of everlasting bliss. You might enter an agreement with an empyrean, a couatl, a sphinx, a unicorn, or another heavenly entity. Or you might call on numerous such beings as you pursue goals aligned with theirs. Your pact allows you to experience a hint of the holy light that illuminates the multiverse.",
-          "url": "http://dnd2024.wikidot.com/warlock:celestial-patron"
+          "description": "Call on the Power of the Heavens\nYour pact draws on the Upper Planes, the realms of everlasting bliss. You might enter an agreement with an empyrean, a couatl, a sphinx, a unicorn, or another heavenly entity. Or you might call on numerous such beings as you pursue goals aligned with theirs. Your pact allows you to experience a hint of the holy light that illuminates the multiverse."
         },
         {
           "name": "Fiend Patron",
@@ -6535,8 +6481,7 @@
               "description": "Once per turn when you hit a creature with an attack roll, you can try to instantly transport the target through the Lower Planes. The target must succeed on a Charisma saving throw against your spell save DC, or the target disappears and hurtles through a nightmare landscape. The target takes 8d10 Psychic damage if it isn\u2019t a Fiend, and it has the Incapacitated condition until the end of your next turn, when it returns to the space it previously occupied or the nearest unoccupied space.\nOnce you use this feature, you can\u2019t use it again until you finish a Long Rest unless you expend a Pact Magic spell slot (no action required) to restore your use of it."
             }
           ],
-          "description": "Source: Player's Handbook\nMake a Deal with the Lower Planes\nYour pact draws on the Lower Planes, the realms of perdition. You might forge a bargain with a demon lord such as Demogorgon or Orcus; an archdevil such as Asmodeus; or a pit fiend, balor, yugoloth, or night hag that is especially mighty. That patron\u2019s aims are evil\u2014the corruption or destruction of all things, ultimately including you\u2014and your path is defined by the extent to which you strive against those aims.",
-          "url": "http://dnd2024.wikidot.com/warlock:fiend-patron"
+          "description": "Make a Deal with the Lower Planes\nYour pact draws on the Lower Planes, the realms of perdition. You might forge a bargain with a demon lord such as Demogorgon or Orcus; an archdevil such as Asmodeus; or a pit fiend, balor, yugoloth, or night hag that is especially mighty. That patron\u2019s aims are evil\u2014the corruption or destruction of all things, ultimately including you\u2014and your path is defined by the extent to which you strive against those aims."
         },
         {
           "name": "Great Old One Patron",
@@ -6577,8 +6522,7 @@
               "description": "When you cast Summon Aberration , you can modify it so that it doesn\u2019t require Concentration. If you do so, the spell\u2019s duration becomes 1 minute for that casting, and when summoned, the Aberration has a number of Temporary Hit Points equal to your Warlock level plus your Charisma modifier.\nIn addition, the first time each turn the Aberration hits a creature under the effect of your Hex , the Aberration deals extra Psychic damage to the target equal to the bonus damage of that spell."
             }
           ],
-          "description": "Source: Player's Handbook\nUnearth Forbidden Lore of Ineffable Beings\nWhen you choose this subclass, you might bind yourself to an unspeakable being from the Far Realm or an elder god\u2014a being such as Tharizdun, the Chained God; Zargon, the Returner; Hadar, the Dark Hunger; or Great Cthulhu. Or you might invoke several entities without yoking yourself to one. The motives of these beings are incomprehensible, and the Great Old One might be indifferent to your existence. But the secrets you\u2019ve learned nevertheless allow you to draw strange magic from it.",
-          "url": "http://dnd2024.wikidot.com/warlock:great-old-one-patron"
+          "description": "Unearth Forbidden Lore of Ineffable Beings\nWhen you choose this subclass, you might bind yourself to an unspeakable being from the Far Realm or an elder god\u2014a being such as Tharizdun, the Chained God; Zargon, the Returner; Hadar, the Dark Hunger; or Great Cthulhu. Or you might invoke several entities without yoking yourself to one. The motives of these beings are incomprehensible, and the Great Old One might be indifferent to your existence. But the secrets you\u2019ve learned nevertheless allow you to draw strange magic from it."
         }
       ]
     },
@@ -7034,8 +6978,7 @@
               "description": "You have Advantage on saving throws against spells, and you have Resistance to the damage of spells."
             }
           ],
-          "description": "Source: Player's Handbook\nShield Companions and Banish Foes Your study of magic is focused on spells that block, banish, or protect\u2014ending harmful effects, banishing evil influences, and protecting the weak. Abjurers are sought when baleful spirits require exorcism, when locations must be guarded against magical spying, and when portals to other planes of existence must be closed. Adventuring parties value Abjurers for the protection they provide against a variety of hostile magic and other attacks.",
-          "url": "http://dnd2024.wikidot.com/wizard:abjurer"
+          "description": "Shield Companions and Banish Foes Your study of magic is focused on spells that block, banish, or protect\u2014ending harmful effects, banishing evil influences, and protecting the weak. Abjurers are sought when baleful spirits require exorcism, when locations must be guarded against magical spying, and when portals to other planes of existence must be closed. Adventuring parties value Abjurers for the protection they provide against a variety of hostile magic and other attacks."
         },
         {
           "name": "Bladesinger",
@@ -7066,8 +7009,7 @@
               "description": "After you cast a spell that has a casting time of an action, you can make one attack with a weapon as a Bonus Action."
             }
           ],
-          "description": "Source: Forgotten Realms - Heroes of Faerun\nWield Weapon and Wizardry in Elegant Tandem\nBladesingers master a tradition of wizardry that incorporates swordplay and dance. In combat, a Bladesinger uses intricate, elegant maneuvers that fend off harm and allow the Bladesinger to channel magic into devastating attacks and a cunning defense. Many who have observed a Bladesinger at work remember the display as one of the more beautiful experiences in their life\u2014a glorious dance accompanied by a singing blade.\nBladesinging is associated with the ancient elven societies that first mastered the art and coined the term. Even today, most Bladesingers still hail from old elven realms, such as Myth Drannor, or from non-elven societies that share land and history with elves, such as the Silver Marches. Wherever they hail from, Bladesingers take their talents all across the Realms to help common people and perform heroic deeds. Most communities greet the arrival of a Bladesinger as a good omen.",
-          "url": "http://dnd2024.wikidot.com/wizard:bladesinger"
+          "description": "Wield Weapon and Wizardry in Elegant Tandem\nBladesingers master a tradition of wizardry that incorporates swordplay and dance. In combat, a Bladesinger uses intricate, elegant maneuvers that fend off harm and allow the Bladesinger to channel magic into devastating attacks and a cunning defense. Many who have observed a Bladesinger at work remember the display as one of the more beautiful experiences in their life\u2014a glorious dance accompanied by a singing blade.\nBladesinging is associated with the ancient elven societies that first mastered the art and coined the term. Even today, most Bladesingers still hail from old elven realms, such as Myth Drannor, or from non-elven societies that share land and history with elves, such as the Silver Marches. Wherever they hail from, Bladesingers take their talents all across the Realms to help common people and perform heroic deeds. Most communities greet the arrival of a Bladesinger as a good omen."
         },
         {
           "name": "Diviner",
@@ -7093,8 +7035,7 @@
               "description": "The visions in your dreams intensify and paint a more accurate picture in your mind of what is to come. Roll three d20s for your Portent feature rather than two."
             }
           ],
-          "description": "Source: Player's Handbook\nLearn the Secrets of the Multiverse The counsel of a Diviner is sought by those who want a clearer understanding of the past, present, and future. As a Diviner, you strive to part the veils of space, time, and consciousness. You work to master spells of discernment, remote viewing, supernatural knowledge, and foresight.",
-          "url": "http://dnd2024.wikidot.com/wizard:diviner"
+          "description": "Learn the Secrets of the Multiverse The counsel of a Diviner is sought by those who want a clearer understanding of the past, present, and future. As a Diviner, you strive to part the veils of space, time, and consciousness. You work to master spells of discernment, remote viewing, supernatural knowledge, and foresight."
         },
         {
           "name": "Evoker",
@@ -7125,8 +7066,7 @@
               "description": "You can increase the power of your spells. When you cast a Wizard spell with a spell slot of levels 1-5 that deals damage, you can deal maximum damage with that spell on the turn you cast it.\nThe first time you do so, you suffer no adverse effect. If you use this feature again before you finish a Long Rest, you take 2d12 Necrotic damage for each level of the spell slot immediately after you cast it. This damage ignores Resistance and Immunity.\nEach time you use this feature again before finishing a Long Rest, the Necrotic damage per spell level increases by 1d12."
             }
           ],
-          "description": "Source: Player's Handbook\nCreate Explosive Elemental Effects Your studies focus on magic that creates powerful elemental effects such as bitter cold, searing flame, rolling thunder, crackling lightning, and burning acid. Some Evokers find employment in military forces, serving as artillery to blast armies from afar. Others use their power to protect others, while some seek their own gain.",
-          "url": "http://dnd2024.wikidot.com/wizard:evoker"
+          "description": "Create Explosive Elemental Effects Your studies focus on magic that creates powerful elemental effects such as bitter cold, searing flame, rolling thunder, crackling lightning, and burning acid. Some Evokers find employment in military forces, serving as artillery to blast armies from afar. Others use their power to protect others, while some seek their own gain."
         },
         {
           "name": "Illusionist",
@@ -7157,8 +7097,7 @@
               "description": "You have learned to weave shadow magic into your illusions to give them a semi-reality. When you cast an Illusion spell with a spell slot, you can choose one inanimate, nonmagical object that is part of the illusion and make that object real. You can do this on your turn as a Bonus Action while the spell is ongoing. The object remains real for 1 minute, during which it can't deal damage or give any conditions. For example, you can create an illusion of a bridge over a chasm and then make it real and cross it."
             }
           ],
-          "description": "Source: Player's Handbook\nWeave Subtle Spells of Deception You specialize in magic that dazzles the senses and tricks the mind, and the illusions you craft make the impossible seem real.",
-          "url": "http://dnd2024.wikidot.com/wizard:illusionist"
+          "description": "Weave Subtle Spells of Deception You specialize in magic that dazzles the senses and tricks the mind, and the illusions you craft make the impossible seem real."
         }
       ]
     }
