@@ -3,6 +3,7 @@ package views
 import (
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/ui/components"
@@ -102,6 +103,21 @@ func NewProficiencySelectionManager(
 
 // Update handles input for the proficiency selection manager.
 func (psm *ProficiencySelectionManager) Update(msg interface{}) {
+	// Handle window size messages for all selectors
+	if _, ok := msg.(tea.WindowSizeMsg); ok {
+		if psm.skillsRequired > 0 {
+			psm.skillSelector, _ = psm.skillSelector.Update(msg)
+		}
+		if psm.toolsRequired > 0 {
+			psm.toolSelector, _ = psm.toolSelector.Update(msg)
+		}
+		if psm.languagesRequired > 0 {
+			psm.languageSelector, _ = psm.languageSelector.Update(msg)
+		}
+		return
+	}
+
+	// Handle other messages only for the current section
 	switch psm.currentSection {
 	case ProfSectionSkills:
 		if psm.skillsRequired > 0 {

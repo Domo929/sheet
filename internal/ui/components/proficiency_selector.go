@@ -53,6 +53,27 @@ func (ps *ProficiencySelector) Update(msg tea.Msg) (ProficiencySelector, tea.Cmd
 	}
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		// Scale width to 80% of terminal width, with min 20 and max 80
+		width := msg.Width * 4 / 5
+		if width > 80 {
+			width = 80
+		}
+		if width < 20 {
+			width = 20
+		}
+		ps.width = width
+
+		// Scale height to 60% of terminal height, with min 10 and max 30
+		height := msg.Height * 3 / 5
+		if height > 30 {
+			height = 30
+		}
+		if height < 10 {
+			height = 10
+		}
+		ps.height = height
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "up", "k":
