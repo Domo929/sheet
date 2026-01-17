@@ -2024,7 +2024,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 					if len(packContents) > 0 {
 						dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 						for _, packItem := range packContents {
-							content.WriteString(dimStyle.Render(fmt.Sprintf("    - %s\n", packItem)))
+							content.WriteString(dimStyle.Render(fmt.Sprintf("      - %s\n", packItem)))
 						}
 					}
 				}
@@ -2302,8 +2302,8 @@ func (m *CharacterCreationModel) renderReview() string {
 			equipmentByType[item.Category] = append(equipmentByType[item.Category], item)
 		}
 		
-		// Display in order: weapon, armor, pack, gear, tool
-		categories := []string{"weapon", "armor", "pack", "gear", "tool"}
+		// Display in order: weapon, armor, gear, tool, pack (pack last so contents are at end)
+		categories := []string{"weapon", "armor", "gear", "tool", "pack"}
 		for _, cat := range categories {
 			items := equipmentByType[cat]
 			if len(items) > 0 {
@@ -2319,7 +2319,7 @@ func (m *CharacterCreationModel) renderReview() string {
 						packContents := m.getPackContents(item.Name)
 						if len(packContents) > 0 {
 							for _, packItem := range packContents {
-								content.WriteString(fmt.Sprintf("    - %s\n", packItem))
+								content.WriteString(fmt.Sprintf("      - %s\n", packItem))
 							}
 						}
 					}
