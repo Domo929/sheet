@@ -65,7 +65,7 @@
             {
               "items": [
                 {
-                  "name": "handaxes",
+                  "name": "Handaxes",
                   "quantity": 2,
                   "category": "weapon"
                 }
@@ -96,7 +96,7 @@
         {
           "type": "fixed",
           "item": {
-            "name": "javelins",
+            "name": "Javelins",
             "quantity": 4,
             "category": "weapon"
           }
@@ -1924,7 +1924,7 @@
             {
               "items": [
                 {
-                  "name": "handaxes",
+                  "name": "Handaxes",
                   "quantity": 2,
                   "category": "weapon"
                 }
@@ -2153,7 +2153,7 @@
         {
           "type": "fixed",
           "item": {
-            "name": "darts",
+            "name": "Darts",
             "quantity": 10,
             "category": "weapon"
           }
@@ -2399,7 +2399,7 @@
             {
               "items": [
                 {
-                  "name": "javelins",
+                  "name": "Javelins",
                   "quantity": 5,
                   "category": "weapon"
                 }
@@ -2789,7 +2789,7 @@
             {
               "items": [
                 {
-                  "name": "shortswords",
+                  "name": "Shortswords",
                   "quantity": 2,
                   "category": "weapon"
                 }
@@ -3582,7 +3582,7 @@
         {
           "type": "fixed",
           "item": {
-            "name": "daggers",
+            "name": "Daggers",
             "quantity": 2,
             "category": "weapon"
           }

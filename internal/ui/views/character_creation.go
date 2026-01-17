@@ -2017,6 +2017,17 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 				} else {
 					content.WriteString(prefix + itemText + " ✓\n")
 				}
+				
+				// If it's a pack, show contents
+				if equip.Item.Category == "pack" {
+					packContents := m.getPackContents(equip.Item.Name)
+					if len(packContents) > 0 {
+						dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+						for _, packItem := range packContents {
+							content.WriteString(dimStyle.Render(fmt.Sprintf("    - %s\n", packItem)))
+						}
+					}
+				}
 			} else if equip.Type == "choice" && len(equip.Options) > 0 {
 				// Choice - show all options vertically
 				choiceText := fmt.Sprintf("%d. Choose one:", i+1)
@@ -2089,6 +2100,19 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 							content.WriteString(prefix + selectedStyle.Render(optionText+suffix) + "\n")
 						} else {
 							content.WriteString(prefix + optionText + suffix + "\n")
+						}
+						
+						// If this option contains a pack, show its contents
+						for _, item := range opt.Items {
+							if item.Category == "pack" && item.Name != "" {
+								packContents := m.getPackContents(item.Name)
+								if len(packContents) > 0 {
+									dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+									for _, packItem := range packContents {
+										content.WriteString(dimStyle.Render(fmt.Sprintf("         - %s\n", packItem)))
+									}
+								}
+							}
 						}
 					}
 				}
@@ -2289,6 +2313,16 @@ func (m *CharacterCreationModel) renderReview() string {
 					} else {
 						content.WriteString(fmt.Sprintf("  • %s\n", item.Name))
 					}
+					
+					// If it's a pack, show contents
+					if cat == "pack" {
+						packContents := m.getPackContents(item.Name)
+						if len(packContents) > 0 {
+							for _, packItem := range packContents {
+								content.WriteString(fmt.Sprintf("    - %s\n", packItem))
+							}
+						}
+					}
 				}
 			}
 		}
@@ -2335,4 +2369,20 @@ func (m *CharacterCreationModel) getStartingGold() int {
 	}
 	
 	return 100 // Default
+}
+
+// getPackContents returns the contents of a pack by name, or nil if not found or not a pack.
+func (m *CharacterCreationModel) getPackContents(packName string) []string {
+	equipment, err := m.loader.GetEquipment()
+	if err != nil || equipment == nil {
+		return nil
+	}
+	
+	for _, pack := range equipment.Packs {
+		if pack.Name == packName {
+			return pack.Contents
+		}
+	}
+	
+	return nil
 }
