@@ -16,11 +16,13 @@ func TestMainSheetQuitKey(t *testing.T) {
 	}
 
 	// Set up as if a character was loaded
-	m.character = &models.Character{
+	char := &models.Character{
 		Info: models.CharacterInfo{
 			Name: "Test Character",
 		},
 	}
+	m.character = char
+	m.mainSheetModel = views.NewMainSheetModel(char, m.storage)
 	m.currentView = ViewMainSheet
 
 	// Send 'q' key
@@ -44,11 +46,13 @@ func TestMainSheetCtrlCQuit(t *testing.T) {
 		t.Fatalf("Failed to create model: %v", err)
 	}
 
-	m.character = &models.Character{
+	char := &models.Character{
 		Info: models.CharacterInfo{
 			Name: "Test Character",
 		},
 	}
+	m.character = char
+	m.mainSheetModel = views.NewMainSheetModel(char, m.storage)
 	m.currentView = ViewMainSheet
 
 	// Send Ctrl+C
