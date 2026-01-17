@@ -169,9 +169,15 @@ func (m *MainSheetModel) View() string {
 	header := m.renderHeader(width)
 	
 	// Main content area - three columns
+	// Account for borders (2 chars each panel = 6), padding (2 chars each = 6), and gaps (4 chars)
 	leftWidth := 22
 	middleWidth := 30
-	rightWidth := width - leftWidth - middleWidth - 8
+	rightWidth := width - leftWidth - middleWidth - 10
+
+	// Ensure minimum width for combat panel
+	if rightWidth < 25 {
+		rightWidth = 25
+	}
 
 	abilities := m.renderAbilities(leftWidth)
 	skills := m.renderSkills(middleWidth)
