@@ -2024,7 +2024,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 					if len(packContents) > 0 {
 						dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 						for _, packItem := range packContents {
-							content.WriteString(dimStyle.Render(fmt.Sprintf("      - %s\n", packItem)))
+							content.WriteString(fmt.Sprintf("      - %s\n", dimStyle.Render(packItem)))
 						}
 					}
 				}
@@ -2109,7 +2109,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 								if len(packContents) > 0 {
 									dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 									for _, packItem := range packContents {
-										content.WriteString(dimStyle.Render(fmt.Sprintf("        - %s\n", packItem)))
+										content.WriteString(fmt.Sprintf("        - %s\n", dimStyle.Render(packItem)))
 									}
 								}
 							}
