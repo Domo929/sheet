@@ -1093,6 +1093,13 @@ func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreati
 		return m, m.loadClasses()
 	case StepBackground:
 		return m, m.loadBackgrounds()
+	case StepProficiencies:
+		// Initialize proficiency manager
+		m.proficiencyManager = NewProficiencySelectionManager(
+			m.selectedClass,
+			m.selectedBackground,
+			m.selectedRace,
+		)
 	case StepEquipment:
 		// Initialize equipment choices only if not already initialized
 		if m.selectedClass != nil && m.equipmentChoices == nil {
