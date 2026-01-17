@@ -248,10 +248,17 @@ func (m *MainSheetModel) renderHeader(width int) string {
 		infoStyle.Render(raceClass),
 	)
 
+	// Proficiency legend icons
+	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
+	expertIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("◆")
+	legendStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+	legend := legendStyle.Render(fmt.Sprintf("%s Proficient  %s Expertise", profIcon, expertIcon))
+
 	headerRight := lipgloss.JoinVertical(
 		lipgloss.Right,
 		labelStyle.Render("Proficiency: ")+infoStyle.Render(fmt.Sprintf("+%d", char.GetProficiencyBonus())),
 		labelStyle.Render(progression)+infoStyle.Render(inspiration),
+		legend,
 	)
 
 	// Join header left and right
@@ -261,12 +268,6 @@ func (m *MainSheetModel) renderHeader(width int) string {
 		Padding(0, 2).
 		Width(width - 2)
 
-	// Proficiency legend icons
-	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
-	expertIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("◆")
-	legendStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
-	legend := legendStyle.Render(fmt.Sprintf("%s Proficient  %s Expertise", profIcon, expertIcon))
-
 	headerContent := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		headerLeft,
@@ -274,14 +275,7 @@ func (m *MainSheetModel) renderHeader(width int) string {
 		headerRight,
 	)
 
-	// Add legend below header content
-	fullHeader := lipgloss.JoinVertical(
-		lipgloss.Left,
-		headerContent,
-		legend,
-	)
-
-	return headerStyle.Render(fullHeader)
+	return headerStyle.Render(headerContent)
 }
 
 func (m *MainSheetModel) renderAbilities(width int) string {
