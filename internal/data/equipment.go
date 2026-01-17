@@ -2,10 +2,14 @@ package data
 
 // Equipment represents the full equipment database.
 type Equipment struct {
-	Weapons Weapons `json:"weapons"`
-	Armor   Armor   `json:"armor"`
-	Packs   []Pack  `json:"packs"`
-	Gear    []Item  `json:"gear"`
+	Weapons          Weapons `json:"weapons"`
+	Armor            Armor   `json:"armor"`
+	Packs            []Pack  `json:"packs"`
+	Gear             []Item  `json:"gear"`
+	Tools            []Item  `json:"tools"`
+	Services         []Item  `json:"services"`
+	FoodDrinkLodging []Item  `json:"foodDrinkLodging"`
+	Transportation   []Item  `json:"transportation"`
 }
 
 // Weapons contains all weapon categories.
@@ -26,15 +30,17 @@ type Armor struct {
 
 // Weapon represents a weapon item.
 type Weapon struct {
-	ID               string            `json:"id"`
-	Name             string            `json:"name"`
-	Cost             map[string]int    `json:"cost"`
-	Damage           string            `json:"damage"`
-	DamageType       string            `json:"damageType"`
-	Weight           float64           `json:"weight"`
-	Properties       []string          `json:"properties"`
-	Range            *WeaponRange      `json:"range,omitempty"`
-	VersatileDamage  string            `json:"versatileDamage,omitempty"`
+	ID              string         `json:"id"`
+	Name            string         `json:"name"`
+	Cost            map[string]int `json:"cost"`
+	Damage          string         `json:"damage"`
+	DamageType      string         `json:"damageType"`
+	Weight          float64        `json:"weight"`
+	Properties      []string       `json:"properties"`
+	Range           *WeaponRange   `json:"range,omitempty"`
+	VersatileDamage string         `json:"versatileDamage,omitempty"`
+	Category        string         `json:"category,omitempty"`
+	SubCategory     string         `json:"subCategory,omitempty"`
 }
 
 // WeaponRange represents weapon range in feet.
@@ -52,23 +58,29 @@ type ArmorItem struct {
 	Weight              float64        `json:"weight"`
 	StealthDisadvantage bool           `json:"stealthDisadvantage,omitempty"`
 	StrengthRequired    int            `json:"strengthRequired,omitempty"`
+	Category            string         `json:"category,omitempty"`
+	SubCategory         string         `json:"subCategory,omitempty"`
 }
 
 // Pack represents an equipment pack.
 type Pack struct {
-	ID       string         `json:"id"`
-	Name     string         `json:"name"`
-	Cost     map[string]int `json:"cost"`
-	Weight   float64        `json:"weight"`
-	Contents []string       `json:"contents"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Cost        map[string]int `json:"cost"`
+	Weight      float64        `json:"weight"`
+	Contents    []string       `json:"contents"`
+	Category    string         `json:"category,omitempty"`
+	SubCategory string         `json:"subCategory,omitempty"`
 }
 
 // Item represents a general gear item.
 type Item struct {
-	ID     string         `json:"id"`
-	Name   string         `json:"name"`
-	Cost   map[string]int `json:"cost"`
-	Weight float64        `json:"weight"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Cost        map[string]int `json:"cost"`
+	Weight      float64        `json:"weight"`
+	Category    string         `json:"category,omitempty"`
+	SubCategory string         `json:"subCategory,omitempty"`
 }
 
 // GetAllWeapons returns all weapons in a flat list.

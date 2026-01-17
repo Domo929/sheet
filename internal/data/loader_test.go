@@ -555,3 +555,322 @@ func TestLoaderEmptyData(t *testing.T) {
 		t.Error("GetRaces() with empty data should return error")
 	}
 }
+
+func TestLoaderGetEquipment(t *testing.T) {
+	loader := NewLoader("../../data")
+
+	equipment, err := loader.GetEquipment()
+	if err != nil {
+		t.Fatalf("GetEquipment() error = %v", err)
+	}
+
+	if equipment == nil {
+		t.Fatal("GetEquipment() returned nil")
+	}
+
+	// Test weapons
+	t.Run("weapons", func(t *testing.T) {
+		allWeapons := equipment.Weapons.GetAllWeapons()
+		if len(allWeapons) == 0 {
+			t.Error("GetEquipment() returned no weapons")
+		}
+
+		// Verify weapon categories have items
+		if len(equipment.Weapons.SimpleMelee) == 0 {
+			t.Error("no simple melee weapons")
+		}
+		if len(equipment.Weapons.SimpleRanged) == 0 {
+			t.Error("no simple ranged weapons")
+		}
+		if len(equipment.Weapons.MartialMelee) == 0 {
+			t.Error("no martial melee weapons")
+		}
+		if len(equipment.Weapons.MartialRanged) == 0 {
+			t.Error("no martial ranged weapons")
+		}
+
+		// Verify weapon fields
+		expectedWeapons := []string{"Dagger", "Longsword", "Shortbow"}
+		for _, expected := range expectedWeapons {
+			found := false
+			for _, weapon := range allWeapons {
+				if weapon.Name == expected {
+					found = true
+					if weapon.ID == "" {
+						t.Errorf("weapon '%s' has empty ID", weapon.Name)
+					}
+					if weapon.Category == "" {
+						t.Errorf("weapon '%s' has empty Category", weapon.Name)
+					}
+					if weapon.SubCategory == "" {
+						t.Errorf("weapon '%s' has empty SubCategory", weapon.Name)
+					}
+					break
+				}
+			}
+			if !found {
+				t.Errorf("expected weapon '%s' not found", expected)
+			}
+		}
+	})
+
+	// Test armor
+	t.Run("armor", func(t *testing.T) {
+		allArmor := equipment.Armor.GetAllArmor()
+		if len(allArmor) == 0 {
+			t.Error("GetEquipment() returned no armor")
+		}
+
+		// Verify armor categories have items
+		if len(equipment.Armor.Light) == 0 {
+			t.Error("no light armor")
+		}
+		if len(equipment.Armor.Medium) == 0 {
+			t.Error("no medium armor")
+		}
+		if len(equipment.Armor.Heavy) == 0 {
+			t.Error("no heavy armor")
+		}
+		if len(equipment.Armor.Shield) == 0 {
+			t.Error("no shields")
+		}
+
+		// Verify armor fields
+		expectedArmor := []string{"Leather Armor", "Chain Mail", "Shield"}
+		for _, expected := range expectedArmor {
+			found := false
+			for _, armor := range allArmor {
+				if armor.Name == expected {
+					found = true
+					if armor.ID == "" {
+						t.Errorf("armor '%s' has empty ID", armor.Name)
+					}
+					if armor.Category == "" {
+						t.Errorf("armor '%s' has empty Category", armor.Name)
+					}
+					break
+				}
+			}
+			if !found {
+				t.Errorf("expected armor '%s' not found", expected)
+			}
+		}
+	})
+
+	// Test packs
+	t.Run("packs", func(t *testing.T) {
+		if len(equipment.Packs) == 0 {
+			t.Error("GetEquipment() returned no packs")
+		}
+
+		expectedPacks := []string{"Burglar's Pack", "Explorer's Pack", "Dungeoneer's Pack"}
+		for _, expected := range expectedPacks {
+			found := false
+			for _, pack := range equipment.Packs {
+				if pack.Name == expected {
+					found = true
+					if pack.ID == "" {
+						t.Errorf("pack '%s' has empty ID", pack.Name)
+					}
+					if len(pack.Contents) == 0 {
+						t.Errorf("pack '%s' has no contents", pack.Name)
+					}
+					if pack.Category == "" {
+						t.Errorf("pack '%s' has empty Category", pack.Name)
+					}
+					break
+				}
+			}
+			if !found {
+				t.Errorf("expected pack '%s' not found", expected)
+			}
+		}
+	})
+
+	// Test gear
+	t.Run("gear", func(t *testing.T) {
+		if len(equipment.Gear) == 0 {
+			t.Error("GetEquipment() returned no gear")
+		}
+
+		expectedGear := []string{"Backpack", "Bedroll", "Rope (50 feet)"}
+		for _, expected := range expectedGear {
+			found := false
+			for _, item := range equipment.Gear {
+				if item.Name == expected {
+					found = true
+					if item.ID == "" {
+						t.Errorf("gear '%s' has empty ID", item.Name)
+					}
+					if item.Category == "" {
+						t.Errorf("gear '%s' has empty Category", item.Name)
+					}
+					break
+				}
+			}
+			if !found {
+				t.Errorf("expected gear '%s' not found", expected)
+			}
+		}
+	})
+
+	// Test tools
+	t.Run("tools", func(t *testing.T) {
+		if len(equipment.Tools) == 0 {
+			t.Error("GetEquipment() returned no tools")
+		}
+
+		// Verify tools have required fields
+		for _, tool := range equipment.Tools {
+			if tool.ID == "" {
+				t.Errorf("tool '%s' has empty ID", tool.Name)
+			}
+			if tool.Category == "" {
+				t.Errorf("tool '%s' has empty Category", tool.Name)
+			}
+		}
+
+		// Check for some expected tools
+		expectedTools := []string{"Thieves' Tools"}
+		for _, expected := range expectedTools {
+			found := false
+			for _, tool := range equipment.Tools {
+				if tool.Name == expected {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("expected tool '%s' not found", expected)
+			}
+		}
+	})
+
+	// Test services
+	t.Run("services", func(t *testing.T) {
+		if len(equipment.Services) == 0 {
+			t.Error("GetEquipment() returned no services")
+		}
+
+		for _, service := range equipment.Services {
+			if service.ID == "" {
+				t.Errorf("service '%s' has empty ID", service.Name)
+			}
+			if service.Category == "" {
+				t.Errorf("service '%s' has empty Category", service.Name)
+			}
+		}
+	})
+
+	// Test food/drink/lodging
+	t.Run("foodDrinkLodging", func(t *testing.T) {
+		if len(equipment.FoodDrinkLodging) == 0 {
+			t.Error("GetEquipment() returned no food/drink/lodging items")
+		}
+
+		for _, item := range equipment.FoodDrinkLodging {
+			if item.ID == "" {
+				t.Errorf("food/drink/lodging item '%s' has empty ID", item.Name)
+			}
+			if item.Category == "" {
+				t.Errorf("food/drink/lodging item '%s' has empty Category", item.Name)
+			}
+		}
+	})
+
+	// Test transportation
+	t.Run("transportation", func(t *testing.T) {
+		if len(equipment.Transportation) == 0 {
+			t.Error("GetEquipment() returned no transportation items")
+		}
+
+		for _, item := range equipment.Transportation {
+			if item.ID == "" {
+				t.Errorf("transportation item '%s' has empty ID", item.Name)
+			}
+			if item.Category == "" {
+				t.Errorf("transportation item '%s' has empty Category", item.Name)
+			}
+		}
+	})
+
+	// Test caching
+	t.Run("caching", func(t *testing.T) {
+		equipment2, err := loader.GetEquipment()
+		if err != nil {
+			t.Fatalf("GetEquipment() second call error = %v", err)
+		}
+
+		if equipment != equipment2 {
+			t.Error("GetEquipment() did not return cached data")
+		}
+	})
+}
+
+func TestEquipmentWeaponHelpers(t *testing.T) {
+	loader := NewLoader("../../data")
+
+	equipment, err := loader.GetEquipment()
+	if err != nil {
+		t.Fatalf("GetEquipment() error = %v", err)
+	}
+
+	t.Run("GetSimpleWeapons", func(t *testing.T) {
+		simple := equipment.Weapons.GetSimpleWeapons()
+		if len(simple) == 0 {
+			t.Error("GetSimpleWeapons() returned empty list")
+		}
+
+		expectedCount := len(equipment.Weapons.SimpleMelee) + len(equipment.Weapons.SimpleRanged)
+		if len(simple) != expectedCount {
+			t.Errorf("GetSimpleWeapons() returned %d weapons, expected %d", len(simple), expectedCount)
+		}
+	})
+
+	t.Run("GetMartialWeapons", func(t *testing.T) {
+		martial := equipment.Weapons.GetMartialWeapons()
+		if len(martial) == 0 {
+			t.Error("GetMartialWeapons() returned empty list")
+		}
+
+		expectedCount := len(equipment.Weapons.MartialMelee) + len(equipment.Weapons.MartialRanged)
+		if len(martial) != expectedCount {
+			t.Errorf("GetMartialWeapons() returned %d weapons, expected %d", len(martial), expectedCount)
+		}
+	})
+
+	t.Run("GetAllWeapons", func(t *testing.T) {
+		all := equipment.Weapons.GetAllWeapons()
+		if len(all) == 0 {
+			t.Error("GetAllWeapons() returned empty list")
+		}
+
+		expectedCount := len(equipment.Weapons.SimpleMelee) + len(equipment.Weapons.SimpleRanged) +
+			len(equipment.Weapons.MartialMelee) + len(equipment.Weapons.MartialRanged)
+		if len(all) != expectedCount {
+			t.Errorf("GetAllWeapons() returned %d weapons, expected %d", len(all), expectedCount)
+		}
+	})
+}
+
+func TestEquipmentArmorHelpers(t *testing.T) {
+	loader := NewLoader("../../data")
+
+	equipment, err := loader.GetEquipment()
+	if err != nil {
+		t.Fatalf("GetEquipment() error = %v", err)
+	}
+
+	t.Run("GetAllArmor", func(t *testing.T) {
+		all := equipment.Armor.GetAllArmor()
+		if len(all) == 0 {
+			t.Error("GetAllArmor() returned empty list")
+		}
+
+		expectedCount := len(equipment.Armor.Light) + len(equipment.Armor.Medium) +
+			len(equipment.Armor.Heavy) + len(equipment.Armor.Shield)
+		if len(all) != expectedCount {
+			t.Errorf("GetAllArmor() returned %d items, expected %d", len(all), expectedCount)
+		}
+	})
+}
