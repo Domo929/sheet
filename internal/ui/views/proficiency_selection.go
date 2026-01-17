@@ -271,6 +271,32 @@ func (psm ProficiencySelectionManager) GetSelectedLanguages() []string {
 	return psm.languageSelector.GetSelectedOptions()
 }
 
+// GetAllSkills returns all skill proficiencies (class-selected + background-granted).
+func (psm ProficiencySelectionManager) GetAllSkills() []string {
+	all := make([]string, 0)
+	all = append(all, psm.GetSelectedSkills()...)
+	all = append(all, psm.backgroundSkills...)
+	return all
+}
+
+// GetAllTools returns all tool proficiencies (selected + background-granted).
+func (psm ProficiencySelectionManager) GetAllTools() []string {
+	all := make([]string, 0)
+	all = append(all, psm.GetSelectedTools()...)
+	if psm.backgroundTool != "" {
+		all = append(all, psm.backgroundTool)
+	}
+	return all
+}
+
+// GetAllLanguages returns all language proficiencies (selected + racial).
+func (psm ProficiencySelectionManager) GetAllLanguages() []string {
+	all := make([]string, 0)
+	all = append(all, psm.GetSelectedLanguages()...)
+	all = append(all, psm.racialLanguages...)
+	return all
+}
+
 // ApplyToCharacter applies the selected proficiencies to the character.
 func (psm ProficiencySelectionManager) ApplyToCharacter(char *models.Character) {
 	// Apply class skill selections

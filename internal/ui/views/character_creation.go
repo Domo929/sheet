@@ -569,7 +569,17 @@ return m, nil
 
 // renderProficiencySelection renders the proficiency selection step.
 func (m *CharacterCreationModel) renderProficiencySelection() string {
-return m.proficiencyManager.View()
+	var content strings.Builder
+	
+	stepStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8")).
+		Italic(true)
+	content.WriteString(stepStyle.Render("Step 6 of 8: Proficiency Selection"))
+	content.WriteString("\n\n")
+	
+	content.WriteString(m.proficiencyManager.View())
+	
+	return content.String()
 }
 
 // handleEquipmentKeys handles keys for the starting equipment step.
@@ -582,7 +592,7 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 			m.startingGold = m.getStartingGold()
 			return m.moveToStep(StepReview)
 		case "esc":
-			return m.moveToStep(StepAbilities)
+			return m.moveToStep(StepProficiencies)
 		}
 		return m, nil
 	}
@@ -656,8 +666,8 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 		return m, nil
 		
 	case "esc":
-		// Go back to abilities
-		return m.moveToStep(StepAbilities)
+		// Go back to proficiencies
+		return m.moveToStep(StepProficiencies)
 	}
 	
 	return m, nil
@@ -1615,7 +1625,7 @@ func (m *CharacterCreationModel) renderBasicInfo() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 1 of 6: Basic Information"))
+	content.WriteString(stepStyle.Render("Step 1 of 8: Basic Information"))
 	content.WriteString("\n\n")
 	
 	// Character name input
@@ -1652,7 +1662,7 @@ func (m *CharacterCreationModel) renderRaceSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 2 of 6: Race Selection"))
+	content.WriteString(stepStyle.Render("Step 2 of 8: Race Selection"))
 	content.WriteString("\n\n")
 	
 	// Render race list
@@ -1675,7 +1685,7 @@ func (m *CharacterCreationModel) renderClassSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 3 of 6: Class Selection"))
+	content.WriteString(stepStyle.Render("Step 3 of 8: Class Selection"))
 	content.WriteString("\n\n")
 	
 	// Render class list
@@ -1698,7 +1708,7 @@ func (m *CharacterCreationModel) renderBackgroundSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 4 of 6: Background Selection"))
+	content.WriteString(stepStyle.Render("Step 4 of 8: Background Selection"))
 	content.WriteString("\n\n")
 	
 	// Show background list
@@ -1823,7 +1833,7 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 5 of 6: Ability Score Assignment"))
+	content.WriteString(stepStyle.Render("Step 5 of 8: Ability Score Assignment"))
 	content.WriteString("\n\n")
 	
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
@@ -1975,7 +1985,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 7 of 7: Starting Equipment"))
+	content.WriteString(stepStyle.Render("Step 7 of 8: Starting Equipment"))
 	content.WriteString("\n\n")
 	
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
@@ -2114,7 +2124,7 @@ func (m *CharacterCreationModel) renderEquipmentSubSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 7 of 7: Starting Equipment - Choose Specific Item"))
+	content.WriteString(stepStyle.Render("Step 7 of 8: Starting Equipment - Choose Specific Item"))
 	content.WriteString("\n\n")
 	
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
@@ -2230,27 +2240,27 @@ func (m *CharacterCreationModel) renderReview() string {
 	content.WriteString(labelStyle.Render("Proficiencies:"))
 	content.WriteString("\n")
 	
-	// Skills
-	selectedSkills := m.proficiencyManager.GetSelectedSkills()
-	if len(selectedSkills) > 0 {
+	// Skills (class-selected + background-granted)
+	allSkills := m.proficiencyManager.GetAllSkills()
+	if len(allSkills) > 0 {
 		content.WriteString("  Skills: ")
-		content.WriteString(strings.Join(selectedSkills, ", "))
+		content.WriteString(strings.Join(allSkills, ", "))
 		content.WriteString("\n")
 	}
 	
-	// Tools
-	selectedTools := m.proficiencyManager.GetSelectedTools()
-	if len(selectedTools) > 0 {
+	// Tools (selected + background-granted)
+	allTools := m.proficiencyManager.GetAllTools()
+	if len(allTools) > 0 {
 		content.WriteString("  Tools: ")
-		content.WriteString(strings.Join(selectedTools, ", "))
+		content.WriteString(strings.Join(allTools, ", "))
 		content.WriteString("\n")
 	}
 	
-	// Languages
-	selectedLanguages := m.proficiencyManager.GetSelectedLanguages()
-	if len(selectedLanguages) > 0 {
+	// Languages (selected + racial)
+	allLanguages := m.proficiencyManager.GetAllLanguages()
+	if len(allLanguages) > 0 {
 		content.WriteString("  Languages: ")
-		content.WriteString(strings.Join(selectedLanguages, ", "))
+		content.WriteString(strings.Join(allLanguages, ", "))
 		content.WriteString("\n")
 	}
 	
