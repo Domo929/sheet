@@ -342,6 +342,110 @@ func TestFormatModifier(t *testing.T) {
 	}
 }
 
+func TestMainSheetModelHPInputMode(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitPoints.Maximum = 45
+	char.CombatStats.HitPoints.Current = 45
+
+	model := NewMainSheetModel(char, nil)
+	model.focusArea = FocusCombat
+
+	// Test entering damage mode
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	if model.hpInputMode != HPInputDamage {
+		t.Errorf("expected HPInputDamage mode, got %d", model.hpInputMode)
+	}
+
+	// Test entering numbers
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1', '0'}})
+	if model.hpInputBuffer != "10" {
+		t.Errorf("expected buffer '10', got '%s'", model.hpInputBuffer)
+	}
+
+	// Test applying damage
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if model.character.CombatStats.HitPoints.Current != 35 {
+		t.Errorf("expected HP 35 after 10 damage, got %d", model.character.CombatStats.HitPoints.Current)
+	}
+	if model.hpInputMode != HPInputNone {
+		t.Error("expected to exit input mode after enter")
+	}
+}
+
+func TestMainSheetModelHPHeal(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitPoints.Maximum = 45
+	char.CombatStats.HitPoints.Current = 30
+
+	model := NewMainSheetModel(char, nil)
+	model.focusArea = FocusCombat
+
+	// Enter heal mode and heal 10
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1', '0'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	if model.character.CombatStats.HitPoints.Current != 40 {
+		t.Errorf("expected HP 40 after healing 10, got %d", model.character.CombatStats.HitPoints.Current)
+	}
+}
+
+func TestMainSheetModelHPTempHP(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitPoints.Maximum = 45
+	char.CombatStats.HitPoints.Current = 45
+	char.CombatStats.HitPoints.Temporary = 0
+
+	model := NewMainSheetModel(char, nil)
+	model.focusArea = FocusCombat
+
+	// Enter temp HP mode and add 5
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'5'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	if model.character.CombatStats.HitPoints.Temporary != 5 {
+		t.Errorf("expected temp HP 5, got %d", model.character.CombatStats.HitPoints.Temporary)
+	}
+}
+
+func TestMainSheetModelHPInputCancel(t *testing.T) {
+	char := createTestCharacter()
+	model := NewMainSheetModel(char, nil)
+	model.focusArea = FocusCombat
+
+	// Enter damage mode
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1', '0'}})
+
+	// Cancel with escape
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+
+	if model.hpInputMode != HPInputNone {
+		t.Error("expected to exit input mode on escape")
+	}
+	if model.hpInputBuffer != "" {
+		t.Error("expected buffer to be cleared on escape")
+	}
+}
+
+func TestMainSheetModelHPBar(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitPoints.Maximum = 100
+	char.CombatStats.HitPoints.Current = 50
+
+	model := NewMainSheetModel(char, nil)
+	model.width = 120
+	model.height = 40
+
+	view := model.View()
+
+	// Check HP bar brackets are present
+	if !strings.Contains(view, "[") || !strings.Contains(view, "]") {
+		t.Error("view should contain HP bar with brackets")
+	}
+}
+
 // Helper function to create a test character
 func createTestCharacter() *models.Character {
 	char := models.NewCharacter("test-id", "Aragorn", "Human", "Ranger")

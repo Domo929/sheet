@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/Domo929/sheet/internal/models"
@@ -20,7 +21,21 @@ type MainSheetModel struct {
 	focusArea     FocusArea
 	keys          mainSheetKeyMap
 	statusMessage string
+
+	// HP input mode
+	hpInputMode   HPInputMode
+	hpInputBuffer string
 }
+
+// HPInputMode represents the current HP modification mode.
+type HPInputMode int
+
+const (
+	HPInputNone HPInputMode = iota
+	HPInputDamage
+	HPInputHeal
+	HPInputTemp
+)
 
 // FocusArea represents which panel is currently focused.
 type FocusArea int
@@ -43,6 +58,9 @@ type mainSheetKeyMap struct {
 	Combat     key.Binding
 	Rest       key.Binding
 	Navigation key.Binding
+	Damage     key.Binding
+	Heal       key.Binding
+	TempHP     key.Binding
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -83,6 +101,18 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 			key.WithKeys("esc"),
 			key.WithHelp("esc", "back to selection"),
 		),
+		Damage: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "take damage"),
+		),
+		Heal: key.NewBinding(
+			key.WithKeys("h"),
+			key.WithHelp("h", "heal"),
+		),
+		TempHP: key.NewBinding(
+			key.WithKeys("t"),
+			key.WithHelp("t", "temp HP"),
+		),
 	}
 }
 
@@ -110,6 +140,11 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// Handle HP input mode
+		if m.hpInputMode != HPInputNone {
+			return m.handleHPInput(msg)
+		}
+
 		// Clear status message on any key press
 		m.statusMessage = ""
 		
@@ -143,7 +178,88 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Rest):
 			m.statusMessage = "Rest options coming soon..."
 			return m, nil
+		case key.Matches(msg, m.keys.Damage):
+			if m.focusArea == FocusCombat {
+				m.hpInputMode = HPInputDamage
+				m.hpInputBuffer = ""
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.Heal):
+			if m.focusArea == FocusCombat {
+				m.hpInputMode = HPInputHeal
+				m.hpInputBuffer = ""
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.TempHP):
+			if m.focusArea == FocusCombat {
+				m.hpInputMode = HPInputTemp
+				m.hpInputBuffer = ""
+				return m, nil
+			}
 		}
+	}
+
+	return m, nil
+}
+
+// handleHPInput handles keyboard input when in HP modification mode.
+func (m *MainSheetModel) handleHPInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEscape:
+		m.hpInputMode = HPInputNone
+		m.hpInputBuffer = ""
+		return m, nil
+
+	case tea.KeyEnter:
+		if m.hpInputBuffer == "" {
+			m.hpInputMode = HPInputNone
+			return m, nil
+		}
+		
+		amount, err := strconv.Atoi(m.hpInputBuffer)
+		if err != nil || amount < 0 {
+			m.statusMessage = "Invalid number"
+			m.hpInputMode = HPInputNone
+			m.hpInputBuffer = ""
+			return m, nil
+		}
+
+		// Apply the HP change
+		switch m.hpInputMode {
+		case HPInputDamage:
+			m.character.CombatStats.HitPoints.TakeDamage(amount)
+			m.statusMessage = fmt.Sprintf("Took %d damage", amount)
+		case HPInputHeal:
+			m.character.CombatStats.HitPoints.Heal(amount)
+			m.statusMessage = fmt.Sprintf("Healed %d HP", amount)
+		case HPInputTemp:
+			m.character.CombatStats.HitPoints.AddTemporaryHP(amount)
+			m.statusMessage = fmt.Sprintf("Gained %d temp HP", amount)
+		}
+
+		// Save character
+		if m.storage != nil {
+			_, _ = m.storage.Save(m.character)
+		}
+
+		m.hpInputMode = HPInputNone
+		m.hpInputBuffer = ""
+		return m, nil
+
+	case tea.KeyBackspace:
+		if len(m.hpInputBuffer) > 0 {
+			m.hpInputBuffer = m.hpInputBuffer[:len(m.hpInputBuffer)-1]
+		}
+		return m, nil
+
+	case tea.KeyRunes:
+		// Only accept digits
+		for _, r := range msg.Runes {
+			if r >= '0' && r <= '9' {
+				m.hpInputBuffer += string(r)
+			}
+		}
+		return m, nil
 	}
 
 	return m, nil
@@ -510,7 +626,7 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 	lines = append(lines, titleStyle.Render("Combat"))
 	lines = append(lines, "")
 
-	// HP
+	// HP with visual bar
 	hp := char.CombatStats.HitPoints
 	hpPercent := float64(hp.Current) / float64(hp.Maximum)
 	hpColor := "76" // green
@@ -530,6 +646,31 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		hpLine += labelStyle.Render(fmt.Sprintf(" (+%d temp)", hp.Temporary))
 	}
 	lines = append(lines, hpLine)
+
+	// HP Bar
+	barWidth := width - 6
+	if barWidth < 10 {
+		barWidth = 10
+	}
+	filledWidth := int(float64(barWidth) * hpPercent)
+	if filledWidth < 0 {
+		filledWidth = 0
+	}
+	if filledWidth > barWidth {
+		filledWidth = barWidth
+	}
+	emptyWidth := barWidth - filledWidth
+
+	barFilled := lipgloss.NewStyle().Background(lipgloss.Color(hpColor)).Render(strings.Repeat(" ", filledWidth))
+	barEmpty := lipgloss.NewStyle().Background(lipgloss.Color("238")).Render(strings.Repeat(" ", emptyWidth))
+	lines = append(lines, fmt.Sprintf("[%s%s]", barFilled, barEmpty))
+
+	// HP controls hint
+	if m.focusArea == FocusCombat {
+		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
+		lines = append(lines, hintStyle.Render("d: damage  h: heal  t: temp HP"))
+	}
+	lines = append(lines, "")
 
 	// AC
 	lines = append(lines, fmt.Sprintf("%s %s",
@@ -610,6 +751,28 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Width(width)
 
 	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • c: character info • r: rest • esc: back • q: quit"
+
+	// Show HP input prompt if in input mode
+	if m.hpInputMode != HPInputNone {
+		var prompt string
+		switch m.hpInputMode {
+		case HPInputDamage:
+			prompt = "Damage amount: "
+		case HPInputHeal:
+			prompt = "Heal amount: "
+		case HPInputTemp:
+			prompt = "Temp HP amount: "
+		}
+		inputStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("99")).
+			Bold(true)
+		inputLine := inputStyle.Render(prompt + m.hpInputBuffer + "█")
+		helpLine := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Render("Enter to confirm • Esc to cancel")
+		return lipgloss.JoinVertical(lipgloss.Left,
+			inputLine,
+			helpLine,
+		)
+	}
 
 	// Show status message if present
 	if m.statusMessage != "" {
