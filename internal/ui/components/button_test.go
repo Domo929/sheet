@@ -138,7 +138,7 @@ func TestButtonGroupEmpty(t *testing.T) {
 
 func TestButtonGroupFocusedVsSelected(t *testing.T) {
 	bg := NewButtonGroup("XP Tracking", "Milestone")
-	
+
 	// Initially: first button selected, group not focused
 	if !bg.Buttons[0].Selected {
 		t.Error("First button should be selected initially")
@@ -146,7 +146,7 @@ func TestButtonGroupFocusedVsSelected(t *testing.T) {
 	if bg.Buttons[0].Focused {
 		t.Error("Buttons should not be focused when group is not focused")
 	}
-	
+
 	// Set group as focused (like when user tabs to it)
 	bg.SetFocused(true)
 	if !bg.Buttons[0].Focused {
@@ -155,7 +155,7 @@ func TestButtonGroupFocusedVsSelected(t *testing.T) {
 	if !bg.Buttons[0].Selected {
 		t.Error("First button should still be selected")
 	}
-	
+
 	// Set group as not focused (like when user tabs away)
 	bg.SetFocused(false)
 	if bg.Buttons[0].Focused {
@@ -164,12 +164,12 @@ func TestButtonGroupFocusedVsSelected(t *testing.T) {
 	if !bg.Buttons[0].Selected {
 		t.Error("Button should remain selected even when group loses focus")
 	}
-	
+
 	// Move to second button and unfocus
 	bg.SetFocused(true)
 	bg.MoveRight()
 	bg.SetFocused(false)
-	
+
 	// First button should no longer be selected
 	if bg.Buttons[0].Selected {
 		t.Error("First button should not be selected after moving right")
@@ -182,4 +182,3 @@ func TestButtonGroupFocusedVsSelected(t *testing.T) {
 		t.Error("Second button should not be focused when group is not focused")
 	}
 }
-

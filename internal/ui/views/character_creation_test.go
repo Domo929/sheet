@@ -159,7 +159,7 @@ func TestValidateAbilityScoresManual(t *testing.T) {
 	model := NewCharacterCreationModel(store, loader)
 
 	model.abilityScoreMode = AbilityModeManual
-	
+
 	// Valid scores
 	model.abilityScores = [6]int{10, 12, 14, 8, 16, 9}
 	if !model.validateAbilityScores() {
@@ -191,7 +191,7 @@ func TestValidateAbilityScoresPointBuy(t *testing.T) {
 	model := NewCharacterCreationModel(store, loader)
 
 	model.abilityScoreMode = AbilityModePointBuy
-	
+
 	// Valid: all 8s (0 points)
 	model.abilityScores = [6]int{8, 8, 8, 8, 8, 8}
 	if !model.validateAbilityScores() {
@@ -235,23 +235,23 @@ func TestBackgroundBonusAllocation(t *testing.T) {
 	model.backgroundBonusComplete = true
 
 	bonuses := model.getBackgroundBonuses()
-	
+
 	// Check int got +2 (index 3)
 	if bonuses[3] != 2 {
 		t.Errorf("Expected +2 to INT, got %d", bonuses[3])
 	}
-	
+
 	// Check wis got +1 (index 4)
 	if bonuses[4] != 1 {
 		t.Errorf("Expected +1 to WIS, got %d", bonuses[4])
 	}
-	
+
 	// Test +1/+1/+1 pattern
 	model.backgroundBonusPattern = 1
 	model.backgroundBonusComplete = true
-	
+
 	bonuses = model.getBackgroundBonuses()
-	
+
 	// Check first 3 options got +1 each
 	if bonuses[3] != 1 { // int
 		t.Errorf("Expected +1 to INT, got %d", bonuses[3])
@@ -279,7 +279,7 @@ func TestAbilityScoreModeToggle(t *testing.T) {
 	nextMode := AbilityModeManual
 	model.abilityScoreMode = nextMode
 	model.resetAbilityScores()
-	
+
 	if model.abilityScoreMode != AbilityModeManual {
 		t.Errorf("Expected Manual mode, got %v", model.abilityScoreMode)
 	}
@@ -291,7 +291,7 @@ func TestAbilityScoreModeToggle(t *testing.T) {
 	nextMode = AbilityModeStandardArray
 	model.abilityScoreMode = nextMode
 	model.resetAbilityScores()
-	
+
 	if model.abilityScoreMode != AbilityModeStandardArray {
 		t.Errorf("Expected StandardArray mode, got %v", model.abilityScoreMode)
 	}
@@ -303,7 +303,7 @@ func TestAbilityScoreModeToggle(t *testing.T) {
 	nextMode = AbilityModePointBuy
 	model.abilityScoreMode = nextMode
 	model.resetAbilityScores()
-	
+
 	if model.abilityScoreMode != AbilityModePointBuy {
 		t.Errorf("Expected PointBuy mode, got %v", model.abilityScoreMode)
 	}

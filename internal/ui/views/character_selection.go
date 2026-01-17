@@ -4,25 +4,25 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/components"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // CharacterSelectionModel manages the character selection screen.
 type CharacterSelectionModel struct {
-	storage           *storage.CharacterStorage
-	characters        []storage.CharacterInfo
-	list              components.List
-	helpFooter        components.HelpFooter
-	width             int
-	height            int
-	err               error
-	loading           bool
-	confirmingDelete  bool
-	deleteTarget      string
-	quitting          bool
+	storage          *storage.CharacterStorage
+	characters       []storage.CharacterInfo
+	list             components.List
+	helpFooter       components.HelpFooter
+	width            int
+	height           int
+	err              error
+	loading          bool
+	confirmingDelete bool
+	deleteTarget     string
+	quitting         bool
 }
 
 // NewCharacterSelectionModel creates a new character selection model.
@@ -135,7 +135,7 @@ func (m *CharacterSelectionModel) Update(msg tea.Msg) (*CharacterSelectionModel,
 			}
 			return m, nil
 		}
-		
+
 		// Normal key handling
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -167,13 +167,13 @@ func (m *CharacterSelectionModel) Update(msg tea.Msg) (*CharacterSelectionModel,
 				}
 			}
 			return m, nil
-		
+
 		case "n", "N":
 			// New character
 			return m, func() tea.Msg {
 				return StartCharacterCreationMsg{}
 			}
-		
+
 		case "d", "D":
 			// Delete character (with confirmation)
 			if len(m.characters) == 0 {
@@ -211,7 +211,7 @@ func (m *CharacterSelectionModel) View() string {
 	if m.quitting {
 		return ""
 	}
-	
+
 	if m.width == 0 || m.height == 0 {
 		return "Initializing terminal display..."
 	}

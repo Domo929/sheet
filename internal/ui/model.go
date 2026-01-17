@@ -1,11 +1,11 @@
 package ui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/views"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // ViewType represents the different views in the application.
@@ -25,15 +25,15 @@ const (
 
 // Model is the main application model that manages view routing.
 type Model struct {
-	currentView  ViewType
-	width        int
-	height       int
-	character    *models.Character
-	storage      *storage.CharacterStorage
-	loader       *data.Loader
-	err          error
-	quitting     bool // Track if we're in the process of quitting
-	
+	currentView ViewType
+	width       int
+	height      int
+	character   *models.Character
+	storage     *storage.CharacterStorage
+	loader      *data.Loader
+	err         error
+	quitting    bool // Track if we're in the process of quitting
+
 	// View-specific models
 	characterSelectionModel *views.CharacterSelectionModel
 	characterCreationModel  *views.CharacterCreationModel
@@ -147,7 +147,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // updateCurrentView routes the message to the current view's update function.
 func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	
+
 	switch m.currentView {
 	case ViewCharacterSelection:
 		if m.characterSelectionModel != nil {
@@ -173,7 +173,7 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	default:
 		// Other views not yet implemented
 	}
-	
+
 	return m, cmd
 }
 
@@ -183,7 +183,7 @@ func (m Model) View() string {
 	if m.quitting {
 		return ""
 	}
-	
+
 	if m.err != nil {
 		return "Error: " + m.err.Error() + "\n\nPress q to quit."
 	}

@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/components"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // CreationStep represents the current step in character creation.
@@ -21,58 +21,62 @@ const (
 	StepClass
 	StepBackground
 	StepAbilities
+	StepProficiencies
 	StepReview
 )
 
 // CharacterCreationModel manages the character creation wizard.
 type CharacterCreationModel struct {
-	storage  *storage.CharacterStorage
-	loader   *data.Loader
-	width    int
-	height   int
-	
+	storage *storage.CharacterStorage
+	loader  *data.Loader
+	width   int
+	height  int
+
 	// Current step
 	currentStep CreationStep
-	
+
 	// Character being created
 	character *models.Character
-	
+
 	// Basic Info step
 	nameInput       components.TextInput
 	playerNameInput components.TextInput
 	progressionType models.ProgressionType
 	progressionList components.ButtonGroup
 	focusedField    int // 0=name, 1=playerName, 2=progression
-	
+
 	// Race step
-	raceList       components.List
-	selectedRace   *data.Race
+	raceList        components.List
+	selectedRace    *data.Race
 	selectedSubtype int // -1 if none selected
-	
+
 	// Class step
 	classList       components.List
 	selectedClass   *data.Class
 	skillSelections []int // Indices of selected skills
-	
+
 	// Background step
-	backgroundList       components.List
-	selectedBackground   *data.Background
-	
+	backgroundList     components.List
+	selectedBackground *data.Background
+
 	// Ability Score step
-	abilityScoreMode         AbilityScoreMode // Manual, Standard Array, or Point Buy
-	abilityScores            [6]int           // STR, DEX, CON, INT, WIS, CHA
-	focusedAbility           AbilityIndex     // Which ability is currently focused (0-5)
-	standardArrayValues      []int            // For standard array mode
-	standardArrayUsed        [6]bool          // Track which standard array values are used
-	focusedSection           CreationSection  // Background bonus or ability scores
-	
+	abilityScoreMode    AbilityScoreMode // Manual, Standard Array, or Point Buy
+	abilityScores       [6]int           // STR, DEX, CON, INT, WIS, CHA
+	focusedAbility      AbilityIndex     // Which ability is currently focused (0-5)
+	standardArrayValues []int            // For standard array mode
+	standardArrayUsed   [6]bool          // Track which standard array values are used
+	focusedSection      CreationSection  // Background bonus or ability scores
+
 	// Background bonus allocation (integrated into ability score step)
-	backgroundBonusPattern   BonusPattern  // +2/+1 or +1/+1/+1
-	backgroundBonus2Target   int           // Which ability gets +2 (index in background options)
-	backgroundBonus1Target   int           // Which ability gets +1 (index in background options)
-	focusedBonusField        BonusField    // pattern, +2 target, or +1 target
-	backgroundBonusComplete  bool          // Whether background bonuses are fully allocated
-	
+	backgroundBonusPattern  BonusPattern // +2/+1 or +1/+1/+1
+	backgroundBonus2Target  int          // Which ability gets +2 (index in background options)
+	backgroundBonus1Target  int          // Which ability gets +1 (index in background options)
+	focusedBonusField       BonusField   // pattern, +2 target, or +1 target
+	backgroundBonusComplete bool         // Whether background bonuses are fully allocated
+
+	// Proficiency Selection step
+	proficiencyManager ProficiencySelectionManager
+
 	// Navigation
 	helpFooter components.HelpFooter
 	buttons    components.ButtonGroup
@@ -101,8 +105,8 @@ const (
 type BonusPattern int
 
 const (
-	BonusPattern2Plus1     BonusPattern = iota // +2 to one ability, +1 to another
-	BonusPattern1Plus1Plus1                    // +1 to three abilities
+	BonusPattern2Plus1      BonusPattern = iota // +2 to one ability, +1 to another
+	BonusPattern1Plus1Plus1                     // +1 to three abilities
 )
 
 // BonusField represents which bonus field is focused.
@@ -130,16 +134,16 @@ const (
 func NewCharacterCreationModel(store *storage.CharacterStorage, loader *data.Loader) *CharacterCreationModel {
 	nameInput := components.NewTextInput("Character Name", "Enter character name...")
 	// Width will be set when window size is received
-	
+
 	playerNameInput := components.NewTextInput("Player Name", "Enter player name...")
 	// Width will be set when window size is received
-	
+
 	progressionButtons := components.NewButtonGroup("XP Tracking", "Milestone")
-	
+
 	helpFooter := components.NewHelpFooter()
-	
+
 	navButtons := components.NewButtonGroup("Next", "Cancel")
-	
+
 	return &CharacterCreationModel{
 		storage:             store,
 		loader:              loader,
@@ -152,7 +156,7 @@ func NewCharacterCreationModel(store *storage.CharacterStorage, loader *data.Loa
 		helpFooter:          helpFooter,
 		buttons:             navButtons,
 		selectedSubtype:     -1,
-		abilityScoreMode:    AbilityModePointBuy, // Default to point buy
+		abilityScoreMode:    AbilityModePointBuy,      // Default to point buy
 		abilityScores:       [6]int{8, 8, 8, 8, 8, 8}, // Start at minimum for point buy
 		standardArrayValues: models.StandardArray(),
 		character: &models.Character{
@@ -195,23 +199,23 @@ func (m *CharacterCreationModel) Update(msg tea.Msg) (*CharacterCreationModel, t
 		m.nameInput.Width = inputWidth
 		m.playerNameInput.Width = inputWidth
 		return m, nil
-		
+
 	case RaceDataLoadedMsg:
 		m.raceList = components.NewList("Available Races", msg.Items)
 		return m, nil
-		
+
 	case ClassDataLoadedMsg:
 		m.classList = components.NewList("Available Classes", msg.Items)
 		return m, nil
-		
+
 	case BackgroundDataLoadedMsg:
 		m.backgroundList = components.NewList("Available Backgrounds", msg.Items)
 		return m, nil
-		
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
-	
+
 	return m, nil
 }
 
@@ -222,7 +226,7 @@ func (m *CharacterCreationModel) handleKey(msg tea.KeyMsg) (*CharacterCreationMo
 		m.quitting = true
 		return m, tea.Quit
 	}
-	
+
 	switch m.currentStep {
 	case StepBasicInfo:
 		return m.handleBasicInfoKeys(msg)
@@ -234,6 +238,8 @@ func (m *CharacterCreationModel) handleKey(msg tea.KeyMsg) (*CharacterCreationMo
 		return m.handleBackgroundKeys(msg)
 	case StepAbilities:
 		return m.handleAbilityKeys(msg)
+	case StepProficiencies:
+		return m.handleProficiencyKeys(msg)
 	default:
 		return m, nil
 	}
@@ -245,21 +251,21 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 	case "tab":
 		m.focusedField = (m.focusedField + 1) % 3
 		return m, nil
-		
+
 	case "shift+tab":
 		m.focusedField--
 		if m.focusedField < 0 {
 			m.focusedField = 2
 		}
 		return m, nil
-		
+
 	case "up":
 		// Arrow keys always work for navigation
 		if m.focusedField > 0 {
 			m.focusedField--
 		}
 		return m, nil
-		
+
 	case "k":
 		// Vim key only works when NOT in text field
 		if m.focusedField == 2 && m.focusedField > 0 {
@@ -267,14 +273,14 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			return m, nil
 		}
 		// Otherwise treat as regular text input
-		
+
 	case "down":
 		// Arrow keys always work for navigation
 		if m.focusedField < 2 {
 			m.focusedField++
 		}
 		return m, nil
-		
+
 	case "j":
 		// Vim key only works when NOT in text field
 		if m.focusedField == 2 && m.focusedField < 2 {
@@ -282,7 +288,7 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			return m, nil
 		}
 		// Otherwise treat as regular text input
-		
+
 	case "left":
 		// Arrow keys for progression type selection
 		if m.focusedField == 2 {
@@ -290,7 +296,7 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			m.updateProgressionType()
 		}
 		return m, nil
-		
+
 	case "h":
 		// Vim key only works for progression type selection
 		if m.focusedField == 2 {
@@ -299,7 +305,7 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			return m, nil
 		}
 		// Otherwise treat as regular text input
-		
+
 	case "right":
 		// Arrow keys for progression type selection
 		if m.focusedField == 2 {
@@ -307,7 +313,7 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			m.updateProgressionType()
 		}
 		return m, nil
-		
+
 	case "l":
 		// Vim key only works for progression type selection
 		if m.focusedField == 2 {
@@ -316,7 +322,7 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			return m, nil
 		}
 		// Otherwise treat as regular text input
-		
+
 	case "enter":
 		// Move to next step if validation passes
 		if m.validateBasicInfo() {
@@ -324,13 +330,13 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			return m.moveToStep(StepRace)
 		}
 		return m, nil
-		
+
 	case "esc":
 		// Cancel creation - return to character selection
 		return m, func() tea.Msg {
 			return CancelCharacterCreationMsg{}
 		}
-		
+
 	case "backspace":
 		// Handle backspace for text input fields
 		if m.focusedField == 0 {
@@ -343,7 +349,7 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 			}
 		}
 		return m, nil
-		
+
 	case " ":
 		// Handle space in text input fields
 		if m.focusedField == 0 {
@@ -353,7 +359,7 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 		}
 		return m, nil
 	}
-	
+
 	// Handle text input - only process actual character runes
 	if msg.Type == tea.KeyRunes && (m.focusedField == 0 || m.focusedField == 1) {
 		char := string(msg.Runes)
@@ -386,7 +392,7 @@ func (m *CharacterCreationModel) handleBackgroundKeys(msg tea.KeyMsg) (*Characte
 // handleAbilityKeys handles keys for the ability score assignment step.
 func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
 	hasBackgroundBonuses := m.selectedBackground != nil && len(m.selectedBackground.AbilityScores.Options) > 0
-	
+
 	switch msg.String() {
 	case "up", "k":
 		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus {
@@ -412,7 +418,7 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 			}
 		}
 		return m, nil
-		
+
 	case "down", "j":
 		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus {
 			// In background bonus section
@@ -420,7 +426,7 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 			if m.backgroundBonusPattern == BonusPattern2Plus1 {
 				maxField = BonusFieldPlus1Target // pattern, +2, +1
 			}
-			
+
 			if m.focusedBonusField < maxField {
 				m.focusedBonusField++
 			} else {
@@ -435,7 +441,7 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 			}
 		}
 		return m, nil
-		
+
 	case "right", "l", "+", "=":
 		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus {
 			// Adjusting background bonuses
@@ -445,7 +451,7 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 			return m.incrementAbility(), nil
 		}
 		return m, nil
-		
+
 	case "left", "h", "-", "_":
 		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus {
 			// Adjusting background bonuses
@@ -455,7 +461,7 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 			return m.decrementAbility(), nil
 		}
 		return m, nil
-		
+
 	case "m":
 		// Toggle mode (only works in ability score section)
 		if m.focusedSection == SectionAbilityScores {
@@ -472,7 +478,7 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 			}
 		}
 		return m, nil
-		
+
 	case "enter":
 		if hasBackgroundBonuses && m.focusedSection == SectionBackgroundBonus && !m.backgroundBonusComplete {
 			// Confirm background bonuses
@@ -496,19 +502,51 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 				}
 			}
 		} else if m.focusedSection == SectionAbilityScores {
-			// Finalize character
+			// Move to proficiency selection
 			if m.validateAbilityScores() {
-				return m.finalizeCharacter()
+				return m.moveToStep(StepProficiencies)
 			}
 		}
 		return m, nil
-		
+
 	case "esc":
 		// Go back to background selection
 		return m.moveToStep(StepBackground)
 	}
-	
+
 	return m, nil
+}
+
+// handleProficiencyKeys handles keys for the proficiency selection step.
+func (m *CharacterCreationModel) handleProficiencyKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		// If proficiencies are complete, continue to finalization
+		if m.proficiencyManager.IsComplete() {
+			return m.finalizeCharacter()
+		}
+		// Otherwise, do nothing (user needs to complete selections)
+		return m, nil
+
+	case "tab":
+		// Try to move to next section
+		m.proficiencyManager.NextSection()
+		return m, nil
+
+	case "shift+tab":
+		// Try to move to previous section
+		m.proficiencyManager.PreviousSection()
+		return m, nil
+
+	case "esc":
+		// Go back to abilities
+		return m.moveToStep(StepAbilities)
+
+	default:
+		// Pass keys (including space for toggle) to the proficiency manager
+		m.proficiencyManager.Update(msg)
+		return m, nil
+	}
 }
 
 // adjustBackgroundBonus handles left/right adjustments in the background bonus section.
@@ -516,12 +554,12 @@ func (m *CharacterCreationModel) adjustBackgroundBonus(increase bool) *Character
 	if m.selectedBackground == nil {
 		return m
 	}
-	
+
 	options := m.selectedBackground.AbilityScores.Options
 	points := m.selectedBackground.AbilityScores.Points
 	canUse2Plus1 := len(options) >= 2 && points == 3
 	canUse1Plus1Plus1 := len(options) >= 3 && points == 3
-	
+
 	if m.focusedBonusField == BonusFieldPattern {
 		// Toggle pattern
 		if increase {
@@ -584,7 +622,7 @@ func (m *CharacterCreationModel) adjustBackgroundBonus(increase bool) *Character
 			m.backgroundBonus1Target = newTarget
 		}
 	}
-	
+
 	return m
 }
 
@@ -600,23 +638,23 @@ func (m *CharacterCreationModel) handleListSelectionKeys(
 	case "up", "k":
 		list.MoveUp()
 		return m, nil
-		
+
 	case "down", "j":
 		list.MoveDown()
 		return m, nil
-		
+
 	case "enter":
 		// Select item and move to next step
 		if selectFunc() {
 			return m.moveToStep(nextStep)
 		}
 		return m, nil
-		
+
 	case "esc":
 		// Go back to previous step
 		return m.moveToStep(previousStep)
 	}
-	
+
 	return m, nil
 }
 
@@ -653,7 +691,7 @@ func (m *CharacterCreationModel) updateProgressionType() {
 // moveToStep moves to a specific creation step.
 func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreationModel, tea.Cmd) {
 	m.currentStep = step
-	
+
 	// Load data for the new step
 	switch step {
 	case StepRace:
@@ -662,8 +700,15 @@ func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreati
 		return m, m.loadClasses()
 	case StepBackground:
 		return m, m.loadBackgrounds()
+	case StepProficiencies:
+		// Initialize proficiency selection manager
+		m.proficiencyManager = NewProficiencySelectionManager(
+			m.selectedClass,
+			m.selectedBackground,
+			m.selectedRace,
+		)
 	}
-	
+
 	return m, nil
 }
 
@@ -674,7 +719,7 @@ func (m *CharacterCreationModel) loadRaces() tea.Cmd {
 		if err != nil {
 			return fmt.Errorf("failed to load races: %w", err)
 		}
-		
+
 		items := make([]components.ListItem, len(races.Races))
 		for i, race := range races.Races {
 			desc := fmt.Sprintf("%s, %s, Speed %d ft", race.CreatureType, race.Size, race.Speed)
@@ -684,7 +729,7 @@ func (m *CharacterCreationModel) loadRaces() tea.Cmd {
 				Value:       &races.Races[i],
 			}
 		}
-		
+
 		return RaceDataLoadedMsg{Items: items}
 	}
 }
@@ -696,7 +741,7 @@ func (m *CharacterCreationModel) loadClasses() tea.Cmd {
 		if err != nil {
 			return fmt.Errorf("failed to load classes: %w", err)
 		}
-		
+
 		items := make([]components.ListItem, len(classes.Classes))
 		for i, class := range classes.Classes {
 			desc := fmt.Sprintf("Hit Die: %s, Primary: %s", class.HitDice, strings.Join(class.PrimaryAbility, "/"))
@@ -706,7 +751,7 @@ func (m *CharacterCreationModel) loadClasses() tea.Cmd {
 				Value:       &classes.Classes[i],
 			}
 		}
-		
+
 		return ClassDataLoadedMsg{Items: items}
 	}
 }
@@ -718,7 +763,7 @@ func (m *CharacterCreationModel) loadBackgrounds() tea.Cmd {
 		if err != nil {
 			return fmt.Errorf("failed to load backgrounds: %w", err)
 		}
-		
+
 		items := make([]components.ListItem, len(backgrounds.Backgrounds))
 		for i, bg := range backgrounds.Backgrounds {
 			desc := fmt.Sprintf("Skills: %s", strings.Join(bg.SkillProficiencies, ", "))
@@ -728,7 +773,7 @@ func (m *CharacterCreationModel) loadBackgrounds() tea.Cmd {
 				Value:       &backgrounds.Backgrounds[i],
 			}
 		}
-		
+
 		return BackgroundDataLoadedMsg{Items: items}
 	}
 }
@@ -755,13 +800,13 @@ func (m *CharacterCreationModel) selectCurrentRace() bool {
 		m.err = fmt.Errorf("no race selected")
 		return false
 	}
-	
+
 	race, ok := selected.Value.(*data.Race)
 	if !ok {
 		m.err = fmt.Errorf("invalid race data")
 		return false
 	}
-	
+
 	m.selectedRace = race
 	m.character.Info.Race = race.Name
 	m.err = nil
@@ -775,13 +820,13 @@ func (m *CharacterCreationModel) selectCurrentClass() bool {
 		m.err = fmt.Errorf("no class selected")
 		return false
 	}
-	
+
 	class, ok := selected.Value.(*data.Class)
 	if !ok {
 		m.err = fmt.Errorf("invalid class data")
 		return false
 	}
-	
+
 	m.selectedClass = class
 	m.character.Info.Class = class.Name
 	m.err = nil
@@ -795,23 +840,23 @@ func (m *CharacterCreationModel) selectCurrentBackground() bool {
 		m.err = fmt.Errorf("no background selected")
 		return false
 	}
-	
+
 	bg, ok := selected.Value.(*data.Background)
 	if !ok {
 		m.err = fmt.Errorf("invalid background data")
 		return false
 	}
-	
+
 	m.selectedBackground = bg
 	m.character.Info.Background = bg.Name
-	
+
 	// Reset background bonus allocation for ability score step
 	m.backgroundBonusPattern = BonusPattern2Plus1
 	m.backgroundBonus2Target = -1
 	m.backgroundBonus1Target = -1
 	m.focusedBonusField = BonusFieldPattern
 	m.backgroundBonusComplete = false
-	
+
 	m.err = nil
 	return true
 }
@@ -845,7 +890,7 @@ func (m *CharacterCreationModel) incrementAbility() *CharacterCreationModel {
 			oldCost := models.PointBuyCost(m.abilityScores[m.focusedAbility])
 			newCost := models.PointBuyCost(newScore)
 			totalPoints := m.calculateCurrentPointBuy()
-			if totalPoints - oldCost + newCost <= 27 {
+			if totalPoints-oldCost+newCost <= 27 {
 				m.abilityScores[m.focusedAbility] = newScore
 			}
 		}
@@ -873,7 +918,7 @@ func (m *CharacterCreationModel) decrementAbility() *CharacterCreationModel {
 // cycleStandardArrayValue cycles through available standard array values.
 func (m *CharacterCreationModel) cycleStandardArrayValue(forward bool) {
 	current := m.abilityScores[m.focusedAbility]
-	
+
 	// Find current value index in standard array, or -1 if not set
 	currentIdx := -1
 	for i, val := range m.standardArrayValues {
@@ -882,16 +927,16 @@ func (m *CharacterCreationModel) cycleStandardArrayValue(forward bool) {
 			break
 		}
 	}
-	
+
 	// Mark current as unused if it was set
 	if currentIdx != -1 {
 		m.standardArrayUsed[currentIdx] = false
 	}
-	
+
 	// Standard array is [15, 14, 13, 12, 10, 8]
 	// Forward (right) should go 8->10->12->13->14->15 (decreasing indices)
 	// Backward (left) should go 15->14->13->12->10->8 (increasing indices)
-	
+
 	// Find starting point for search
 	start := 0
 	if currentIdx != -1 {
@@ -916,7 +961,7 @@ func (m *CharacterCreationModel) cycleStandardArrayValue(forward bool) {
 			start = 0
 		}
 	}
-	
+
 	// Search for next unused value
 	for i := 0; i < len(m.standardArrayValues); i++ {
 		idx := start
@@ -930,7 +975,7 @@ func (m *CharacterCreationModel) cycleStandardArrayValue(forward bool) {
 			// Go forwards through array (increasing index)
 			idx = (start + i) % len(m.standardArrayValues)
 		}
-		
+
 		if !m.standardArrayUsed[idx] {
 			m.abilityScores[m.focusedAbility] = m.standardArrayValues[idx]
 			m.standardArrayUsed[idx] = true
@@ -1003,7 +1048,7 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 		Wisdom:       models.AbilityScore{Base: m.abilityScores[4]},
 		Charisma:     models.AbilityScore{Base: m.abilityScores[5]},
 	}
-	
+
 	// Apply background ability bonuses
 	bonuses := m.getBackgroundBonuses()
 	m.character.AbilityScores.Strength.Base += bonuses[0]
@@ -1012,14 +1057,17 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 	m.character.AbilityScores.Intelligence.Base += bonuses[3]
 	m.character.AbilityScores.Wisdom.Base += bonuses[4]
 	m.character.AbilityScores.Charisma.Base += bonuses[5]
-	
+
+	// Apply proficiency selections
+	m.proficiencyManager.ApplyToCharacter(m.character)
+
 	// Save character
 	path, err := m.storage.Save(m.character)
 	if err != nil {
 		m.err = fmt.Errorf("failed to save character: %w", err)
 		return m, nil
 	}
-	
+
 	return m, func() tea.Msg {
 		return CharacterCreatedMsg{
 			Character: m.character,
@@ -1031,16 +1079,16 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 // getBackgroundBonuses returns an array of bonuses for each ability [STR, DEX, CON, INT, WIS, CHA].
 func (m *CharacterCreationModel) getBackgroundBonuses() [6]int {
 	bonuses := [6]int{0, 0, 0, 0, 0, 0}
-	
+
 	if m.selectedBackground == nil || len(m.selectedBackground.AbilityScores.Options) == 0 {
 		return bonuses
 	}
-	
+
 	options := m.selectedBackground.AbilityScores.Options
 	abilityIndices := map[string]int{
 		"str": 0, "dex": 1, "con": 2, "int": 3, "wis": 4, "cha": 5,
 	}
-	
+
 	if m.backgroundBonusPattern == BonusPattern2Plus1 {
 		// +2/+1 pattern
 		if m.backgroundBonus2Target >= 0 && m.backgroundBonus2Target < len(options) {
@@ -1064,7 +1112,7 @@ func (m *CharacterCreationModel) getBackgroundBonuses() [6]int {
 			}
 		}
 	}
-	
+
 	return bonuses
 }
 
@@ -1074,13 +1122,13 @@ func (m *CharacterCreationModel) View() string {
 	if m.quitting {
 		return ""
 	}
-	
+
 	if m.width == 0 || m.height == 0 {
 		return "Error: Terminal size not initialized. Please resize your terminal or restart the application."
 	}
-	
+
 	var content strings.Builder
-	
+
 	// Title
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
@@ -1089,7 +1137,7 @@ func (m *CharacterCreationModel) View() string {
 	title := titleStyle.Render("Create New Character")
 	content.WriteString(title)
 	content.WriteString("\n\n")
-	
+
 	// Error message if present
 	if m.err != nil {
 		errorStyle := lipgloss.NewStyle().
@@ -1098,7 +1146,7 @@ func (m *CharacterCreationModel) View() string {
 		content.WriteString(errorStyle.Render(fmt.Sprintf("Error: %v", m.err)))
 		content.WriteString("\n\n")
 	}
-	
+
 	// Render current step
 	switch m.currentStep {
 	case StepBasicInfo:
@@ -1111,128 +1159,130 @@ func (m *CharacterCreationModel) View() string {
 		content.WriteString(m.renderBackgroundSelection())
 	case StepAbilities:
 		content.WriteString(m.renderAbilityScores())
+	case StepProficiencies:
+		content.WriteString(m.renderProficiencies())
 	}
-	
+
 	return content.String()
 }
 
 // renderBasicInfo renders the basic info step.
 func (m *CharacterCreationModel) renderBasicInfo() string {
 	var content strings.Builder
-	
+
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
 	content.WriteString(stepStyle.Render("Step 1 of 4: Basic Information"))
 	content.WriteString("\n\n")
-	
+
 	// Character name input
 	m.nameInput.Focused = (m.focusedField == 0)
 	content.WriteString(m.nameInput.Render())
 	content.WriteString("\n\n")
-	
+
 	// Player name input
 	m.playerNameInput.Focused = (m.focusedField == 1)
 	content.WriteString(m.playerNameInput.Render())
 	content.WriteString("\n\n")
-	
+
 	// Progression type selection
 	labelStyle := lipgloss.NewStyle().Bold(true)
 	content.WriteString(labelStyle.Render("Progression Type:"))
 	content.WriteString("\n")
-	
+
 	// Set focus state on button group based on focused field
 	m.progressionList.SetFocused(m.focusedField == 2)
 	content.WriteString(m.progressionList.Render())
 	content.WriteString("\n\n")
-	
+
 	// Help text
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	content.WriteString(helpStyle.Render("Tab: Next field | Enter: Continue | Esc: Cancel"))
-	
+
 	return content.String()
 }
 
 // renderRaceSelection renders the race selection step.
 func (m *CharacterCreationModel) renderRaceSelection() string {
 	var content strings.Builder
-	
+
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
 	content.WriteString(stepStyle.Render("Step 2 of 4: Race Selection"))
 	content.WriteString("\n\n")
-	
+
 	// Render race list
 	m.raceList.Width = m.width - 4
 	m.raceList.Height = m.height - 15
 	content.WriteString(m.raceList.Render())
 	content.WriteString("\n\n")
-	
+
 	// Help text
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Select | Esc: Back"))
-	
+
 	return content.String()
 }
 
 // renderClassSelection renders the class selection step.
 func (m *CharacterCreationModel) renderClassSelection() string {
 	var content strings.Builder
-	
+
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
 	content.WriteString(stepStyle.Render("Step 3 of 4: Class Selection"))
 	content.WriteString("\n\n")
-	
+
 	// Render class list
 	m.classList.Width = m.width - 4
 	m.classList.Height = m.height - 15
 	content.WriteString(m.classList.Render())
 	content.WriteString("\n\n")
-	
+
 	// Help text
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Select | Esc: Back"))
-	
+
 	return content.String()
 }
 
 // renderBackgroundSelection renders the background selection step.
 func (m *CharacterCreationModel) renderBackgroundSelection() string {
 	var content strings.Builder
-	
+
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
 	content.WriteString(stepStyle.Render("Step 4 of 5: Background Selection"))
 	content.WriteString("\n\n")
-	
+
 	// Show background list
 	m.backgroundList.Width = m.width - 4
 	m.backgroundList.Height = m.height - 15
 	content.WriteString(m.backgroundList.Render())
 	content.WriteString("\n\n")
-	
+
 	// Help text
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Next | Esc: Back"))
-	
+
 	return content.String()
 }
 
 // renderBackgroundBonusSelection renders the background bonus allocation UI at the top of ability scores.
 func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 	var content strings.Builder
-	
+
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
-	
+
 	content.WriteString(titleStyle.Render("Background Ability Score Bonuses"))
 	content.WriteString("\n")
 	content.WriteString(helpStyle.Render(fmt.Sprintf("From: %s", m.selectedBackground.Name)))
-	
+
 	// Show completion status
 	if m.backgroundBonusComplete {
 		completeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
@@ -1240,28 +1290,28 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 		content.WriteString(completeStyle.Render("✓ Allocated"))
 	}
 	content.WriteString("\n\n")
-	
+
 	options := m.selectedBackground.AbilityScores.Options
 	points := m.selectedBackground.AbilityScores.Points
-	
+
 	abilityFullNames := map[string]string{
 		"str": "Strength", "dex": "Dexterity", "con": "Constitution",
 		"int": "Intelligence", "wis": "Wisdom", "cha": "Charisma",
 	}
-	
+
 	// Pattern selection
 	canUse2Plus1 := len(options) >= 2 && points == 3
 	_ = canUse2Plus1 // May be used for validation in future
 	canUse1Plus1Plus1 := len(options) >= 3 && points == 3
 	_ = canUse1Plus1Plus1 // May be used for validation in future
-	
+
 	var patternStr string
 	if m.backgroundBonusPattern == BonusPattern2Plus1 {
 		patternStr = "+2 / +1"
 	} else {
 		patternStr = "+1 / +1 / +1"
 	}
-	
+
 	var lineStyle lipgloss.Style
 	if m.focusedSection == SectionBackgroundBonus && m.focusedBonusField == BonusFieldPattern {
 		lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
@@ -1270,10 +1320,10 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 		lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15"))
 		content.WriteString("  ")
 	}
-	
+
 	content.WriteString(lineStyle.Render(fmt.Sprintf("Pattern: %s", patternStr)))
 	content.WriteString("\n\n")
-	
+
 	// Ability selections (if +2/+1 pattern)
 	if m.backgroundBonusPattern == BonusPattern2Plus1 && canUse2Plus1 {
 		// +2 target
@@ -1282,7 +1332,7 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 			key := options[m.backgroundBonus2Target]
 			plus2Ability = abilityFullNames[key]
 		}
-		
+
 		if m.focusedSection == SectionBackgroundBonus && m.focusedBonusField == BonusFieldPlus2Target {
 			lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
 			content.WriteString("▶ ")
@@ -1292,14 +1342,14 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 		}
 		content.WriteString(lineStyle.Render(fmt.Sprintf("+2 Bonus: %s", plus2Ability)))
 		content.WriteString("\n")
-		
+
 		// +1 target
 		plus1Ability := "None"
 		if m.backgroundBonus1Target >= 0 && m.backgroundBonus1Target < len(options) {
 			key := options[m.backgroundBonus1Target]
 			plus1Ability = abilityFullNames[key]
 		}
-		
+
 		if m.focusedSection == SectionBackgroundBonus && m.focusedBonusField == BonusFieldPlus1Target {
 			lineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
 			content.WriteString("▶ ")
@@ -1320,33 +1370,33 @@ func (m *CharacterCreationModel) renderBackgroundBonusSelection() string {
 		content.WriteString(helpStyle.Render(strings.Join(allocated, ", ")))
 		content.WriteString("\n")
 	}
-	
+
 	return content.String()
 }
 
 // renderAbilityScores renders the ability score assignment step.
 func (m *CharacterCreationModel) renderAbilityScores() string {
 	var content strings.Builder
-	
+
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
 	content.WriteString(stepStyle.Render("Step 5 of 5: Ability Score Assignment"))
 	content.WriteString("\n\n")
-	
+
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	
+
 	// Background ability bonus selection (if applicable)
 	if m.selectedBackground != nil && len(m.selectedBackground.AbilityScores.Options) > 0 {
 		content.WriteString(m.renderBackgroundBonusSelection())
 		content.WriteString("\n\n")
-		
+
 		// Show separator
 		separatorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 		content.WriteString(separatorStyle.Render("─────────────────────────────────────────"))
 		content.WriteString("\n\n")
 	}
-	
+
 	// Mode selector
 	modeStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("12"))
 	var modeName string
@@ -1360,17 +1410,17 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 	}
 	content.WriteString(modeStyle.Render(fmt.Sprintf("Mode: %s", modeName)))
 	content.WriteString("\n")
-	
+
 	content.WriteString(helpStyle.Render("Press 'm' to change mode"))
 	content.WriteString("\n\n")
-	
+
 	// Ability names
 	abilityNames := []string{"STR", "DEX", "CON", "INT", "WIS", "CHA"}
 	abilityFullNames := []string{"Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"}
-	
+
 	// Background bonuses
 	backgroundBonuses := m.getBackgroundBonuses()
-	
+
 	// Render ability scores
 	for i := 0; i < 6; i++ {
 		base := m.abilityScores[i]
@@ -1378,7 +1428,7 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 		final := base + bonus
 		modifier := (final - 10) / 2
 		modifierStr := fmt.Sprintf("%+d", modifier)
-		
+
 		// Style based on focus (only show focus if in ability score section)
 		var lineStyle lipgloss.Style
 		if m.focusedSection == SectionAbilityScores && AbilityIndex(i) == m.focusedAbility {
@@ -1389,7 +1439,7 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 			lineStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("15"))
 		}
-		
+
 		// Build line
 		var line strings.Builder
 		if m.focusedSection == SectionAbilityScores && AbilityIndex(i) == m.focusedAbility {
@@ -1397,28 +1447,28 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 		} else {
 			line.WriteString("  ")
 		}
-		
+
 		line.WriteString(fmt.Sprintf("%-3s  %-14s  ", abilityNames[i], abilityFullNames[i]))
-		
+
 		// Show base score
 		line.WriteString(fmt.Sprintf("%2d", base))
-		
+
 		// Show bonus if any
 		if bonus > 0 {
 			line.WriteString(fmt.Sprintf(" + %d", bonus))
 		} else {
 			line.WriteString("    ")
 		}
-		
+
 		// Show final and modifier
 		line.WriteString(fmt.Sprintf("  =  %2d  (%s)", final, modifierStr))
-		
+
 		content.WriteString(lineStyle.Render(line.String()))
 		content.WriteString("\n")
 	}
-	
+
 	content.WriteString("\n")
-	
+
 	// Mode-specific info
 	switch m.abilityScoreMode {
 	case AbilityModeManual:
@@ -1450,7 +1500,7 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 		content.WriteString(helpStyle.Render("Range: 8-15 for each ability"))
 		content.WriteString("\n")
 	}
-	
+
 	// Background bonus info
 	if m.selectedBackground != nil && len(m.selectedBackground.AbilityScores.Options) > 0 {
 		content.WriteString("\n")
@@ -1462,11 +1512,36 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 		}
 		content.WriteString("\n")
 	}
-	
+
 	content.WriteString("\n")
-	
+
 	// Unified help text
 	content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Adjust | m: Change mode | Enter: Confirm/Finish | Esc: Back"))
-	
+
+	return content.String()
+}
+
+// renderProficiencies renders the proficiency selection step.
+func (m *CharacterCreationModel) renderProficiencies() string {
+	var content strings.Builder
+
+	stepStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8")).
+		Italic(true)
+	content.WriteString(stepStyle.Render("Step 6 of 7: Proficiency Selection"))
+	content.WriteString("\n\n")
+
+	// Render proficiency selection
+	content.WriteString(m.proficiencyManager.View())
+	content.WriteString("\n\n")
+
+	// Help text
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	if m.proficiencyManager.IsComplete() {
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | Space: Select/Deselect | Tab: Next section | Enter: Continue | Esc: Back"))
+	} else {
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | Space: Select/Deselect | Tab: Next section | Esc: Back"))
+	}
+
 	return content.String()
 }
