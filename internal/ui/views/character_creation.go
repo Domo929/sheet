@@ -75,10 +75,16 @@ type CharacterCreationModel struct {
 	backgroundBonusComplete  bool          // Whether background bonuses are fully allocated
 	
 	// Equipment step
-	startingGold             int      // Starting gold pieces for the character
-	equipmentChoices         []int    // Selected option index for each equipment choice (-1 = not selected)
-	focusedEquipmentChoice   int      // Which equipment choice is currently focused
-	equipmentConfirmed       bool     // Whether equipment has been reviewed and confirmed
+	startingGold             int               // Starting gold pieces for the character
+	equipmentChoices         []int             // Selected option index for each equipment choice (-1 = not selected)
+	focusedEquipmentChoice   int               // Which equipment choice is currently focused
+	equipmentConfirmed       bool              // Whether equipment has been reviewed and confirmed
+	equipmentSubSelections   map[int]string    // Map of choice index to selected sub-item name for "any [category]" patterns
+	
+	// Sub-selection for "any [category]" items
+	inEquipmentSubSelection  bool     // Whether we're in the sub-selection UI
+	equipmentSubItems        []string // Available items for sub-selection
+	focusedSubItem           int      // Which sub-item is focused
 	
 	// Navigation
 	helpFooter components.HelpFooter
@@ -537,6 +543,39 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 		return m, nil
 	}
 	
+	// Handle sub-selection mode (picking specific item from "any [category]")
+	if m.inEquipmentSubSelection {
+		switch msg.String() {
+		case "up", "k":
+			if m.focusedSubItem > 0 {
+				m.focusedSubItem--
+			}
+			return m, nil
+		case "down", "j":
+			if m.focusedSubItem < len(m.equipmentSubItems)-1 {
+				m.focusedSubItem++
+			}
+			return m, nil
+		case "enter":
+			// Select this specific item
+			if m.equipmentSubSelections == nil {
+				m.equipmentSubSelections = make(map[int]string)
+			}
+			m.equipmentSubSelections[m.focusedEquipmentChoice] = m.equipmentSubItems[m.focusedSubItem]
+			m.inEquipmentSubSelection = false
+			m.equipmentSubItems = nil
+			m.focusedSubItem = 0
+			return m, nil
+		case "esc":
+			// Cancel sub-selection
+			m.inEquipmentSubSelection = false
+			m.equipmentSubItems = nil
+			m.focusedSubItem = 0
+			return m, nil
+		}
+		return m, nil
+	}
+	
 	switch msg.String() {
 	case "up", "k":
 		// Move to previous equipment choice
@@ -563,6 +602,10 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 				// Wrap to last option
 				m.equipmentChoices[m.focusedEquipmentChoice] = len(currentEquip.Options) - 1
 			}
+			// Clear any previous sub-selection when changing options
+			if m.equipmentSubSelections != nil {
+				delete(m.equipmentSubSelections, m.focusedEquipmentChoice)
+			}
 		}
 		return m, nil
 		
@@ -577,10 +620,21 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 				// Wrap to first option
 				m.equipmentChoices[m.focusedEquipmentChoice] = 0
 			}
+			// Clear any previous sub-selection when changing options
+			if m.equipmentSubSelections != nil {
+				delete(m.equipmentSubSelections, m.focusedEquipmentChoice)
+			}
 		}
 		return m, nil
 		
 	case "enter":
+		// Check if current selection needs sub-selection
+		if m.needsSubSelection() {
+			// Enter sub-selection mode
+			m.enterSubSelection()
+			return m, nil
+		}
+		
 		// Check if all choices are made
 		if m.allEquipmentChoicesMade() {
 			m.equipmentConfirmed = true
@@ -609,10 +663,120 @@ func (m *CharacterCreationModel) allEquipmentChoicesMade() bool {
 			if i >= len(m.equipmentChoices) || m.equipmentChoices[i] < 0 {
 				return false
 			}
+			
+			// Check if selected option needs sub-selection
+			selectedIdx := m.equipmentChoices[i]
+			if selectedIdx >= 0 && selectedIdx < len(equip.Options) {
+				for _, item := range equip.Options[selectedIdx].Items {
+					if m.isAnyItemPattern(item.Name) {
+						// Check if we have a sub-selection for this choice
+						if m.equipmentSubSelections == nil || m.equipmentSubSelections[i] == "" {
+							return false // Needs sub-selection but none made
+						}
+					}
+				}
+			}
 		}
 		// Fixed items don't need selection
 	}
 	return true
+}
+
+// needsSubSelection checks if the currently focused choice needs a sub-selection.
+func (m *CharacterCreationModel) needsSubSelection() bool {
+	if m.selectedClass == nil || m.focusedEquipmentChoice >= len(m.selectedClass.StartingEquipment) {
+		return false
+	}
+	
+	equip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
+	if equip.Type != "choice" || m.focusedEquipmentChoice >= len(m.equipmentChoices) {
+		return false
+	}
+	
+	selectedIdx := m.equipmentChoices[m.focusedEquipmentChoice]
+	if selectedIdx < 0 || selectedIdx >= len(equip.Options) {
+		return false
+	}
+	
+	// Check if any item in the selected option is an "any [category]" pattern
+	for _, item := range equip.Options[selectedIdx].Items {
+		if m.isAnyItemPattern(item.Name) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// isAnyItemPattern checks if an item name is an "any [category]" pattern.
+func (m *CharacterCreationModel) isAnyItemPattern(name string) bool {
+	return strings.HasPrefix(strings.ToLower(name), "any ")
+}
+
+// enterSubSelection enters the sub-selection mode for choosing a specific item.
+func (m *CharacterCreationModel) enterSubSelection() {
+	if m.selectedClass == nil || m.focusedEquipmentChoice >= len(m.selectedClass.StartingEquipment) {
+		return
+	}
+	
+	equip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
+	if equip.Type != "choice" || m.focusedEquipmentChoice >= len(m.equipmentChoices) {
+		return
+	}
+	
+	selectedIdx := m.equipmentChoices[m.focusedEquipmentChoice]
+	if selectedIdx < 0 || selectedIdx >= len(equip.Options) {
+		return
+	}
+	
+	// Find the "any [category]" item
+	for _, item := range equip.Options[selectedIdx].Items {
+		if m.isAnyItemPattern(item.Name) {
+			// Parse the pattern and get available items
+			m.equipmentSubItems = m.getItemsForPattern(item.Name)
+			if len(m.equipmentSubItems) > 0 {
+				m.inEquipmentSubSelection = true
+				m.focusedSubItem = 0
+			}
+			return
+		}
+	}
+}
+
+// getItemsForPattern returns a list of item names matching an "any [category]" pattern.
+func (m *CharacterCreationModel) getItemsForPattern(pattern string) []string {
+	equipment, err := m.loader.GetEquipment()
+	if err != nil || equipment == nil {
+		return nil
+	}
+	
+	lowerPattern := strings.ToLower(pattern)
+	var items []string
+	
+	// Match different patterns
+	if strings.Contains(lowerPattern, "any simple weapon") {
+		weapons := equipment.Weapons.GetSimpleWeapons()
+		for _, w := range weapons {
+			items = append(items, w.Name)
+		}
+	} else if strings.Contains(lowerPattern, "any martial melee weapon") {
+		weapons := equipment.Weapons.MartialMelee
+		for _, w := range weapons {
+			items = append(items, w.Name)
+		}
+	} else if strings.Contains(lowerPattern, "any martial weapon") {
+		weapons := equipment.Weapons.GetMartialWeapons()
+		for _, w := range weapons {
+			items = append(items, w.Name)
+		}
+	} else if strings.Contains(lowerPattern, "any simple melee weapon") {
+		weapons := equipment.Weapons.SimpleMelee
+		for _, w := range weapons {
+			items = append(items, w.Name)
+		}
+	}
+	
+	return items
 }
 
 // getSelectedEquipment returns all selected equipment items.
@@ -631,7 +795,22 @@ func (m *CharacterCreationModel) getSelectedEquipment() []data.EquipmentItem {
 			selectedIdx := m.equipmentChoices[i]
 			if selectedIdx >= 0 && selectedIdx < len(equip.Options) {
 				// Add all items from the selected option
-				items = append(items, equip.Options[selectedIdx].Items...)
+				for _, item := range equip.Options[selectedIdx].Items {
+					// If this is an "any [category]" item, use the sub-selection
+					if m.isAnyItemPattern(item.Name) {
+						if m.equipmentSubSelections != nil && m.equipmentSubSelections[i] != "" {
+							items = append(items, data.EquipmentItem{
+								Name:     m.equipmentSubSelections[i],
+								Quantity: item.Quantity,
+								Category: item.Category,
+							})
+						}
+						// If pattern but no selection yet, skip (shouldn't happen if validation works)
+					} else {
+						// Normal item, add as-is
+						items = append(items, item)
+					}
+				}
 			}
 		}
 	}
@@ -1669,6 +1848,11 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	var content strings.Builder
 	
+	// If we're in sub-selection mode, show that instead
+	if m.inEquipmentSubSelection {
+		return m.renderEquipmentSubSelection()
+	}
+	
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
@@ -1727,10 +1911,18 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 					if len(opt.Items) > 0 {
 						itemStrs := []string{}
 						for _, item := range opt.Items {
+							displayName := item.Name
+							// If this is the selected option and it's an "any" pattern with a sub-selection
+							if j == selectedIdx && m.isAnyItemPattern(item.Name) {
+								if m.equipmentSubSelections != nil && m.equipmentSubSelections[i] != "" {
+									displayName = m.equipmentSubSelections[i]
+								}
+							}
+							
 							if item.Quantity > 1 {
-								itemStrs = append(itemStrs, fmt.Sprintf("%d× %s", item.Quantity, item.Name))
+								itemStrs = append(itemStrs, fmt.Sprintf("%d× %s", item.Quantity, displayName))
 							} else {
-								itemStrs = append(itemStrs, item.Name)
+								itemStrs = append(itemStrs, displayName)
 							}
 						}
 						
@@ -1738,10 +1930,24 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 						
 						if j == selectedIdx {
 							// This option is selected
+							// Show if it needs sub-selection
+							needsSub := false
+							for _, item := range opt.Items {
+								if m.isAnyItemPattern(item.Name) {
+									needsSub = true
+									break
+								}
+							}
+							
+							checkmark := " ✓"
+							if needsSub && (m.equipmentSubSelections == nil || m.equipmentSubSelections[i] == "") {
+								checkmark = " [Press Enter to choose]"
+							}
+							
 							if isFocused {
-								content.WriteString("     " + selectedStyle.Render(optionText+" ✓") + "\n")
+								content.WriteString("     " + selectedStyle.Render(optionText+checkmark) + "\n")
 							} else {
-								content.WriteString("     " + optionText + " ✓\n")
+								content.WriteString("     " + optionText + checkmark + "\n")
 							}
 						} else {
 							content.WriteString("     " + optionText + "\n")
@@ -1767,8 +1973,54 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	if allSelected {
 		content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Continue to Review | Esc: Back"))
 	} else {
-		content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Select option | Esc: Back"))
+		needsSub := m.needsSubSelection()
+		if needsSub {
+			content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Select option | Enter: Choose specific item | Esc: Back"))
+		} else {
+			content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Select option | Esc: Back"))
+		}
 	}
+	
+	return content.String()
+}
+
+// renderEquipmentSubSelection renders the sub-selection UI for "any [category]" items.
+func (m *CharacterCreationModel) renderEquipmentSubSelection() string {
+	var content strings.Builder
+	
+	stepStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8")).
+		Italic(true)
+	content.WriteString(stepStyle.Render("Step 6 of 6: Starting Equipment - Choose Specific Item"))
+	content.WriteString("\n\n")
+	
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	focusStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true)
+	
+	content.WriteString(titleStyle.Render("Choose Your Item"))
+	content.WriteString("\n\n")
+	
+	content.WriteString(helpStyle.Render("Select from the available items:"))
+	content.WriteString("\n\n")
+	
+	// Display items in sub-selection
+	for i, item := range m.equipmentSubItems {
+		isFocused := (i == m.focusedSubItem)
+		prefix := "  "
+		if isFocused {
+			prefix = "▶ "
+		}
+		
+		if isFocused {
+			content.WriteString(prefix + focusStyle.Render(item) + "\n")
+		} else {
+			content.WriteString(prefix + item + "\n")
+		}
+	}
+	
+	content.WriteString("\n")
+	content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Select | Esc: Cancel"))
 	
 	return content.String()
 }
