@@ -29,6 +29,7 @@ type ProficiencySelectionManager struct {
 	skillsRequired    int
 	classSkillOptions []string // Skills available from class
 	backgroundSkills  []string // Fixed skills from background
+	backgroundName    string   // Name of selected background
 
 	// Tool proficiency selection
 	toolSelector   components.ProficiencySelector
@@ -67,6 +68,7 @@ func NewProficiencySelectionManager(
 
 	if selectedBackground != nil {
 		psm.backgroundSkills = normalizeSkillNames(selectedBackground.SkillProficiencies)
+		psm.backgroundName = selectedBackground.Name
 	}
 
 	if psm.skillsRequired > 0 {
@@ -75,6 +77,11 @@ func NewProficiencySelectionManager(
 			psm.skillOptions,
 			psm.skillsRequired,
 		)
+		// Set background skills as locked (pre-selected, non-toggleable)
+		if len(psm.backgroundSkills) > 0 {
+			label := "(From " + psm.backgroundName + ")"
+			psm.skillSelector.SetLocked(psm.backgroundSkills, label)
+		}
 		psm.skillSelector.SetFocused(true)
 	} else {
 		psm.skillsComplete = true
@@ -146,15 +153,6 @@ func (psm ProficiencySelectionManager) View() string {
 		if psm.skillsRequired > 0 {
 			// Render selector without help text
 			b.WriteString(psm.skillSelector.ViewWithoutHelp())
-
-			// Show background skills
-			if len(psm.backgroundSkills) > 0 {
-				b.WriteString("\n")
-				b.WriteString("From Background:\n")
-				for _, skill := range psm.backgroundSkills {
-					b.WriteString("  • " + skill + "\n")
-				}
-			}
 			
 			// Help text at the end
 			helpText := psm.skillSelector.HelpText()

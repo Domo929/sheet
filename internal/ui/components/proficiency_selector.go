@@ -13,6 +13,8 @@ type ProficiencySelector struct {
 	title     string
 	options   []string
 	selected  map[int]bool
+	locked    map[int]bool   // Items that are pre-selected and cannot be deselected
+	labels    map[int]string // Labels to show next to locked items (e.g., "(From Acolyte)")
 	maxSelect int
 	cursor    int
 	width     int
@@ -23,6 +25,7 @@ type ProficiencySelector struct {
 	titleStyle    lipgloss.Style
 	optionStyle   lipgloss.Style
 	selectedStyle lipgloss.Style
+	lockedStyle   lipgloss.Style
 	cursorStyle   lipgloss.Style
 	helpStyle     lipgloss.Style
 }
@@ -33,6 +36,8 @@ func NewProficiencySelector(title string, options []string, maxSelect int) Profi
 		title:         title,
 		options:       options,
 		selected:      make(map[int]bool),
+		locked:        make(map[int]bool),
+		labels:        make(map[int]string),
 		maxSelect:     maxSelect,
 		cursor:        0,
 		width:         60,
@@ -41,6 +46,7 @@ func NewProficiencySelector(title string, options []string, maxSelect int) Profi
 		titleStyle:    lipgloss.NewStyle().Bold(true).Underline(true),
 		optionStyle:   lipgloss.NewStyle().Foreground(lipgloss.Color("240")),
 		selectedStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("green")).Bold(true),
+		lockedStyle:   lipgloss.NewStyle().Foreground(lipgloss.Color("cyan")),
 		cursorStyle:   lipgloss.NewStyle().Foreground(lipgloss.Color("yellow")),
 		helpStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Italic(true),
 	}
@@ -85,8 +91,10 @@ func (ps *ProficiencySelector) Update(msg tea.Msg) (ProficiencySelector, tea.Cmd
 				ps.cursor++
 			}
 		case " ":
-			// Toggle selection with space
-			if ps.selected[ps.cursor] {
+			// Toggle selection with space (but not for locked items)
+			if ps.locked[ps.cursor] {
+				// Cannot toggle locked items
+			} else if ps.selected[ps.cursor] {
 				delete(ps.selected, ps.cursor)
 			} else if ps.SelectedCount() < ps.maxSelect {
 				ps.selected[ps.cursor] = true
@@ -125,12 +133,19 @@ func (ps ProficiencySelector) View() string {
 
 		checkbox := "[ ]"
 		style := ps.optionStyle
-		if ps.selected[i] {
+		suffix := ""
+		if ps.locked[i] {
+			checkbox = "[✓]"
+			style = ps.lockedStyle
+			if label, ok := ps.labels[i]; ok {
+				suffix = " " + label
+			}
+		} else if ps.selected[i] {
 			checkbox = "[✓]"
 			style = ps.selectedStyle
 		}
 
-		line := fmt.Sprintf("%s %s %s", cursor, checkbox, option)
+		line := fmt.Sprintf("%s %s %s%s", cursor, checkbox, option, suffix)
 		b.WriteString(style.Render(line))
 		b.WriteString("\n")
 	}
@@ -173,12 +188,19 @@ func (ps ProficiencySelector) ViewWithoutHelp() string {
 
 		checkbox := "[ ]"
 		style := ps.optionStyle
-		if ps.selected[i] {
+		suffix := ""
+		if ps.locked[i] {
+			checkbox = "[✓]"
+			style = ps.lockedStyle
+			if label, ok := ps.labels[i]; ok {
+				suffix = " " + label
+			}
+		} else if ps.selected[i] {
 			checkbox = "[✓]"
 			style = ps.selectedStyle
 		}
 
-		line := fmt.Sprintf("%s %s %s", cursor, checkbox, option)
+		line := fmt.Sprintf("%s %s %s%s", cursor, checkbox, option, suffix)
 		b.WriteString(style.Render(line))
 		b.WriteString("\n")
 	}
@@ -240,6 +262,28 @@ func (ps *ProficiencySelector) SetSelected(indices []int) {
 			ps.selected[i] = true
 		}
 	}
+}
+
+// SetLocked sets options as locked (pre-selected, non-toggleable) with a label.
+func (ps *ProficiencySelector) SetLocked(optionNames []string, label string) {
+	for i, opt := range ps.options {
+		for _, locked := range optionNames {
+			if strings.EqualFold(opt, locked) {
+				ps.locked[i] = true
+				ps.labels[i] = label
+				break
+			}
+		}
+	}
+}
+
+// GetLockedOptions returns the locked option strings.
+func (ps ProficiencySelector) GetLockedOptions() []string {
+	options := make([]string, 0, len(ps.locked))
+	for i := range ps.locked {
+		options = append(options, ps.options[i])
+	}
+	return options
 }
 
 // SetWidth sets the width of the component.
