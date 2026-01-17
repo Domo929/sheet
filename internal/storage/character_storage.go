@@ -51,18 +51,18 @@ func (cs *CharacterStorage) GetBaseDir() string {
 func sanitizeFilename(name string) string {
 	// Replace spaces with underscores
 	name = strings.ReplaceAll(name, " ", "_")
-	
+
 	// Remove or replace invalid characters
 	invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|"}
 	for _, char := range invalidChars {
 		name = strings.ReplaceAll(name, char, "")
 	}
-	
+
 	// Ensure it's not empty
 	if name == "" {
 		name = "unnamed"
 	}
-	
+
 	return name
 }
 
@@ -78,13 +78,13 @@ func (cs *CharacterStorage) Save(character *models.Character) (string, error) {
 	if character == nil {
 		return "", errors.New("character cannot be nil")
 	}
-	
+
 	if character.Info.Name == "" {
 		return "", ErrInvalidCharacterName
 	}
 
 	path := cs.getCharacterPath(character.Info.Name)
-	
+
 	// Create file
 	file, err := os.Create(path)
 	if err != nil {
@@ -107,7 +107,7 @@ func (cs *CharacterStorage) Load(characterName string) (*models.Character, error
 	}
 
 	path := cs.getCharacterPath(characterName)
-	
+
 	// Check if file exists
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, ErrCharacterNotFound
@@ -159,7 +159,7 @@ func (cs *CharacterStorage) Delete(characterName string) error {
 	}
 
 	path := cs.getCharacterPath(characterName)
-	
+
 	// Check if file exists
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return ErrCharacterNotFound
@@ -178,7 +178,7 @@ func (cs *CharacterStorage) Exists(characterName string) bool {
 	if characterName == "" {
 		return false
 	}
-	
+
 	path := cs.getCharacterPath(characterName)
 	_, err := os.Stat(path)
 	return err == nil
@@ -206,14 +206,14 @@ func (cs *CharacterStorage) List() ([]CharacterInfo, error) {
 		if entry.IsDir() {
 			continue
 		}
-		
+
 		// Only process .json files
 		if !strings.HasSuffix(entry.Name(), ".json") {
 			continue
 		}
 
 		path := filepath.Join(cs.baseDir, entry.Name())
-		
+
 		// Read and parse the file to get basic info
 		data, err := os.ReadFile(path)
 		if err != nil {
@@ -250,7 +250,7 @@ func (cs *CharacterStorage) Rename(oldName, newName string) error {
 
 	oldPath := cs.getCharacterPath(oldName)
 	newPath := cs.getCharacterPath(newName)
-	
+
 	// Check if old file exists
 	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
 		return ErrCharacterNotFound

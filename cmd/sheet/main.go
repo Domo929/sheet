@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Domo929/sheet/internal/ui"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 		tea.WithAltScreen(),       // Use alternate screen buffer
 		tea.WithMouseCellMotion(), // Enable mouse support
 	)
-	
+
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running application: %v\n", err)
 		os.Exit(1)

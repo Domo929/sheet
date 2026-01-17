@@ -4,15 +4,15 @@ import tea "github.com/charmbracelet/bubbletea"
 
 // KeyMap defines common keyboard shortcuts.
 type KeyMap struct {
-	Up      []string
-	Down    []string
-	Left    []string
-	Right   []string
-	Select  []string
-	Back    []string
-	Quit    []string
-	Help    []string
-	Tab     []string
+	Up       []string
+	Down     []string
+	Left     []string
+	Right    []string
+	Select   []string
+	Back     []string
+	Quit     []string
+	Help     []string
+	Tab      []string
 	ShiftTab []string
 }
 

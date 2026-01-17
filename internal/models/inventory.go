@@ -4,11 +4,11 @@ import "errors"
 
 // Error sentinels for inventory operations
 var (
-	ErrInsufficientFunds         = errors.New("insufficient funds")
+	ErrInsufficientFunds            = errors.New("insufficient funds")
 	ErrItemDoesNotRequireAttunement = errors.New("item does not require attunement")
-	ErrItemAlreadyAttuned        = errors.New("item is already attuned")
-	ErrMaxAttunementReached      = errors.New("already attuned to maximum of 3 items")
-	ErrItemNotAttuned            = errors.New("item is not attuned")
+	ErrItemAlreadyAttuned           = errors.New("item is already attuned")
+	ErrMaxAttunementReached         = errors.New("already attuned to maximum of 3 items")
+	ErrItemNotAttuned               = errors.New("item is not attuned")
 )
 
 // Currency represents D&D 5e currency.

@@ -368,7 +368,7 @@ func TestCharacterWriteToReadFromRoundTrip(t *testing.T) {
 		t.Errorf("Level mismatch: got %d, want %d", loaded.Info.Level, original.Info.Level)
 	}
 	if loaded.AbilityScores.Charisma.Base != original.AbilityScores.Charisma.Base {
-		t.Errorf("Charisma mismatch: got %d, want %d", 
+		t.Errorf("Charisma mismatch: got %d, want %d",
 			loaded.AbilityScores.Charisma.Base, original.AbilityScores.Charisma.Base)
 	}
 	if loaded.CombatStats.HitPoints.Maximum != original.CombatStats.HitPoints.Maximum {

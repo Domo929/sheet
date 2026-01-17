@@ -21,6 +21,7 @@ const (
 	StepClass
 	StepBackground
 	StepAbilities
+	StepProficiencies
 	StepEquipment
 	StepReview
 )
@@ -73,6 +74,9 @@ type CharacterCreationModel struct {
 	backgroundBonus1Target   int           // Which ability gets +1 (index in background options)
 	focusedBonusField        BonusField    // pattern, +2 target, or +1 target
 	backgroundBonusComplete  bool          // Whether background bonuses are fully allocated
+	
+	// Proficiency Selection step
+	proficiencyManager ProficiencySelectionManager
 	
 	// Equipment step
 	startingGold             int               // Starting gold pieces for the character
@@ -248,6 +252,8 @@ func (m *CharacterCreationModel) handleKey(msg tea.KeyMsg) (*CharacterCreationMo
 		return m.handleBackgroundKeys(msg)
 	case StepAbilities:
 		return m.handleAbilityKeys(msg)
+	case StepProficiencies:
+		return m.handleProficiencyKeys(msg)
 	case StepEquipment:
 		return m.handleEquipmentKeys(msg)
 	case StepReview:
@@ -514,9 +520,9 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 				}
 			}
 		} else if m.focusedSection == SectionAbilityScores {
-			// Move to equipment selection
+			// Move to proficiency selection
 			if m.validateAbilityScores() {
-				return m.moveToStep(StepEquipment)
+				return m.moveToStep(StepProficiencies)
 			}
 		}
 		return m, nil
@@ -527,6 +533,43 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 	}
 	
 	return m, nil
+}
+
+// handleProficiencyKeys handles keys for the proficiency selection step.
+func (m *CharacterCreationModel) handleProficiencyKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+switch msg.String() {
+case "enter":
+// If proficiencies are complete, continue to equipment
+if m.proficiencyManager.IsComplete() {
+return m.moveToStep(StepEquipment)
+}
+// Otherwise, do nothing (user needs to complete selections)
+return m, nil
+
+case "tab":
+// Try to move to next section
+m.proficiencyManager.NextSection()
+return m, nil
+
+case "shift+tab":
+// Try to move to previous section
+m.proficiencyManager.PreviousSection()
+return m, nil
+
+case "esc":
+// Go back to abilities
+return m.moveToStep(StepAbilities)
+
+default:
+// Pass keys (including space for toggle) to the proficiency manager
+m.proficiencyManager.Update(msg)
+return m, nil
+}
+}
+
+// renderProficiencySelection renders the proficiency selection step.
+func (m *CharacterCreationModel) renderProficiencySelection() string {
+return m.proficiencyManager.View()
 }
 
 // handleEquipmentKeys handles keys for the starting equipment step.
@@ -1547,6 +1590,8 @@ func (m *CharacterCreationModel) View() string {
 		content.WriteString(m.renderBackgroundSelection())
 	case StepAbilities:
 		content.WriteString(m.renderAbilityScores())
+	case StepProficiencies:
+		content.WriteString(m.renderProficiencySelection())
 	case StepEquipment:
 		content.WriteString(m.renderEquipmentSelection())
 	case StepReview:
@@ -1923,7 +1968,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 6 of 6: Starting Equipment"))
+	content.WriteString(stepStyle.Render("Step 7 of 7: Starting Equipment"))
 	content.WriteString("\n\n")
 	
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
@@ -2062,7 +2107,7 @@ func (m *CharacterCreationModel) renderEquipmentSubSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 6 of 6: Starting Equipment - Choose Specific Item"))
+	content.WriteString(stepStyle.Render("Step 7 of 7: Starting Equipment - Choose Specific Item"))
 	content.WriteString("\n\n")
 	
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
