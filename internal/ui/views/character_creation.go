@@ -588,8 +588,8 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 		m.navigateEquipmentDown()
 		return m, nil
 		
-	case " ", "enter":
-		// Spacebar or Enter: Select current option or enter sub-selection if needed
+	case " ":
+		// Spacebar: Select current option and enter sub-selection if needed
 		currentEquip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
 		if currentEquip.Type == "choice" {
 			// Select the focused option
@@ -601,13 +601,10 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 				return m, nil
 			}
 		}
+		return m, nil
 		
-		// If spacebar and all complete, do nothing (Enter will proceed)
-		if msg.String() == " " {
-			return m, nil
-		}
-		
-		// Enter: proceed if all choices made
+	case "enter":
+		// Enter: Always proceed to review if all choices made (never enters sub-selection)
 		if m.allEquipmentChoicesMade() {
 			m.equipmentConfirmed = true
 			m.startingGold = m.getStartingGold()
@@ -2051,12 +2048,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	if allSelected {
 		content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Continue to Review | Esc: Back"))
 	} else {
-		needsSub := m.needsSubSelection()
-		if needsSub {
-			content.WriteString(helpStyle.Render("↑/↓: Navigate | Space/Enter: Select | Esc: Back"))
-		} else {
-			content.WriteString(helpStyle.Render("↑/↓: Navigate | Space/Enter: Select | Esc: Back"))
-		}
+		content.WriteString(helpStyle.Render("↑/↓: Navigate | Space: Select | Enter: Continue (when ready) | Esc: Back"))
 	}
 	
 	return content.String()
