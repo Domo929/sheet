@@ -446,6 +446,183 @@ func TestMainSheetModelHPBar(t *testing.T) {
 	}
 }
 
+func TestMainSheetModelDeathSaves(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitPoints.Current = 0 // At 0 HP
+
+	model := NewMainSheetModel(char, nil)
+	model.focusArea = FocusCombat
+
+	// Test adding death save success
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
+	if char.CombatStats.DeathSaves.Successes != 1 {
+		t.Errorf("expected 1 success, got %d", char.CombatStats.DeathSaves.Successes)
+	}
+
+	// Test adding death save failure
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
+	if char.CombatStats.DeathSaves.Failures != 1 {
+		t.Errorf("expected 1 failure, got %d", char.CombatStats.DeathSaves.Failures)
+	}
+
+	// Test reset
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
+	if char.CombatStats.DeathSaves.Successes != 0 || char.CombatStats.DeathSaves.Failures != 0 {
+		t.Error("expected death saves to be reset")
+	}
+}
+
+func TestMainSheetModelDeathSavesStabilized(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitPoints.Current = 0
+	char.CombatStats.DeathSaves.Successes = 3
+
+	model := NewMainSheetModel(char, nil)
+	model.width = 120
+	model.height = 40
+
+	view := model.View()
+
+	if !strings.Contains(view, "STABILIZED") {
+		t.Error("view should show STABILIZED when 3 successes")
+	}
+}
+
+func TestMainSheetModelConditionAdd(t *testing.T) {
+	char := createTestCharacter()
+	model := NewMainSheetModel(char, nil)
+	model.focusArea = FocusCombat
+
+	// Enter condition add mode
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'+'}})
+	if !model.conditionMode || !model.conditionAdding {
+		t.Error("expected to be in condition add mode")
+	}
+
+	// Select and add first condition
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if len(char.CombatStats.Conditions) != 1 {
+		t.Errorf("expected 1 condition, got %d", len(char.CombatStats.Conditions))
+	}
+	if model.conditionMode {
+		t.Error("expected to exit condition mode after adding")
+	}
+}
+
+func TestMainSheetModelConditionRemove(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.AddCondition(models.ConditionPoisoned)
+	char.CombatStats.AddCondition(models.ConditionFrightened)
+
+	model := NewMainSheetModel(char, nil)
+	model.focusArea = FocusCombat
+
+	// Enter condition remove mode
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'-'}})
+	if !model.conditionMode || model.conditionAdding {
+		t.Error("expected to be in condition remove mode")
+	}
+
+	// Remove first condition
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if len(char.CombatStats.Conditions) != 1 {
+		t.Errorf("expected 1 condition after removal, got %d", len(char.CombatStats.Conditions))
+	}
+}
+
+func TestMainSheetModelConditionNavigation(t *testing.T) {
+	char := createTestCharacter()
+	model := NewMainSheetModel(char, nil)
+	model.focusArea = FocusCombat
+
+	// Enter condition add mode
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'+'}})
+
+	// Navigate down
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if model.conditionCursor != 1 {
+		t.Errorf("expected cursor at 1, got %d", model.conditionCursor)
+	}
+
+	// Navigate up
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if model.conditionCursor != 0 {
+		t.Errorf("expected cursor at 0, got %d", model.conditionCursor)
+	}
+
+	// Cancel
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+	if model.conditionMode {
+		t.Error("expected to exit condition mode on escape")
+	}
+}
+
+func TestMainSheetModelWeaponAttacks(t *testing.T) {
+	char := createTestCharacter()
+	// Add a weapon to inventory
+	sword := models.NewItem("sword-1", "Longsword", models.ItemTypeWeapon)
+	sword.Damage = "1d8"
+	sword.DamageType = "slashing"
+	char.Inventory.AddItem(sword)
+
+	model := NewMainSheetModel(char, nil)
+	model.width = 120
+	model.height = 40
+
+	view := model.View()
+
+	// Check weapon is displayed
+	if !strings.Contains(view, "Attacks") {
+		t.Error("view should contain Attacks section when weapons present")
+	}
+	if !strings.Contains(view, "Longsword") {
+		t.Error("view should contain weapon name")
+	}
+	if !strings.Contains(view, "1d8") {
+		t.Error("view should contain weapon damage")
+	}
+}
+
+func TestMainSheetModelWeaponAttackBonus(t *testing.T) {
+	char := createTestCharacter()
+	char.AbilityScores.Strength.Base = 16  // +3 modifier
+	char.AbilityScores.Dexterity.Base = 14 // +2 modifier
+	char.Info.Level = 5                     // +3 proficiency
+
+	// Test regular melee weapon (uses STR)
+	sword := models.NewItem("sword-1", "Longsword", models.ItemTypeWeapon)
+	sword.Damage = "1d8"
+	sword.DamageType = "slashing"
+	char.Inventory.AddItem(sword)
+
+	model := NewMainSheetModel(char, nil)
+	bonus := model.getWeaponAttackBonus(sword)
+	// STR (+3) + Prof (+3) = +6
+	if bonus != 6 {
+		t.Errorf("expected attack bonus 6, got %d", bonus)
+	}
+
+	// Test finesse weapon (uses better of STR/DEX)
+	dagger := models.NewItem("dagger-1", "Dagger", models.ItemTypeWeapon)
+	dagger.Damage = "1d4"
+	dagger.DamageType = "piercing"
+	dagger.WeaponProps = []string{"finesse", "light", "thrown"}
+
+	bonus = model.getWeaponAttackBonus(dagger)
+	// Better of STR (+3) or DEX (+2) = STR (+3) + Prof (+3) = +6
+	if bonus != 6 {
+		t.Errorf("expected finesse attack bonus 6, got %d", bonus)
+	}
+
+	// Test with higher DEX
+	char.AbilityScores.Dexterity.Base = 18 // +4 modifier
+	bonus = model.getWeaponAttackBonus(dagger)
+	// Better of STR (+3) or DEX (+4) = DEX (+4) + Prof (+3) = +7
+	if bonus != 7 {
+		t.Errorf("expected finesse attack bonus 7 with higher DEX, got %d", bonus)
+	}
+}
+
 // Helper function to create a test character
 func createTestCharacter() *models.Character {
 	char := models.NewCharacter("test-id", "Aragorn", "Human", "Ranger")

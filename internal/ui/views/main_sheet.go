@@ -25,6 +25,11 @@ type MainSheetModel struct {
 	// HP input mode
 	hpInputMode   HPInputMode
 	hpInputBuffer string
+
+	// Condition selection mode
+	conditionMode    bool
+	conditionCursor  int
+	conditionAdding  bool // true = adding, false = removing
 }
 
 // HPInputMode represents the current HP modification mode.
@@ -48,19 +53,43 @@ const (
 
 const numFocusAreas = 3
 
+// All D&D 5e conditions for selection
+var allConditions = []models.Condition{
+	models.ConditionBlinded,
+	models.ConditionCharmed,
+	models.ConditionDeafened,
+	models.ConditionExhaustion,
+	models.ConditionFrightened,
+	models.ConditionGrappled,
+	models.ConditionIncapacitated,
+	models.ConditionInvisible,
+	models.ConditionParalyzed,
+	models.ConditionPetrified,
+	models.ConditionPoisoned,
+	models.ConditionProne,
+	models.ConditionRestrained,
+	models.ConditionStunned,
+	models.ConditionUnconscious,
+}
+
 type mainSheetKeyMap struct {
-	Quit       key.Binding
-	Tab        key.Binding
-	ShiftTab   key.Binding
-	Inventory  key.Binding
-	Spellbook  key.Binding
-	Info       key.Binding
-	Combat     key.Binding
-	Rest       key.Binding
-	Navigation key.Binding
-	Damage     key.Binding
-	Heal       key.Binding
-	TempHP     key.Binding
+	Quit          key.Binding
+	Tab           key.Binding
+	ShiftTab      key.Binding
+	Inventory     key.Binding
+	Spellbook     key.Binding
+	Info          key.Binding
+	Combat        key.Binding
+	Rest          key.Binding
+	Navigation    key.Binding
+	Damage        key.Binding
+	Heal          key.Binding
+	TempHP        key.Binding
+	DeathSuccess  key.Binding
+	DeathFail     key.Binding
+	DeathReset    key.Binding
+	AddCondition  key.Binding
+	RemCondition  key.Binding
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -113,6 +142,26 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 			key.WithKeys("t"),
 			key.WithHelp("t", "temp HP"),
 		),
+		DeathSuccess: key.NewBinding(
+			key.WithKeys("1"),
+			key.WithHelp("1", "death save success"),
+		),
+		DeathFail: key.NewBinding(
+			key.WithKeys("2"),
+			key.WithHelp("2", "death save failure"),
+		),
+		DeathReset: key.NewBinding(
+			key.WithKeys("0"),
+			key.WithHelp("0", "reset death saves"),
+		),
+		AddCondition: key.NewBinding(
+			key.WithKeys("+", "="),
+			key.WithHelp("+", "add condition"),
+		),
+		RemCondition: key.NewBinding(
+			key.WithKeys("-", "_"),
+			key.WithHelp("-", "remove condition"),
+		),
 	}
 }
 
@@ -143,6 +192,11 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		// Handle HP input mode
 		if m.hpInputMode != HPInputNone {
 			return m.handleHPInput(msg)
+		}
+
+		// Handle condition selection mode
+		if m.conditionMode {
+			return m.handleConditionInput(msg)
 		}
 
 		// Clear status message on any key press
@@ -196,10 +250,64 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 				m.hpInputBuffer = ""
 				return m, nil
 			}
+		case key.Matches(msg, m.keys.DeathSuccess):
+			if m.focusArea == FocusCombat && m.character.CombatStats.HitPoints.Current == 0 {
+				if m.character.CombatStats.DeathSaves.Successes < 3 {
+					m.character.CombatStats.DeathSaves.Successes++
+					if m.character.CombatStats.DeathSaves.Successes >= 3 {
+						m.statusMessage = "Stabilized!"
+					} else {
+						m.statusMessage = fmt.Sprintf("Death save success (%d/3)", m.character.CombatStats.DeathSaves.Successes)
+					}
+					m.saveCharacter()
+				}
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.DeathFail):
+			if m.focusArea == FocusCombat && m.character.CombatStats.HitPoints.Current == 0 {
+				if m.character.CombatStats.DeathSaves.Failures < 3 {
+					m.character.CombatStats.DeathSaves.Failures++
+					if m.character.CombatStats.DeathSaves.Failures >= 3 {
+						m.statusMessage = "Character has died!"
+					} else {
+						m.statusMessage = fmt.Sprintf("Death save failure (%d/3)", m.character.CombatStats.DeathSaves.Failures)
+					}
+					m.saveCharacter()
+				}
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.DeathReset):
+			if m.focusArea == FocusCombat {
+				m.character.CombatStats.DeathSaves.Reset()
+				m.statusMessage = "Death saves reset"
+				m.saveCharacter()
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.AddCondition):
+			if m.focusArea == FocusCombat {
+				m.conditionMode = true
+				m.conditionAdding = true
+				m.conditionCursor = 0
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.RemCondition):
+			if m.focusArea == FocusCombat && len(m.character.CombatStats.Conditions) > 0 {
+				m.conditionMode = true
+				m.conditionAdding = false
+				m.conditionCursor = 0
+				return m, nil
+			}
 		}
 	}
 
 	return m, nil
+}
+
+// saveCharacter saves the character if storage is available.
+func (m *MainSheetModel) saveCharacter() {
+	if m.storage != nil {
+		_, _ = m.storage.Save(m.character)
+	}
 }
 
 // handleHPInput handles keyboard input when in HP modification mode.
@@ -258,6 +366,54 @@ func (m *MainSheetModel) handleHPInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd
 			if r >= '0' && r <= '9' {
 				m.hpInputBuffer += string(r)
 			}
+		}
+		return m, nil
+	}
+
+	return m, nil
+}
+
+// handleConditionInput handles keyboard input when in condition selection mode.
+func (m *MainSheetModel) handleConditionInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd) {
+	var listLen int
+	if m.conditionAdding {
+		listLen = len(allConditions)
+	} else {
+		listLen = len(m.character.CombatStats.Conditions)
+	}
+
+	switch msg.Type {
+	case tea.KeyEscape:
+		m.conditionMode = false
+		return m, nil
+
+	case tea.KeyEnter:
+		if m.conditionAdding {
+			// Add the selected condition
+			cond := allConditions[m.conditionCursor]
+			m.character.CombatStats.AddCondition(cond)
+			m.statusMessage = fmt.Sprintf("Added %s", cond)
+		} else {
+			// Remove the selected condition
+			if len(m.character.CombatStats.Conditions) > 0 {
+				cond := m.character.CombatStats.Conditions[m.conditionCursor]
+				m.character.CombatStats.RemoveCondition(cond)
+				m.statusMessage = fmt.Sprintf("Removed %s", cond)
+			}
+		}
+		m.conditionMode = false
+		m.saveCharacter()
+		return m, nil
+
+	case tea.KeyUp:
+		if m.conditionCursor > 0 {
+			m.conditionCursor--
+		}
+		return m, nil
+
+	case tea.KeyDown:
+		if m.conditionCursor < listLen-1 {
+			m.conditionCursor++
 		}
 		return m, nil
 	}
@@ -715,6 +871,18 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 
 		lines = append(lines, fmt.Sprintf("%s %s", labelStyle.Render("Successes:"), successes))
 		lines = append(lines, fmt.Sprintf("%s %s", labelStyle.Render("Failures: "), failures))
+
+		// Status indicator
+		if ds.Successes >= 3 {
+			stableStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Bold(true)
+			lines = append(lines, stableStyle.Render("★ STABILIZED"))
+		} else if ds.Failures >= 3 {
+			deadStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
+			lines = append(lines, deadStyle.Render("☠ DEAD"))
+		} else if m.focusArea == FocusCombat {
+			hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
+			lines = append(lines, hintStyle.Render("1: success  2: fail  0: reset"))
+		}
 	}
 
 	// Spellcasting info if applicable
@@ -732,14 +900,35 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		))
 	}
 
-	// Active conditions
-	if len(char.CombatStats.Conditions) > 0 {
+	// Weapon Attacks
+	weapons := m.getWeapons()
+	if len(weapons) > 0 {
 		lines = append(lines, "")
-		lines = append(lines, titleStyle.Render("Conditions"))
+		lines = append(lines, titleStyle.Render("Attacks"))
+		for _, w := range weapons {
+			attackBonus := m.getWeaponAttackBonus(w)
+			lines = append(lines, fmt.Sprintf("%s %s %s",
+				valueStyle.Render(w.Name),
+				labelStyle.Render(formatModifier(attackBonus)),
+				labelStyle.Render(w.Damage+" "+w.DamageType),
+			))
+		}
+	}
+
+	// Active conditions (always show section with hint when focused)
+	lines = append(lines, "")
+	lines = append(lines, titleStyle.Render("Conditions"))
+	if len(char.CombatStats.Conditions) > 0 {
 		condStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
 		for _, cond := range char.CombatStats.Conditions {
 			lines = append(lines, condStyle.Render("• "+string(cond)))
 		}
+	} else {
+		lines = append(lines, labelStyle.Render("None"))
+	}
+	if m.focusArea == FocusCombat {
+		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
+		lines = append(lines, hintStyle.Render("+: add  -: remove"))
 	}
 
 	return panelStyle.Render(strings.Join(lines, "\n"))
@@ -751,6 +940,50 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Width(width)
 
 	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • c: character info • r: rest • esc: back • q: quit"
+
+	// Show condition selection if in condition mode
+	if m.conditionMode {
+		var title string
+		var items []string
+		if m.conditionAdding {
+			title = "Add Condition (↑/↓ to select, Enter to add, Esc to cancel)"
+			for i, cond := range allConditions {
+				prefix := "  "
+				if i == m.conditionCursor {
+					prefix = "▶ "
+				}
+				items = append(items, prefix+string(cond))
+			}
+		} else {
+			title = "Remove Condition (↑/↓ to select, Enter to remove, Esc to cancel)"
+			for i, cond := range m.character.CombatStats.Conditions {
+				prefix := "  "
+				if i == m.conditionCursor {
+					prefix = "▶ "
+				}
+				items = append(items, prefix+string(cond))
+			}
+		}
+
+		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
+		itemStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+
+		// Show only a window of items around the cursor
+		start := m.conditionCursor - 3
+		if start < 0 {
+			start = 0
+		}
+		end := start + 7
+		if end > len(items) {
+			end = len(items)
+		}
+		visibleItems := items[start:end]
+
+		return lipgloss.JoinVertical(lipgloss.Left,
+			titleStyle.Render(title),
+			itemStyle.Render(strings.Join(visibleItems, "\n")),
+		)
+	}
 
 	// Show HP input prompt if in input mode
 	if m.hpInputMode != HPInputNone {
@@ -786,6 +1019,55 @@ func (m *MainSheetModel) renderFooter(width int) string {
 	}
 
 	return footerStyle.Render(help)
+}
+
+// getWeapons returns weapons from the character's inventory.
+func (m *MainSheetModel) getWeapons() []models.Item {
+	var weapons []models.Item
+	for _, item := range m.character.Inventory.Items {
+		if item.Type == models.ItemTypeWeapon && item.Damage != "" {
+			weapons = append(weapons, item)
+		}
+	}
+	return weapons
+}
+
+// getWeaponAttackBonus calculates the attack bonus for a weapon.
+func (m *MainSheetModel) getWeaponAttackBonus(weapon models.Item) int {
+	char := m.character
+	profBonus := char.GetProficiencyBonus()
+
+	// Check for finesse property - use better of STR/DEX
+	isFinesse := false
+	isRanged := false
+	for _, prop := range weapon.WeaponProps {
+		if prop == "finesse" {
+			isFinesse = true
+		}
+		if prop == "ammunition" || prop == "thrown" {
+			isRanged = true
+		}
+	}
+
+	var abilityMod int
+	if isFinesse {
+		strMod := char.AbilityScores.Strength.Modifier()
+		dexMod := char.AbilityScores.Dexterity.Modifier()
+		if dexMod > strMod {
+			abilityMod = dexMod
+		} else {
+			abilityMod = strMod
+		}
+	} else if isRanged {
+		abilityMod = char.AbilityScores.Dexterity.Modifier()
+	} else {
+		abilityMod = char.AbilityScores.Strength.Modifier()
+	}
+
+	// Add magic bonus if any
+	magicBonus := weapon.MagicBonus
+
+	return abilityMod + profBonus + magicBonus
 }
 
 // formatModifier formats an integer as a modifier string (e.g., +2 or -1).
