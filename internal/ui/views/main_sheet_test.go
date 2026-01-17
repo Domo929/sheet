@@ -182,6 +182,7 @@ func TestMainSheetModelViewSkills(t *testing.T) {
 	// Set some skill proficiencies
 	char.Skills.Stealth.Proficiency = models.Proficient
 	char.Skills.Perception.Proficiency = models.Expertise
+	char.AbilityScores.Wisdom.Base = 14 // +2 modifier
 
 	model := NewMainSheetModel(char, nil)
 	model.width = 120
@@ -198,6 +199,19 @@ func TestMainSheetModelViewSkills(t *testing.T) {
 	}
 	if !strings.Contains(view, "Acrobatics") {
 		t.Error("view should contain Acrobatics skill")
+	}
+
+	// Check passive perception is displayed
+	if !strings.Contains(view, "Passive Perception") {
+		t.Error("view should contain Passive Perception")
+	}
+
+	// Check legend is present in header
+	if !strings.Contains(view, "Proficient") {
+		t.Error("view should contain proficiency legend in header")
+	}
+	if !strings.Contains(view, "Expertise") {
+		t.Error("view should contain expertise legend in header")
 	}
 }
 

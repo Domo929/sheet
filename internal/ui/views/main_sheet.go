@@ -169,9 +169,15 @@ func (m *MainSheetModel) View() string {
 	header := m.renderHeader(width)
 	
 	// Main content area - three columns
+	// Account for borders (2 chars each panel = 6), padding (2 chars each = 6), and gaps (4 chars)
 	leftWidth := 22
 	middleWidth := 30
-	rightWidth := width - leftWidth - middleWidth - 8
+	rightWidth := width - leftWidth - middleWidth - 10
+
+	// Ensure minimum width for combat panel
+	if rightWidth < 25 {
+		rightWidth = 25
+	}
 
 	abilities := m.renderAbilities(leftWidth)
 	skills := m.renderSkills(middleWidth)
@@ -248,10 +254,17 @@ func (m *MainSheetModel) renderHeader(width int) string {
 		infoStyle.Render(raceClass),
 	)
 
+	// Proficiency legend icons
+	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
+	expertIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("◆")
+	legendStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+	legend := legendStyle.Render(fmt.Sprintf("%s Proficient  %s Expertise", profIcon, expertIcon))
+
 	headerRight := lipgloss.JoinVertical(
 		lipgloss.Right,
 		labelStyle.Render("Proficiency: ")+infoStyle.Render(fmt.Sprintf("+%d", char.GetProficiencyBonus())),
 		labelStyle.Render(progression)+infoStyle.Render(inspiration),
+		legend,
 	)
 
 	// Join header left and right
@@ -386,8 +399,12 @@ func (m *MainSheetModel) renderSkills(width int) string {
 		Bold(true).
 		Foreground(lipgloss.Color("99"))
 
-	modStyle := lipgloss.NewStyle().
+	labelStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("244"))
+
+	modStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("252"))
 
 	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
 	expertIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("◆")
@@ -427,6 +444,13 @@ func (m *MainSheetModel) renderSkills(width int) string {
 
 	var lines []string
 	lines = append(lines, titleStyle.Render("Skills"))
+
+	// Passive Perception - important enough to highlight
+	passivePerception := 10 + char.GetSkillModifier(models.SkillPerception)
+	lines = append(lines, fmt.Sprintf("%s %s",
+		labelStyle.Render("Passive Perception:"),
+		modStyle.Render(fmt.Sprintf("%d", passivePerception)),
+	))
 	lines = append(lines, "")
 
 	for _, skillName := range models.AllSkills() {
@@ -445,11 +469,11 @@ func (m *MainSheetModel) renderSkills(width int) string {
 		displayName := skillNames[skillName]
 		abilityAbbr := skillAbilityAbbr[ability]
 
-		line := fmt.Sprintf("%s %s %-15s %s",
+		line := fmt.Sprintf("%s %3s %-15s %s",
 			icon,
-			modStyle.Render(fmt.Sprintf("(%s)", abilityAbbr)),
+			modStr,
 			displayName,
-			modStyle.Render(modStr),
+			labelStyle.Render(fmt.Sprintf("(%s)", abilityAbbr)),
 		)
 		lines = append(lines, line)
 	}
