@@ -25,12 +25,12 @@ type MainSheetModel struct {
 type FocusArea int
 
 const (
-	FocusHeader FocusArea = iota
-	FocusAbilities
+	FocusAbilitiesAndSaves FocusArea = iota
 	FocusSkills
-	FocusSavingThrows
-	FocusCombatStats
+	FocusCombat
 )
+
+const numFocusAreas = 3
 
 type mainSheetKeyMap struct {
 	Quit       key.Binding
@@ -90,7 +90,7 @@ func NewMainSheetModel(character *models.Character, storage *storage.CharacterSt
 	return &MainSheetModel{
 		character: character,
 		storage:   storage,
-		focusArea: FocusAbilities,
+		focusArea: FocusAbilitiesAndSaves,
 		keys:      defaultMainSheetKeyMap(),
 	}
 }
@@ -113,11 +113,11 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Tab):
-			m.focusArea = (m.focusArea + 1) % 5
+			m.focusArea = (m.focusArea + 1) % numFocusAreas
 			return m, nil
 		case key.Matches(msg, m.keys.ShiftTab):
 			if m.focusArea == 0 {
-				m.focusArea = 4
+				m.focusArea = numFocusAreas - 1
 			} else {
 				m.focusArea--
 			}
@@ -262,7 +262,7 @@ func (m *MainSheetModel) renderAbilities(width int) string {
 		Padding(0, 1).
 		Width(width)
 
-	if m.focusArea == FocusAbilities {
+	if m.focusArea == FocusAbilitiesAndSaves {
 		panelStyle = panelStyle.BorderForeground(lipgloss.Color("99"))
 	}
 
@@ -448,7 +448,7 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		Padding(0, 1).
 		Width(width)
 
-	if m.focusArea == FocusCombatStats {
+	if m.focusArea == FocusCombat {
 		panelStyle = panelStyle.BorderForeground(lipgloss.Color("99"))
 	}
 

@@ -20,8 +20,8 @@ func TestNewMainSheetModel(t *testing.T) {
 		t.Error("character not set correctly")
 	}
 
-	if model.focusArea != FocusAbilities {
-		t.Errorf("expected initial focus area to be FocusAbilities, got %d", model.focusArea)
+	if model.focusArea != FocusAbilitiesAndSaves {
+		t.Errorf("expected initial focus area to be FocusAbilitiesAndSaves, got %d", model.focusArea)
 	}
 }
 
@@ -54,28 +54,27 @@ func TestMainSheetModelTabNavigation(t *testing.T) {
 	char := createTestCharacter()
 	model := NewMainSheetModel(char, nil)
 
-	// Initial focus should be FocusAbilities
-	if model.focusArea != FocusAbilities {
-		t.Errorf("expected initial focus to be FocusAbilities (1), got %d", model.focusArea)
+	// Initial focus should be FocusAbilitiesAndSaves (0)
+	if model.focusArea != FocusAbilitiesAndSaves {
+		t.Errorf("expected initial focus to be FocusAbilitiesAndSaves (0), got %d", model.focusArea)
 	}
 
 	// Tab to next panel
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	if model.focusArea != FocusSkills {
-		t.Errorf("expected focus to be FocusSkills (2) after tab, got %d", model.focusArea)
+		t.Errorf("expected focus to be FocusSkills (1) after tab, got %d", model.focusArea)
 	}
 
 	// Tab again
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	if model.focusArea != FocusSavingThrows {
-		t.Errorf("expected focus to be FocusSavingThrows (3) after tab, got %d", model.focusArea)
+	if model.focusArea != FocusCombat {
+		t.Errorf("expected focus to be FocusCombat (2) after tab, got %d", model.focusArea)
 	}
 
 	// Tab wraps around
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	if model.focusArea != FocusHeader {
-		t.Errorf("expected focus to wrap to FocusHeader (0), got %d", model.focusArea)
+	if model.focusArea != FocusAbilitiesAndSaves {
+		t.Errorf("expected focus to wrap to FocusAbilitiesAndSaves (0), got %d", model.focusArea)
 	}
 }
 
@@ -83,25 +82,19 @@ func TestMainSheetModelShiftTabNavigation(t *testing.T) {
 	char := createTestCharacter()
 	model := NewMainSheetModel(char, nil)
 
-	// Set focus to Skills (2)
+	// Set focus to Skills (1)
 	model.focusArea = FocusSkills
 
 	// Shift+Tab to previous panel
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	if model.focusArea != FocusAbilities {
-		t.Errorf("expected focus to be FocusAbilities (1) after shift+tab, got %d", model.focusArea)
+	if model.focusArea != FocusAbilitiesAndSaves {
+		t.Errorf("expected focus to be FocusAbilitiesAndSaves (0) after shift+tab, got %d", model.focusArea)
 	}
 
-	// Shift+Tab again goes to FocusHeader (0)
+	// Shift+Tab wraps around from 0 to 2 (Combat)
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	if model.focusArea != FocusHeader {
-		t.Errorf("expected focus to be FocusHeader (0) after shift+tab, got %d", model.focusArea)
-	}
-
-	// Shift+Tab wraps around from 0 to 4
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	if model.focusArea != FocusCombatStats {
-		t.Errorf("expected focus to wrap to FocusCombatStats (4), got %d", model.focusArea)
+	if model.focusArea != FocusCombat {
+		t.Errorf("expected focus to wrap to FocusCombat (2), got %d", model.focusArea)
 	}
 }
 
