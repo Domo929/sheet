@@ -2159,6 +2159,44 @@ func (m *CharacterCreationModel) renderReview() string {
 	}
 	
 	content.WriteString("\n")
+	
+	// Starting Equipment
+	content.WriteString(labelStyle.Render("Starting Equipment:"))
+	content.WriteString("\n")
+	
+	selectedEquipment := m.getSelectedEquipment()
+	if len(selectedEquipment) > 0 {
+		// Group items by type for better display
+		equipmentByType := make(map[string][]data.EquipmentItem)
+		for _, item := range selectedEquipment {
+			equipmentByType[item.Category] = append(equipmentByType[item.Category], item)
+		}
+		
+		// Display in order: weapon, armor, pack, gear, tool
+		categories := []string{"weapon", "armor", "pack", "gear", "tool"}
+		for _, cat := range categories {
+			items := equipmentByType[cat]
+			if len(items) > 0 {
+				for _, item := range items {
+					if item.Quantity > 1 {
+						content.WriteString(fmt.Sprintf("  • %d× %s\n", item.Quantity, item.Name))
+					} else {
+						content.WriteString(fmt.Sprintf("  • %s\n", item.Name))
+					}
+				}
+			}
+		}
+	} else {
+		content.WriteString("  (none)\n")
+	}
+	
+	content.WriteString("\n")
+	
+	// Starting Gold
+	startingGold := m.getStartingGold()
+	content.WriteString(labelStyle.Render(fmt.Sprintf("Starting Gold: %d gp", startingGold)))
+	content.WriteString("\n\n")
+	
 	content.WriteString(helpStyle.Render("Enter: Save Character | Esc: Back to Equipment"))
 	
 	return content.String()
