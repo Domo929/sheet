@@ -78,8 +78,10 @@ type Feature struct {
 
 // Subclass represents a class specialization.
 type Subclass struct {
-	Name     string    `json:"name"`
-	Features []Feature `json:"features"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	URL         string    `json:"url,omitempty"`
+	Features    []Feature `json:"features"`
 }
 
 // SpellData represents a spell in the game.
