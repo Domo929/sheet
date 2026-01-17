@@ -556,8 +556,8 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 				m.focusedSubItem++
 			}
 			return m, nil
-		case "enter":
-			// Select this specific item
+		case " ", "enter":
+			// Select this specific item (space or enter)
 			if m.equipmentSubSelections == nil {
 				m.equipmentSubSelections = make(map[int]string)
 			}
@@ -627,14 +627,15 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 		}
 		return m, nil
 		
-	case "enter":
-		// Check if current selection needs sub-selection
+	case " ":
+		// Spacebar: Enter sub-selection if needed
 		if m.needsSubSelection() {
-			// Enter sub-selection mode
 			m.enterSubSelection()
 			return m, nil
 		}
+		return m, nil
 		
+	case "enter":
 		// Check if all choices are made
 		if m.allEquipmentChoicesMade() {
 			m.equipmentConfirmed = true
@@ -1966,13 +1967,15 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 						itemStrs := []string{}
 						for _, item := range opt.Items {
 							displayName := item.Name
-							// If this item has a filter, show descriptive text or sub-selection
+							// If this item has a filter, show descriptive text with sub-selection
 							if m.needsItemSubSelection(item) {
+								filterName := m.getFilterDisplayName(item.Filter)
 								if j == selectedIdx && m.equipmentSubSelections != nil && m.equipmentSubSelections[i] != "" {
-									displayName = m.equipmentSubSelections[i]
+									// Show "any martial weapon [Longsword]" format
+									displayName = fmt.Sprintf("%s [%s]", filterName, m.equipmentSubSelections[i])
 								} else {
-									// Generate display name from filter
-									displayName = m.getFilterDisplayName(item.Filter)
+									// Just show "any martial weapon"
+									displayName = filterName
 								}
 							}
 							
@@ -1998,7 +2001,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 							
 							checkmark := " ✓"
 							if needsSub && (m.equipmentSubSelections == nil || m.equipmentSubSelections[i] == "") {
-								checkmark = " [Press Enter to choose]"
+								checkmark = " [Press Space to choose]"
 							}
 							
 							if isFocused {
@@ -2032,7 +2035,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	} else {
 		needsSub := m.needsSubSelection()
 		if needsSub {
-			content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Select option | Enter: Choose specific item | Esc: Back"))
+			content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Select option | Space: Choose specific item | Esc: Back"))
 		} else {
 			content.WriteString(helpStyle.Render("↑/↓: Navigate | ←/→: Select option | Esc: Back"))
 		}
@@ -2077,7 +2080,7 @@ func (m *CharacterCreationModel) renderEquipmentSubSelection() string {
 	}
 	
 	content.WriteString("\n")
-	content.WriteString(helpStyle.Render("↑/↓: Navigate | Enter: Select | Esc: Cancel"))
+	content.WriteString(helpStyle.Render("↑/↓: Navigate | Space/Enter: Select | Esc: Cancel"))
 	
 	return content.String()
 }
