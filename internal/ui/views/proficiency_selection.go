@@ -104,17 +104,17 @@ func NewProficiencySelectionManager(
 func (psm *ProficiencySelectionManager) Update(msg interface{}) {
 	switch psm.currentSection {
 	case ProfSectionSkills:
-		if !psm.skillsComplete && psm.skillsRequired > 0 {
+		if psm.skillsRequired > 0 {
 			psm.skillSelector, _ = psm.skillSelector.Update(msg)
 			psm.skillsComplete = psm.skillSelector.IsComplete()
 		}
 	case ProfSectionTools:
-		if !psm.toolsComplete && psm.toolsRequired > 0 {
+		if psm.toolsRequired > 0 {
 			psm.toolSelector, _ = psm.toolSelector.Update(msg)
 			psm.toolsComplete = psm.toolSelector.IsComplete()
 		}
 	case ProfSectionLanguages:
-		if !psm.languagesComplete && psm.languagesRequired > 0 {
+		if psm.languagesRequired > 0 {
 			psm.languageSelector, _ = psm.languageSelector.Update(msg)
 			psm.languagesComplete = psm.languageSelector.IsComplete()
 		}
