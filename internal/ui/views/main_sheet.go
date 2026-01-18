@@ -680,13 +680,9 @@ func (m *MainSheetModel) renderAbilitiesAndSaves(width int) string {
 	var lines []string
 	lines = append(lines, titleStyle.Render("Abilities & Saving Throws"))
 	
-	// Header row: Ability | Score | Mod | Save - match data row spacing
-	lines = append(lines, fmt.Sprintf("%-12s  %5s  %3s   %4s",
-		headerStyle.Render("Ability"),
-		headerStyle.Render("Score"),
-		headerStyle.Render("Mod"),
-		headerStyle.Render("Save"),
-	))
+	// Header row - use plain formatting then style the whole line
+	headerLine := fmt.Sprintf("%-12s %5s %4s %5s", "Ability", "Score", "Mod", "Save")
+	lines = append(lines, headerStyle.Render(headerLine))
 
 	for _, a := range abilities {
 		mod := a.score.Modifier()
@@ -699,7 +695,8 @@ func (m *MainSheetModel) renderAbilitiesAndSaves(width int) string {
 			icon = profIcon
 		}
 
-		line := fmt.Sprintf("%-12s    %2d   %3s   %s %3s",
+		// Format with fixed widths: name(12) score(5) mod(4) icon+save(5)
+		line := fmt.Sprintf("%-12s %5d %4s %s%4s",
 			a.name,
 			a.score.Total(),
 			modStr,
@@ -781,18 +778,11 @@ func (m *MainSheetModel) renderSkills(width int) string {
 	passivePerception := 10 + char.GetSkillModifier(models.SkillPerception)
 	passiveInvestigation := 10 + char.GetSkillModifier(models.SkillInvestigation)
 	passiveInsight := 10 + char.GetSkillModifier(models.SkillInsight)
-	lines = append(lines, fmt.Sprintf("%-22s %2d",
-		labelStyle.Render("Passive Perception:"),
-		passivePerception,
-	))
-	lines = append(lines, fmt.Sprintf("%-22s %2d",
-		labelStyle.Render("Passive Investigation:"),
-		passiveInvestigation,
-	))
-	lines = append(lines, fmt.Sprintf("%-22s %2d",
-		labelStyle.Render("Passive Insight:"),
-		passiveInsight,
-	))
+	
+	// Format passives with plain strings first
+	lines = append(lines, labelStyle.Render(fmt.Sprintf("Passive Perception:    %2d", passivePerception)))
+	lines = append(lines, labelStyle.Render(fmt.Sprintf("Passive Investigation: %2d", passiveInvestigation)))
+	lines = append(lines, labelStyle.Render(fmt.Sprintf("Passive Insight:       %2d", passiveInsight)))
 	lines = append(lines, "")
 
 	for _, skillName := range models.AllSkills() {
@@ -811,12 +801,12 @@ func (m *MainSheetModel) renderSkills(width int) string {
 		displayName := skillNames[skillName]
 		abilityAbbr := skillAbilityAbbr[ability]
 
-		// Format: icon name (ability) modifier - with modifier right-aligned
-		line := fmt.Sprintf("%s %-15s %s %3s",
+		// Format: icon name modifier (ability) - modifier between name and ability
+		line := fmt.Sprintf("%s %-15s %3s %s",
 			icon,
 			displayName,
-			labelStyle.Render(fmt.Sprintf("(%s)", abilityAbbr)),
 			modStr,
+			labelStyle.Render(fmt.Sprintf("(%s)", abilityAbbr)),
 		)
 		lines = append(lines, line)
 	}
