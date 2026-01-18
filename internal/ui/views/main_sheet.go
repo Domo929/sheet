@@ -511,17 +511,18 @@ func (m *MainSheetModel) View() string {
 	header := m.renderHeader(width)
 	
 	// Two-column layout with vertical stacking
-	// Left column: Abilities/Saves + Skills
-	// Right column: Combat + Actions
-	leftWidth := (width - 4) / 2  // Half width minus gap
-	rightWidth := (width - 4) / 2
+	// Left column is sized to content (abilities table + skills list)
+	// Right column gets remaining space
+	
+	// Left column width: "Constitution" (12) + score (3) + mod (4) + save icon+mod (6) + padding/border (6) = ~35
+	// Skills: icon (1) + mod (4) + name (15) + ability (5) + padding/border (6) = ~33
+	// Use the wider of the two, plus a small margin
+	leftWidth := 38
+	rightWidth := width - leftWidth - 4  // 4 for gap between columns
 
-	// Ensure minimum widths
-	if leftWidth < 35 {
-		leftWidth = 35
-	}
-	if rightWidth < 40 {
-		rightWidth = 40
+	// Ensure minimum width for right column
+	if rightWidth < 45 {
+		rightWidth = 45
 	}
 
 	// Left column: Abilities/Saves on top, Skills below
