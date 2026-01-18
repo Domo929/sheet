@@ -162,24 +162,24 @@ func TestMainSheetModelViewAbilityScores(t *testing.T) {
 
 	view := model.View()
 
-	// Check ability abbreviations are present
-	if !strings.Contains(view, "STR") {
-		t.Error("view should contain STR")
+	// Check ability names are present (full names in new layout)
+	if !strings.Contains(view, "Strength") {
+		t.Error("view should contain Strength")
 	}
-	if !strings.Contains(view, "DEX") {
-		t.Error("view should contain DEX")
+	if !strings.Contains(view, "Dexterity") {
+		t.Error("view should contain Dexterity")
 	}
-	if !strings.Contains(view, "CON") {
-		t.Error("view should contain CON")
+	if !strings.Contains(view, "Constitution") {
+		t.Error("view should contain Constitution")
 	}
-	if !strings.Contains(view, "INT") {
-		t.Error("view should contain INT")
+	if !strings.Contains(view, "Intelligence") {
+		t.Error("view should contain Intelligence")
 	}
-	if !strings.Contains(view, "WIS") {
-		t.Error("view should contain WIS")
+	if !strings.Contains(view, "Wisdom") {
+		t.Error("view should contain Wisdom")
 	}
-	if !strings.Contains(view, "CHA") {
-		t.Error("view should contain CHA")
+	if !strings.Contains(view, "Charisma") {
+		t.Error("view should contain Charisma")
 	}
 }
 

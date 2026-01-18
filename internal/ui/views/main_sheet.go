@@ -510,36 +510,36 @@ func (m *MainSheetModel) View() string {
 	// Render sections
 	header := m.renderHeader(width)
 	
-	// Main content area - four columns
-	// Account for borders (2 chars each panel = 8), padding (2 chars each = 8), and gaps (6 chars)
-	leftWidth := 22
-	skillsWidth := 30
-	combatWidth := 28
-	actionsWidth := width - leftWidth - skillsWidth - combatWidth - 14
+	// Two-column layout with vertical stacking
+	// Left column: Abilities/Saves + Skills
+	// Right column: Combat + Actions
+	leftWidth := (width - 4) / 2  // Half width minus gap
+	rightWidth := (width - 4) / 2
 
 	// Ensure minimum widths
-	if combatWidth < 25 {
-		combatWidth = 25
+	if leftWidth < 35 {
+		leftWidth = 35
 	}
-	if actionsWidth < 30 {
-		actionsWidth = 30
+	if rightWidth < 40 {
+		rightWidth = 40
 	}
 
-	abilities := m.renderAbilities(leftWidth)
-	skills := m.renderSkills(skillsWidth)
-	combat := m.renderCombatStats(combatWidth)
-	actions := m.renderActions(actionsWidth)
+	// Left column: Abilities/Saves on top, Skills below
+	abilitiesAndSaves := m.renderAbilitiesAndSaves(leftWidth)
+	skills := m.renderSkills(leftWidth)
+	leftColumn := lipgloss.JoinVertical(lipgloss.Left, abilitiesAndSaves, "", skills)
+
+	// Right column: Combat on top, Actions below
+	combat := m.renderCombatStats(rightWidth)
+	actions := m.renderActions(rightWidth)
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, combat, "", actions)
 
 	// Join columns horizontally
 	mainContent := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		abilities,
+		leftColumn,
 		"  ",
-		skills,
-		"  ",
-		combat,
-		"  ",
-		actions,
+		rightColumn,
 	)
 
 	// Footer with navigation help
@@ -633,23 +633,29 @@ func (m *MainSheetModel) renderHeader(width int) string {
 	return headerStyle.Render(headerContent)
 }
 
-func (m *MainSheetModel) renderAbilities(width int) string {
+func (m *MainSheetModel) renderAbilitiesAndSaves(width int) string {
 	char := m.character
 
 	// Styles
+	isFocused := m.focusArea == FocusAbilitiesAndSaves
+	borderColor := lipgloss.Color("240")
+	if isFocused {
+		borderColor = lipgloss.Color("99")
+	}
+
 	panelStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("240")).
+		BorderForeground(borderColor).
 		Padding(0, 1).
-		Width(width)
-
-	if m.focusArea == FocusAbilitiesAndSaves {
-		panelStyle = panelStyle.BorderForeground(lipgloss.Color("99"))
-	}
+		Width(width - 2)
 
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("99"))
+
+	headerStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("244")).
+		Bold(true)
 
 	scoreStyle := lipgloss.NewStyle().
 		Bold(true).
@@ -658,76 +664,63 @@ func (m *MainSheetModel) renderAbilities(width int) string {
 	modStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("244"))
 
-	// Build ability scores list
+	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
+	noProfIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("○")
+
+	// Build combined ability scores and saving throws
 	abilities := []struct {
-		name  string
-		short string
-		score models.AbilityScore
+		name    string
+		short   string
+		score   models.AbilityScore
+		save    *models.SavingThrow
+		ability models.Ability
 	}{
-		{"Strength", "STR", char.AbilityScores.Strength},
-		{"Dexterity", "DEX", char.AbilityScores.Dexterity},
-		{"Constitution", "CON", char.AbilityScores.Constitution},
-		{"Intelligence", "INT", char.AbilityScores.Intelligence},
-		{"Wisdom", "WIS", char.AbilityScores.Wisdom},
-		{"Charisma", "CHA", char.AbilityScores.Charisma},
+		{"Strength", "STR", char.AbilityScores.Strength, &char.SavingThrows.Strength, models.AbilityStrength},
+		{"Dexterity", "DEX", char.AbilityScores.Dexterity, &char.SavingThrows.Dexterity, models.AbilityDexterity},
+		{"Constitution", "CON", char.AbilityScores.Constitution, &char.SavingThrows.Constitution, models.AbilityConstitution},
+		{"Intelligence", "INT", char.AbilityScores.Intelligence, &char.SavingThrows.Intelligence, models.AbilityIntelligence},
+		{"Wisdom", "WIS", char.AbilityScores.Wisdom, &char.SavingThrows.Wisdom, models.AbilityWisdom},
+		{"Charisma", "CHA", char.AbilityScores.Charisma, &char.SavingThrows.Charisma, models.AbilityCharisma},
 	}
 
 	var lines []string
-	lines = append(lines, titleStyle.Render("Abilities"))
-	lines = append(lines, "")
+	lines = append(lines, titleStyle.Render("Abilities & Saving Throws"))
+	
+	// Header row: Ability | Score | Mod | Save
+	lines = append(lines, fmt.Sprintf("%-12s %5s %4s  %4s",
+		headerStyle.Render("Ability"),
+		headerStyle.Render("Score"),
+		headerStyle.Render("Mod"),
+		headerStyle.Render("Save"),
+	))
 
 	for _, a := range abilities {
 		mod := a.score.Modifier()
 		modStr := formatModifier(mod)
-
-		line := fmt.Sprintf("%-3s %s %s",
-			a.short,
-			scoreStyle.Render(fmt.Sprintf("%2d", a.score.Total())),
-			modStyle.Render(fmt.Sprintf("(%s)", modStr)),
-		)
-		lines = append(lines, line)
-	}
-
-	// Add saving throws section
-	lines = append(lines, "")
-	lines = append(lines, titleStyle.Render("Saving Throws"))
-	lines = append(lines, "")
-
-	saves := []struct {
-		name   string
-		short  string
-		save   *models.SavingThrow
-		ability models.Ability
-	}{
-		{"Strength", "STR", &char.SavingThrows.Strength, models.AbilityStrength},
-		{"Dexterity", "DEX", &char.SavingThrows.Dexterity, models.AbilityDexterity},
-		{"Constitution", "CON", &char.SavingThrows.Constitution, models.AbilityConstitution},
-		{"Intelligence", "INT", &char.SavingThrows.Intelligence, models.AbilityIntelligence},
-		{"Wisdom", "WIS", &char.SavingThrows.Wisdom, models.AbilityWisdom},
-		{"Charisma", "CHA", &char.SavingThrows.Charisma, models.AbilityCharisma},
-	}
-
-	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
-	noProfIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("○")
-
-	for _, s := range saves {
-		mod := char.GetSavingThrowModifier(s.ability)
-		modStr := formatModifier(mod)
+		saveMod := char.GetSavingThrowModifier(a.ability)
+		saveStr := formatModifier(saveMod)
 
 		icon := noProfIcon
-		if s.save.Proficient {
+		if a.save.Proficient {
 			icon = profIcon
 		}
 
-		line := fmt.Sprintf("%s %-3s %s",
+		line := fmt.Sprintf("%-12s %s  %s  %s %s",
+			a.name,
+			scoreStyle.Render(fmt.Sprintf("%2d", a.score.Total())),
+			modStyle.Render(fmt.Sprintf("%3s", modStr)),
 			icon,
-			s.short,
-			modStyle.Render(modStr),
+			modStyle.Render(fmt.Sprintf("%3s", saveStr)),
 		)
 		lines = append(lines, line)
 	}
 
 	return panelStyle.Render(strings.Join(lines, "\n"))
+}
+
+// renderAbilities is kept for backwards compatibility but now redirects
+func (m *MainSheetModel) renderAbilities(width int) string {
+	return m.renderAbilitiesAndSaves(width)
 }
 
 func (m *MainSheetModel) renderSkills(width int) string {
