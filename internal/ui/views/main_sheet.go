@@ -944,13 +944,12 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 			}
 			damageStr += " " + w.DamageType
 			
-			// Add range to weapon name line if applicable
-			nameStr := w.Name
+			// Add range after damage if applicable
 			if w.RangeNormal > 0 {
-				nameStr = fmt.Sprintf("%s (%d/%d ft)", w.Name, w.RangeNormal, w.RangeLong)
+				damageStr = fmt.Sprintf("%s (%d/%d ft)", damageStr, w.RangeNormal, w.RangeLong)
 			}
 			
-			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(nameStr)))
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(w.Name)))
 			lines = append(lines, fmt.Sprintf("    %s %s, %s %s",
 				labelStyle.Render("Hit:"),
 				valueStyle.Render(hitStr),
@@ -958,7 +957,7 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 				valueStyle.Render(damageStr),
 			))
 			
-			// Show properties if any (excluding range info since it's on the name line)
+			// Show properties if any (excluding range info since it's on the damage line)
 			if len(w.WeaponProps) > 0 {
 				propStrs := make([]string, 0, len(w.WeaponProps))
 				for _, prop := range w.WeaponProps {
