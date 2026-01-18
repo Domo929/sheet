@@ -30,6 +30,9 @@ type MainSheetModel struct {
 	conditionMode    bool
 	conditionCursor  int
 	conditionAdding  bool // true = adding, false = removing
+
+	// Action type selection (for Actions panel)
+	selectedActionType ActionType
 }
 
 // HPInputMode represents the current HP modification mode.
@@ -49,9 +52,52 @@ const (
 	FocusAbilitiesAndSaves FocusArea = iota
 	FocusSkills
 	FocusCombat
+	FocusActions
 )
 
-const numFocusAreas = 3
+const numFocusAreas = 4
+
+// ActionType represents the type of action being viewed.
+type ActionType int
+
+const (
+	ActionTypeAction ActionType = iota
+	ActionTypeBonus
+	ActionTypeReaction
+	ActionTypeOther
+)
+
+const numActionTypes = 4
+
+// StandardAction represents a standard D&D 2024 action.
+type StandardAction struct {
+	Name        string
+	Description string
+	ActionType  ActionType
+}
+
+// Standard D&D 2024 actions
+var standardActions = []StandardAction{
+	// Actions
+	{Name: "Attack", Description: "Make one attack with a weapon or Unarmed Strike", ActionType: ActionTypeAction},
+	{Name: "Dash", Description: "Gain extra movement equal to your Speed", ActionType: ActionTypeAction},
+	{Name: "Disengage", Description: "Your movement doesn't provoke Opportunity Attacks", ActionType: ActionTypeAction},
+	{Name: "Dodge", Description: "Attacks against you have Disadvantage; DEX saves have Advantage", ActionType: ActionTypeAction},
+	{Name: "Grapple", Description: "Grab a creature (Athletics vs Athletics/Acrobatics)", ActionType: ActionTypeAction},
+	{Name: "Help", Description: "Give an ally Advantage on their next ability check or attack", ActionType: ActionTypeAction},
+	{Name: "Hide", Description: "Make a Stealth check to become Hidden", ActionType: ActionTypeAction},
+	{Name: "Influence", Description: "Make a Charisma check to alter a creature's attitude", ActionType: ActionTypeAction},
+	{Name: "Magic", Description: "Cast a spell, use a magic item, or use a magical feature", ActionType: ActionTypeAction},
+	{Name: "Ready", Description: "Prepare to take an action in response to a trigger", ActionType: ActionTypeAction},
+	{Name: "Search", Description: "Make a Perception or Investigation check", ActionType: ActionTypeAction},
+	{Name: "Shove", Description: "Push a creature 5 feet or knock it Prone", ActionType: ActionTypeAction},
+	{Name: "Study", Description: "Make an Intelligence check to recall information", ActionType: ActionTypeAction},
+	{Name: "Utilize", Description: "Use a nonmagical object", ActionType: ActionTypeAction},
+	// Bonus Actions
+	{Name: "Offhand Attack", Description: "Attack with a Light weapon in your other hand (no ability mod to damage)", ActionType: ActionTypeBonus},
+	// Reactions
+	{Name: "Opportunity Attack", Description: "Make one melee attack when a creature leaves your reach", ActionType: ActionTypeReaction},
+}
 
 // All D&D 5e conditions for selection
 var allConditions = []models.Condition{
@@ -73,23 +119,25 @@ var allConditions = []models.Condition{
 }
 
 type mainSheetKeyMap struct {
-	Quit          key.Binding
-	Tab           key.Binding
-	ShiftTab      key.Binding
-	Inventory     key.Binding
-	Spellbook     key.Binding
-	Info          key.Binding
-	Combat        key.Binding
-	Rest          key.Binding
-	Navigation    key.Binding
-	Damage        key.Binding
-	Heal          key.Binding
-	TempHP        key.Binding
-	DeathSuccess  key.Binding
-	DeathFail     key.Binding
-	DeathReset    key.Binding
-	AddCondition  key.Binding
-	RemCondition  key.Binding
+	Quit           key.Binding
+	Tab            key.Binding
+	ShiftTab       key.Binding
+	Inventory      key.Binding
+	Spellbook      key.Binding
+	Info           key.Binding
+	Combat         key.Binding
+	Rest           key.Binding
+	Navigation     key.Binding
+	Damage         key.Binding
+	Heal           key.Binding
+	TempHP         key.Binding
+	DeathSuccess   key.Binding
+	DeathFail      key.Binding
+	DeathReset     key.Binding
+	AddCondition   key.Binding
+	RemCondition   key.Binding
+	NextActionType key.Binding
+	PrevActionType key.Binding
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -161,6 +209,14 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		RemCondition: key.NewBinding(
 			key.WithKeys("-", "_"),
 			key.WithHelp("-", "remove condition"),
+		),
+		NextActionType: key.NewBinding(
+			key.WithKeys("right", "l"),
+			key.WithHelp("→", "next action type"),
+		),
+		PrevActionType: key.NewBinding(
+			key.WithKeys("left", "h"),
+			key.WithHelp("←", "prev action type"),
 		),
 	}
 }
@@ -297,6 +353,20 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 				m.conditionCursor = 0
 				return m, nil
 			}
+		case key.Matches(msg, m.keys.NextActionType):
+			if m.focusArea == FocusActions {
+				m.selectedActionType = (m.selectedActionType + 1) % numActionTypes
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.PrevActionType):
+			if m.focusArea == FocusActions {
+				if m.selectedActionType == 0 {
+					m.selectedActionType = numActionTypes - 1
+				} else {
+					m.selectedActionType--
+				}
+				return m, nil
+			}
 		}
 	}
 
@@ -430,7 +500,7 @@ func (m *MainSheetModel) View() string {
 	// Calculate available width
 	width := m.width
 	if width == 0 {
-		width = 120
+		width = 140
 	}
 	height := m.height
 	if height == 0 {
@@ -440,20 +510,25 @@ func (m *MainSheetModel) View() string {
 	// Render sections
 	header := m.renderHeader(width)
 	
-	// Main content area - three columns
-	// Account for borders (2 chars each panel = 6), padding (2 chars each = 6), and gaps (4 chars)
+	// Main content area - four columns
+	// Account for borders (2 chars each panel = 8), padding (2 chars each = 8), and gaps (6 chars)
 	leftWidth := 22
-	middleWidth := 30
-	rightWidth := width - leftWidth - middleWidth - 10
+	skillsWidth := 30
+	combatWidth := 28
+	actionsWidth := width - leftWidth - skillsWidth - combatWidth - 14
 
-	// Ensure minimum width for combat panel
-	if rightWidth < 25 {
-		rightWidth = 25
+	// Ensure minimum widths
+	if combatWidth < 25 {
+		combatWidth = 25
+	}
+	if actionsWidth < 30 {
+		actionsWidth = 30
 	}
 
 	abilities := m.renderAbilities(leftWidth)
-	skills := m.renderSkills(middleWidth)
-	combat := m.renderCombatStats(rightWidth)
+	skills := m.renderSkills(skillsWidth)
+	combat := m.renderCombatStats(combatWidth)
+	actions := m.renderActions(actionsWidth)
 
 	// Join columns horizontally
 	mainContent := lipgloss.JoinHorizontal(
@@ -463,6 +538,8 @@ func (m *MainSheetModel) View() string {
 		skills,
 		"  ",
 		combat,
+		"  ",
+		actions,
 	)
 
 	// Footer with navigation help
@@ -927,53 +1004,6 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		))
 	}
 
-	// Weapon Attacks
-	weapons := m.getWeapons()
-	if len(weapons) > 0 {
-		lines = append(lines, "")
-		lines = append(lines, titleStyle.Render("Attacks"))
-		for _, w := range weapons {
-			attackBonus := m.getWeaponAttackBonus(w)
-			damageMod := m.getWeaponDamageMod(w)
-			
-			// Format: "Name: +X to hit, damage type"
-			hitStr := formatModifier(attackBonus)
-			damageStr := w.Damage
-			if damageMod != 0 {
-				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
-			}
-			damageStr += " " + w.DamageType
-			
-			// Add range after damage if applicable
-			if w.RangeNormal > 0 {
-				damageStr = fmt.Sprintf("%s (%d/%d ft)", damageStr, w.RangeNormal, w.RangeLong)
-			}
-			
-			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(w.Name)))
-			lines = append(lines, fmt.Sprintf("    %s %s, %s %s",
-				labelStyle.Render("Hit:"),
-				valueStyle.Render(hitStr),
-				labelStyle.Render("Dmg:"),
-				valueStyle.Render(damageStr),
-			))
-			
-			// Show properties if any (excluding range info since it's on the damage line)
-			if len(w.WeaponProps) > 0 {
-				propStrs := make([]string, 0, len(w.WeaponProps))
-				for _, prop := range w.WeaponProps {
-					propStr := strings.Title(prop)
-					// Add versatile damage if applicable
-					if prop == "versatile" && w.VersatileDamage != "" {
-						propStr = fmt.Sprintf("Versatile (%s)", w.VersatileDamage)
-					}
-					propStrs = append(propStrs, propStr)
-				}
-				propsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
-				lines = append(lines, fmt.Sprintf("    %s", propsStyle.Render(strings.Join(propStrs, ", "))))
-			}
-		}
-	}
-
 	// Active conditions (always show section with hint when focused)
 	lines = append(lines, "")
 	lines = append(lines, titleStyle.Render("Conditions"))
@@ -988,6 +1018,154 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 	if m.focusArea == FocusCombat {
 		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
 		lines = append(lines, hintStyle.Render("+: add  -: remove"))
+	}
+
+	return panelStyle.Render(strings.Join(lines, "\n"))
+}
+
+func (m *MainSheetModel) renderActions(width int) string {
+	char := m.character
+	isFocused := m.focusArea == FocusActions
+
+	borderColor := lipgloss.Color("240")
+	if isFocused {
+		borderColor = lipgloss.Color("99")
+	}
+
+	panelStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(borderColor).
+		Padding(0, 1).
+		Width(width - 2)
+
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
+	selectedStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
+	unselectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+
+	var lines []string
+
+	// Action type tabs
+	actionTypes := []string{"Action", "Bonus", "Reaction", "Other"}
+	var tabs []string
+	for i, at := range actionTypes {
+		if ActionType(i) == m.selectedActionType {
+			tabs = append(tabs, selectedStyle.Render("["+at+"]"))
+		} else {
+			tabs = append(tabs, unselectedStyle.Render(" "+at+" "))
+		}
+	}
+	lines = append(lines, strings.Join(tabs, " "))
+	if isFocused {
+		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
+		lines = append(lines, hintStyle.Render("←/→: switch type"))
+	}
+	lines = append(lines, "")
+
+	switch m.selectedActionType {
+	case ActionTypeAction:
+		// Weapon attacks (including unarmed strike)
+		lines = append(lines, titleStyle.Render("Weapon Attacks"))
+		
+		// Unarmed Strike first
+		unarmedBonus := char.AbilityScores.Strength.Modifier() + char.GetProficiencyBonus()
+		unarmedDmg := char.AbilityScores.Strength.Modifier()
+		unarmedDmgStr := "1"
+		if unarmedDmg != 0 {
+			unarmedDmgStr = fmt.Sprintf("1%s", formatModifier(unarmedDmg))
+		}
+		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Unarmed Strike")))
+		lines = append(lines, fmt.Sprintf("    %s %s, %s %s bludgeoning",
+			labelStyle.Render("Hit:"),
+			valueStyle.Render(formatModifier(unarmedBonus)),
+			labelStyle.Render("Dmg:"),
+			valueStyle.Render(unarmedDmgStr),
+		))
+		
+		// Equipped weapons
+		weapons := m.getWeapons()
+		for _, w := range weapons {
+			attackBonus := m.getWeaponAttackBonus(w)
+			damageMod := m.getWeaponDamageMod(w)
+			
+			hitStr := formatModifier(attackBonus)
+			damageStr := w.Damage
+			if damageMod != 0 {
+				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
+			}
+			damageStr += " " + w.DamageType
+			
+			if w.RangeNormal > 0 {
+				damageStr = fmt.Sprintf("%s (%d/%d ft)", damageStr, w.RangeNormal, w.RangeLong)
+			}
+			
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(w.Name)))
+			lines = append(lines, fmt.Sprintf("    %s %s, %s %s",
+				labelStyle.Render("Hit:"),
+				valueStyle.Render(hitStr),
+				labelStyle.Render("Dmg:"),
+				valueStyle.Render(damageStr),
+			))
+			
+			if len(w.WeaponProps) > 0 {
+				propStrs := make([]string, 0, len(w.WeaponProps))
+				for _, prop := range w.WeaponProps {
+					propStr := strings.Title(prop)
+					if prop == "versatile" && w.VersatileDamage != "" {
+						propStr = fmt.Sprintf("Versatile (%s)", w.VersatileDamage)
+					}
+					propStrs = append(propStrs, propStr)
+				}
+				propsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
+				lines = append(lines, fmt.Sprintf("    %s", propsStyle.Render(strings.Join(propStrs, ", "))))
+			}
+		}
+		
+		// Standard Actions
+		lines = append(lines, "")
+		lines = append(lines, titleStyle.Render("Standard Actions"))
+		for _, action := range standardActions {
+			if action.ActionType == ActionTypeAction && action.Name != "Attack" {
+				lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(action.Name)))
+				lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(action.Description)))
+			}
+		}
+
+	case ActionTypeBonus:
+		lines = append(lines, titleStyle.Render("Bonus Actions"))
+		for _, action := range standardActions {
+			if action.ActionType == ActionTypeBonus {
+				lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(action.Name)))
+				lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(action.Description)))
+			}
+		}
+		// Placeholder for class/feature bonus actions
+		lines = append(lines, "")
+		lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
+
+	case ActionTypeReaction:
+		lines = append(lines, titleStyle.Render("Reactions"))
+		for _, action := range standardActions {
+			if action.ActionType == ActionTypeReaction {
+				lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(action.Name)))
+				lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(action.Description)))
+			}
+		}
+		// Placeholder for class/feature reactions
+		lines = append(lines, "")
+		lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
+
+	case ActionTypeOther:
+		lines = append(lines, titleStyle.Render("Other"))
+		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Object Interaction")))
+		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Interact with one object for free")))
+		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Movement")))
+		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(fmt.Sprintf("Move up to %d ft (can split)", char.CombatStats.Speed))))
+		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Drop Prone")))
+		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Fall prone (no cost)")))
+		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Stand Up")))
+		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Costs half your Speed")))
 	}
 
 	return panelStyle.Render(strings.Join(lines, "\n"))

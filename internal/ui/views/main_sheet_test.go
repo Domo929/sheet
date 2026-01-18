@@ -71,6 +71,12 @@ func TestMainSheetModelTabNavigation(t *testing.T) {
 		t.Errorf("expected focus to be FocusCombat (2) after tab, got %d", model.focusArea)
 	}
 
+	// Tab to Actions
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if model.focusArea != FocusActions {
+		t.Errorf("expected focus to be FocusActions (3) after tab, got %d", model.focusArea)
+	}
+
 	// Tab wraps around
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	if model.focusArea != FocusAbilitiesAndSaves {
@@ -91,10 +97,10 @@ func TestMainSheetModelShiftTabNavigation(t *testing.T) {
 		t.Errorf("expected focus to be FocusAbilitiesAndSaves (0) after shift+tab, got %d", model.focusArea)
 	}
 
-	// Shift+Tab wraps around from 0 to 2 (Combat)
+	// Shift+Tab wraps around from 0 to 3 (Actions)
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	if model.focusArea != FocusCombat {
-		t.Errorf("expected focus to wrap to FocusCombat (2), got %d", model.focusArea)
+	if model.focusArea != FocusActions {
+		t.Errorf("expected focus to wrap to FocusActions (3), got %d", model.focusArea)
 	}
 }
 
