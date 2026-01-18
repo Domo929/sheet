@@ -38,7 +38,7 @@ type Model struct {
 	characterSelectionModel *views.CharacterSelectionModel
 	characterCreationModel  *views.CharacterCreationModel
 	mainSheetModel          *views.MainSheetModel
-	// inventoryModel interface{}
+	inventoryModel          *views.InventoryModel
 	// etc.
 }
 
@@ -121,6 +121,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case views.BackToSheetMsg:
+		// Return from inventory/spellbook to main sheet
+		m.currentView = ViewMainSheet
+		m.inventoryModel = nil
+		return m, nil
+
+	case views.OpenInventoryMsg:
+		// Navigate to inventory view
+		m.inventoryModel = views.NewInventoryModel(m.character, m.storage)
+		if m.width > 0 && m.height > 0 {
+			m.inventoryModel, _ = m.inventoryModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
+		m.currentView = ViewInventory
+		return m, m.inventoryModel.Init()
+
 	case views.CharacterLoadedMsg:
 		// Load the character from storage
 		char, err := m.storage.LoadByPath(msg.Path)
@@ -202,6 +220,12 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
+	case ViewInventory:
+		if m.inventoryModel != nil {
+			updatedModel, c := m.inventoryModel.Update(msg)
+			m.inventoryModel = updatedModel
+			cmd = c
+		}
 	default:
 		// Other views not yet implemented
 	}
@@ -271,7 +295,10 @@ func (m Model) renderMainSheet() string {
 }
 
 func (m Model) renderInventory() string {
-	return "Inventory View (TODO)\n\nPress q to quit."
+	if m.inventoryModel != nil {
+		return m.inventoryModel.View()
+	}
+	return "Inventory View (loading...)"
 }
 
 func (m Model) renderSpellbook() string {
