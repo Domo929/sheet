@@ -36,8 +36,9 @@ type MainSheetModel struct {
 
 	// Rest mode
 	restMode       RestMode
-	restHitDice    int  // Number of hit dice to spend on short rest
-	restConfirming bool // Confirming long rest
+	restHitDice    int    // Number of hit dice to spend on short rest
+	restConfirming bool   // Confirming long rest
+	restResult     string // Result summary to display
 }
 
 // HPInputMode represents the current HP modification mode.
@@ -54,10 +55,11 @@ const (
 type RestMode int
 
 const (
-	RestModeNone RestMode = iota
-	RestModeMenu          // Choosing between short/long rest
-	RestModeShort         // Short rest - spending hit dice
-	RestModeLong          // Long rest - confirming
+	RestModeNone   RestMode = iota
+	RestModeMenu            // Choosing between short/long rest
+	RestModeShort           // Short rest - spending hit dice
+	RestModeLong            // Long rest - confirming
+	RestModeResult          // Showing rest results
 )
 
 // FocusArea represents which panel is currently focused.
@@ -565,6 +567,12 @@ func (m *MainSheetModel) handleRestInput(msg tea.KeyMsg) (*MainSheetModel, tea.C
 			m.restMode = RestModeMenu
 			return m, nil
 		}
+
+	case RestModeResult:
+		// Any key dismisses the result screen
+		m.restMode = RestModeNone
+		m.restResult = ""
+		return m, nil
 	}
 
 	return m, nil
@@ -575,18 +583,22 @@ func (m *MainSheetModel) performShortRest() {
 	char := m.character
 	hd := &char.CombatStats.HitDice
 	hp := &char.CombatStats.HitPoints
+	conMod := char.AbilityScores.Constitution.Modifier()
+	diceSpent := m.restHitDice
+	oldHP := hp.Current
 
 	// Spend hit dice and heal
 	totalHealed := 0
+	healingPerDie := []int{}
 	for i := 0; i < m.restHitDice && hd.Remaining > 0; i++ {
 		if hd.Use() {
-			// Roll hit die + CON modifier (we'll use average for simplicity)
-			avgRoll := (hd.DieType / 2) + 1 // Average roll
-			conMod := char.AbilityScores.Constitution.Modifier()
+			// Use average roll + CON modifier (dice rolling to be added later)
+			avgRoll := (hd.DieType / 2) + 1
 			healing := avgRoll + conMod
 			if healing < 1 {
 				healing = 1
 			}
+			healingPerDie = append(healingPerDie, healing)
 			hp.Heal(healing)
 			totalHealed += healing
 		}
@@ -596,32 +608,72 @@ func (m *MainSheetModel) performShortRest() {
 	char.ShortRest()
 
 	m.saveCharacter()
-	m.restMode = RestModeNone
 	m.restHitDice = 0
-	if totalHealed > 0 {
-		m.statusMessage = fmt.Sprintf("Short rest complete! Healed %d HP.", totalHealed)
+
+	// Build result summary
+	var result strings.Builder
+	result.WriteString("SHORT REST COMPLETE\n\n")
+	
+	if diceSpent > 0 {
+		result.WriteString(fmt.Sprintf("Hit Dice Spent: %d (d%d)\n", diceSpent, hd.DieType))
+		result.WriteString(fmt.Sprintf("CON Modifier: %+d\n\n", conMod))
+		
+		result.WriteString("Healing Breakdown:\n")
+		for i, heal := range healingPerDie {
+			avgRoll := (hd.DieType / 2) + 1
+			result.WriteString(fmt.Sprintf("  Die %d: %d (avg) + %d (CON) = %d HP\n", i+1, avgRoll, conMod, heal))
+		}
+		result.WriteString(fmt.Sprintf("\nTotal Healed: %d HP\n", totalHealed))
+		result.WriteString(fmt.Sprintf("HP: %d → %d\n", oldHP, hp.Current))
 	} else {
-		m.statusMessage = "Short rest complete!"
+		result.WriteString("No hit dice spent.\n")
 	}
+	
+	result.WriteString(fmt.Sprintf("\nHit Dice Remaining: %d/%d", hd.Remaining, hd.Total))
+
+	m.restResult = result.String()
+	m.restMode = RestModeResult
 }
 
 // performLongRest executes a long rest.
 func (m *MainSheetModel) performLongRest() {
 	char := m.character
-	oldHP := char.CombatStats.HitPoints.Current
-	oldHitDice := char.CombatStats.HitDice.Remaining
+	hp := &char.CombatStats.HitPoints
+	hd := &char.CombatStats.HitDice
+	oldHP := hp.Current
+	oldHitDice := hd.Remaining
 
 	char.LongRest()
 
-	newHP := char.CombatStats.HitPoints.Current
-	newHitDice := char.CombatStats.HitDice.Remaining
+	newHP := hp.Current
+	newHitDice := hd.Remaining
 
 	m.saveCharacter()
-	m.restMode = RestModeNone
 
+	// Build result summary
+	var result strings.Builder
+	result.WriteString("LONG REST COMPLETE\n\n")
+	
 	hpRestored := newHP - oldHP
+	if hpRestored > 0 {
+		result.WriteString(fmt.Sprintf("HP Restored: +%d (now %d/%d)\n", hpRestored, newHP, hp.Maximum))
+	} else {
+		result.WriteString(fmt.Sprintf("HP: %d/%d (already at max)\n", newHP, hp.Maximum))
+	}
+	
 	hitDiceRestored := newHitDice - oldHitDice
-	m.statusMessage = fmt.Sprintf("Long rest complete! HP restored: %d, Hit dice recovered: %d", hpRestored, hitDiceRestored)
+	if hitDiceRestored > 0 {
+		result.WriteString(fmt.Sprintf("Hit Dice Recovered: +%d (now %d/%d)\n", hitDiceRestored, newHitDice, hd.Total))
+	} else {
+		result.WriteString(fmt.Sprintf("Hit Dice: %d/%d (already at max)\n", newHitDice, hd.Total))
+	}
+	
+	result.WriteString("\nAll spell slots restored\n")
+	result.WriteString("Death saves reset\n")
+	result.WriteString("Exhaustion reduced by 1 level")
+
+	m.restResult = result.String()
+	m.restMode = RestModeResult
 }
 
 // View renders the main sheet.
@@ -1445,6 +1497,24 @@ func (m *MainSheetModel) renderRestOverlay(width int) string {
 
 		lines = append(lines, "")
 		lines = append(lines, dimStyle.Render("Enter/Y: Confirm • Esc/N: Cancel"))
+
+	case RestModeResult:
+		// Display the result summary
+		lines = append(lines, titleStyle.Render("✓ Rest Complete"))
+		lines = append(lines, "")
+		for _, line := range strings.Split(m.restResult, "\n") {
+			if strings.HasPrefix(line, "SHORT REST") || strings.HasPrefix(line, "LONG REST") {
+				lines = append(lines, titleStyle.Render(line))
+			} else if strings.HasPrefix(line, "  ") {
+				lines = append(lines, dimStyle.Render(line))
+			} else if strings.Contains(line, "+") || strings.Contains(line, "→") {
+				lines = append(lines, valueStyle.Render(line))
+			} else {
+				lines = append(lines, labelStyle.Render(line))
+			}
+		}
+		lines = append(lines, "")
+		lines = append(lines, dimStyle.Render("Press any key to continue"))
 	}
 
 	return panelStyle.Render(strings.Join(lines, "\n"))
