@@ -1339,6 +1339,15 @@ func (m *MainSheetModel) renderRestOverlay(width int) string {
 			dimStyle.Render("/"),
 			fmt.Sprintf("%d (d%d)", hd.Total, hd.DieType),
 		))
+		
+		// Show CON modifier
+		conModStr := fmt.Sprintf("%+d", conMod)
+		lines = append(lines, fmt.Sprintf(
+			"%s %s %s",
+			labelStyle.Render("CON Modifier:"),
+			valueStyle.Render(conModStr),
+			dimStyle.Render("(added to each hit die roll)"),
+		))
 		lines = append(lines, "")
 
 		// Show hit dice to spend
