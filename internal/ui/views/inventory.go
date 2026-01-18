@@ -263,7 +263,7 @@ func (m *InventoryModel) handleDown() (*InventoryModel, tea.Cmd) {
 			}
 		}
 	case FocusCurrency:
-		if m.currencyType < 4 {
+		if m.currencyType < 5 { // 0-4 are currencies, 5 is "Total"
 			m.currencyType++
 		}
 	}
@@ -830,6 +830,8 @@ func (m *InventoryModel) handleCurrencyInput(msg tea.KeyMsg) (*InventoryModel, t
 						currency.AddGold(amount)
 					case 4:
 						currency.AddPlatinum(amount)
+					case 5:
+						currency.AddGold(amount) // Total adds as gold
 					}
 					m.statusMessage = fmt.Sprintf("Added %d %s", amount, currencyName(m.currencyType))
 				} else {
@@ -845,6 +847,9 @@ func (m *InventoryModel) handleCurrencyInput(msg tea.KeyMsg) (*InventoryModel, t
 						err = currency.SpendGold(amount)
 					case 4:
 						err = currency.SpendPlatinum(amount)
+					case 5:
+						// Spend from total - auto-converts currency
+						err = currency.SpendFromTotal(amount)
 					}
 					if err != nil {
 						m.statusMessage = "Insufficient funds"
@@ -878,7 +883,7 @@ func (m *InventoryModel) handleCurrencyInput(msg tea.KeyMsg) (*InventoryModel, t
 }
 
 func currencyName(idx int) string {
-	names := []string{"CP", "SP", "EP", "GP", "PP"}
+	names := []string{"CP", "SP", "EP", "GP", "PP", "GP (from total)"}
 	if idx >= 0 && idx < len(names) {
 		return names[idx]
 	}
@@ -1264,14 +1269,23 @@ func (m *InventoryModel) renderCurrency(width int) string {
 		lines = append(lines, fmt.Sprintf("%s %s", label, value))
 	}
 
-	// Total value
+	// Total value (selectable for smart spending)
 	lines = append(lines, "")
 	gp, cp := currency.TotalInGold()
-	lines = append(lines, labelStyle.Render("─── Total ───"))
 	gpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("220")) // Gold color
 	cpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("166")) // Copper color
-	totalLine := gpStyle.Render(fmt.Sprintf("%d GP", gp)) + " " + cpStyle.Render(fmt.Sprintf("%d CP", cp))
-	lines = append(lines, totalLine)
+
+	if focused && m.currencyType == 5 {
+		// Total is selected
+		totalLabel := selectedStyle.Render("▶ Total")
+		totalValue := gpStyle.Render(fmt.Sprintf("%d GP", gp)) + " " + cpStyle.Render(fmt.Sprintf("%d CP", cp))
+		lines = append(lines, fmt.Sprintf("%s  %s", totalLabel, totalValue))
+		lines = append(lines, labelStyle.Render("  (auto-converts)"))
+	} else {
+		lines = append(lines, labelStyle.Render("─── Total ───"))
+		totalLine := gpStyle.Render(fmt.Sprintf("%d GP", gp)) + " " + cpStyle.Render(fmt.Sprintf("%d CP", cp))
+		lines = append(lines, totalLine)
+	}
 
 	// Currency input mode
 	if m.currencyMode {

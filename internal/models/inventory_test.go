@@ -49,6 +49,71 @@ func TestCurrencyAdd(t *testing.T) {
 	}
 }
 
+func TestSpendFromTotal(t *testing.T) {
+	tests := []struct {
+		name      string
+		currency  Currency
+		spend     int
+		wantErr   bool
+		wantGP    int
+		wantPP    int
+	}{
+		{
+			name:     "simple gold spend",
+			currency: Currency{Gold: 50},
+			spend:    20,
+			wantGP:   0, // 50 GP - 20 GP = 30 GP = 3 PP + 0 GP
+			wantPP:   3,
+		},
+		{
+			name:     "spend from platinum",
+			currency: Currency{Platinum: 3, Gold: 7},
+			spend:    20,
+			wantGP:   7, // 37 total GP - 20 = 17 GP = 1 PP + 7 GP
+			wantPP:   1,
+		},
+		{
+			name:     "exact spend",
+			currency: Currency{Gold: 20},
+			spend:    20,
+			wantGP:   0,
+			wantPP:   0,
+		},
+		{
+			name:     "insufficient funds",
+			currency: Currency{Gold: 10},
+			spend:    20,
+			wantErr:  true,
+		},
+		{
+			name:     "spend from mixed currency",
+			currency: Currency{Copper: 50, Silver: 50, Gold: 5, Platinum: 1},
+			spend:    10, // total is 2050 CP = 20.5 GP, spend 10 leaves 1050 CP = 1 PP + 0 GP + 5 SP
+			wantGP:   0,
+			wantPP:   1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.currency.SpendFromTotal(tt.spend)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SpendFromTotal() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
+				return
+			}
+			if tt.currency.Gold != tt.wantGP {
+				t.Errorf("Gold = %d, want %d", tt.currency.Gold, tt.wantGP)
+			}
+			if tt.currency.Platinum != tt.wantPP {
+				t.Errorf("Platinum = %d, want %d", tt.currency.Platinum, tt.wantPP)
+			}
+		})
+	}
+}
+
 func TestItemCharges(t *testing.T) {
 	item := NewItem("wand-1", "Wand of Magic Missiles", ItemTypeMagicItem)
 	item.Charges = 7
