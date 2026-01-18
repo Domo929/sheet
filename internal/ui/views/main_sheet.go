@@ -803,23 +803,50 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 	}
 	lines = append(lines, hpLine)
 
-	// HP Bar
+	// HP Bar - shows current HP + temp HP
 	barWidth := width - 6
 	if barWidth < 10 {
 		barWidth = 10
 	}
-	filledWidth := int(float64(barWidth) * hpPercent)
-	if filledWidth < 0 {
-		filledWidth = 0
-	}
-	if filledWidth > barWidth {
-		filledWidth = barWidth
-	}
-	emptyWidth := barWidth - filledWidth
 
-	barFilled := lipgloss.NewStyle().Background(lipgloss.Color(hpColor)).Render(strings.Repeat(" ", filledWidth))
+	// Calculate widths for current HP, temp HP, and empty
+	totalEffectiveHP := hp.Current + hp.Temporary
+	maxForBar := hp.Maximum
+	if totalEffectiveHP > maxForBar {
+		maxForBar = totalEffectiveHP // Extend bar if temp HP exceeds max
+	}
+
+	currentWidth := 0
+	if maxForBar > 0 {
+		currentWidth = int(float64(barWidth) * float64(hp.Current) / float64(maxForBar))
+	}
+	if currentWidth < 0 {
+		currentWidth = 0
+	}
+	if currentWidth > barWidth {
+		currentWidth = barWidth
+	}
+
+	tempWidth := 0
+	if hp.Temporary > 0 && maxForBar > 0 {
+		tempWidth = int(float64(barWidth) * float64(hp.Temporary) / float64(maxForBar))
+		if tempWidth < 1 {
+			tempWidth = 1 // Ensure at least 1 char if there's any temp HP
+		}
+	}
+	if currentWidth+tempWidth > barWidth {
+		tempWidth = barWidth - currentWidth
+	}
+
+	emptyWidth := barWidth - currentWidth - tempWidth
+	if emptyWidth < 0 {
+		emptyWidth = 0
+	}
+
+	barCurrent := lipgloss.NewStyle().Background(lipgloss.Color(hpColor)).Render(strings.Repeat(" ", currentWidth))
+	barTemp := lipgloss.NewStyle().Background(lipgloss.Color("39")).Render(strings.Repeat(" ", tempWidth)) // Cyan/blue for temp HP
 	barEmpty := lipgloss.NewStyle().Background(lipgloss.Color("238")).Render(strings.Repeat(" ", emptyWidth))
-	lines = append(lines, fmt.Sprintf("[%s%s]", barFilled, barEmpty))
+	lines = append(lines, fmt.Sprintf("[%s%s%s]", barCurrent, barTemp, barEmpty))
 
 	// HP controls hint
 	if m.focusArea == FocusCombat {
