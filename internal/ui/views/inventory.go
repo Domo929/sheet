@@ -242,11 +242,16 @@ func (m *InventoryModel) handleRemove() (*InventoryModel, tea.Cmd) {
 }
 
 func (m *InventoryModel) handleEquip() (*InventoryModel, tea.Cmd) {
-	if m.focus != FocusItems || m.selectedItem == nil {
+	if m.focus != FocusItems {
 		return m, nil
 	}
 
-	item := m.selectedItem
+	// Use hovered item (cursor position) rather than requiring selection
+	items := m.character.Inventory.Items
+	if m.itemCursor >= len(items) {
+		return m, nil
+	}
+	item := &items[m.itemCursor]
 	equip := &m.character.Inventory.Equipment
 
 	// Weapons go to main hand or off hand
