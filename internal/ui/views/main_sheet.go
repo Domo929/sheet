@@ -658,13 +658,6 @@ func (m *MainSheetModel) renderAbilitiesAndSaves(width int) string {
 		Foreground(lipgloss.Color("244")).
 		Bold(true)
 
-	scoreStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("252"))
-
-	modStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("244"))
-
 	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
 	noProfIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("○")
 
@@ -687,8 +680,8 @@ func (m *MainSheetModel) renderAbilitiesAndSaves(width int) string {
 	var lines []string
 	lines = append(lines, titleStyle.Render("Abilities & Saving Throws"))
 	
-	// Header row: Ability | Score | Mod | Save
-	lines = append(lines, fmt.Sprintf("%-12s %5s %4s  %4s",
+	// Header row: Ability | Score | Mod | Save - match data row spacing
+	lines = append(lines, fmt.Sprintf("%-12s  %5s  %3s   %4s",
 		headerStyle.Render("Ability"),
 		headerStyle.Render("Score"),
 		headerStyle.Render("Mod"),
@@ -706,12 +699,12 @@ func (m *MainSheetModel) renderAbilitiesAndSaves(width int) string {
 			icon = profIcon
 		}
 
-		line := fmt.Sprintf("%-12s %s  %s  %s %s",
+		line := fmt.Sprintf("%-12s    %2d   %3s   %s %3s",
 			a.name,
-			scoreStyle.Render(fmt.Sprintf("%2d", a.score.Total())),
-			modStyle.Render(fmt.Sprintf("%3s", modStr)),
+			a.score.Total(),
+			modStr,
 			icon,
-			modStyle.Render(fmt.Sprintf("%3s", saveStr)),
+			saveStr,
 		)
 		lines = append(lines, line)
 	}
@@ -744,10 +737,6 @@ func (m *MainSheetModel) renderSkills(width int) string {
 
 	labelStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("244"))
-
-	modStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("252"))
 
 	profIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("76")).Render("●")
 	expertIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("◆")
@@ -788,21 +777,21 @@ func (m *MainSheetModel) renderSkills(width int) string {
 	var lines []string
 	lines = append(lines, titleStyle.Render("Skills"))
 
-	// Passive skills - Perception, Investigation, Insight
+	// Passive skills - Perception, Investigation, Insight (aligned numbers)
 	passivePerception := 10 + char.GetSkillModifier(models.SkillPerception)
 	passiveInvestigation := 10 + char.GetSkillModifier(models.SkillInvestigation)
 	passiveInsight := 10 + char.GetSkillModifier(models.SkillInsight)
-	lines = append(lines, fmt.Sprintf("%s %s",
+	lines = append(lines, fmt.Sprintf("%-22s %2d",
 		labelStyle.Render("Passive Perception:"),
-		modStyle.Render(fmt.Sprintf("%d", passivePerception)),
+		passivePerception,
 	))
-	lines = append(lines, fmt.Sprintf("%s %s",
+	lines = append(lines, fmt.Sprintf("%-22s %2d",
 		labelStyle.Render("Passive Investigation:"),
-		modStyle.Render(fmt.Sprintf("%d", passiveInvestigation)),
+		passiveInvestigation,
 	))
-	lines = append(lines, fmt.Sprintf("%s %s",
+	lines = append(lines, fmt.Sprintf("%-22s %2d",
 		labelStyle.Render("Passive Insight:"),
-		modStyle.Render(fmt.Sprintf("%d", passiveInsight)),
+		passiveInsight,
 	))
 	lines = append(lines, "")
 
@@ -822,11 +811,12 @@ func (m *MainSheetModel) renderSkills(width int) string {
 		displayName := skillNames[skillName]
 		abilityAbbr := skillAbilityAbbr[ability]
 
-		line := fmt.Sprintf("%s %3s %-15s %s",
+		// Format: icon name (ability) modifier - with modifier right-aligned
+		line := fmt.Sprintf("%s %-15s %s %3s",
 			icon,
-			modStr,
 			displayName,
 			labelStyle.Render(fmt.Sprintf("(%s)", abilityAbbr)),
+			modStr,
 		)
 		lines = append(lines, line)
 	}
