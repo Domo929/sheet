@@ -634,26 +634,27 @@ func (m *InventoryModel) renderItems(width int) string {
 		}
 	}
 
-	// Selected item details
-	if m.selectedItem != nil && focused {
+	// Show details for hovered item (no selection required)
+	if len(items) > 0 && m.itemCursor < len(items) {
+		hoveredItem := items[m.itemCursor]
 		lines = append(lines, "")
 		lines = append(lines, dimStyle.Render("─── Details ───"))
-		lines = append(lines, itemStyle.Render(m.selectedItem.Name))
-		if m.selectedItem.Description != "" {
-			desc := m.selectedItem.Description
+		lines = append(lines, itemStyle.Render(hoveredItem.Name))
+		if hoveredItem.Description != "" {
+			desc := hoveredItem.Description
 			if len(desc) > width-6 {
 				desc = desc[:width-9] + "..."
 			}
 			lines = append(lines, dimStyle.Render(desc))
 		}
-		if m.selectedItem.Weight > 0 {
-			lines = append(lines, dimStyle.Render(fmt.Sprintf("Weight: %.1f lbs", m.selectedItem.Weight)))
+		if hoveredItem.Weight > 0 {
+			lines = append(lines, dimStyle.Render(fmt.Sprintf("Weight: %.1f lbs", hoveredItem.Weight)))
 		}
-		if m.selectedItem.Damage != "" {
-			lines = append(lines, dimStyle.Render(fmt.Sprintf("Damage: %s %s", m.selectedItem.Damage, m.selectedItem.DamageType)))
+		if hoveredItem.Damage != "" {
+			lines = append(lines, dimStyle.Render(fmt.Sprintf("Damage: %s %s", hoveredItem.Damage, hoveredItem.DamageType)))
 		}
-		if m.selectedItem.Charges > 0 || m.selectedItem.MaxCharges > 0 {
-			lines = append(lines, dimStyle.Render(fmt.Sprintf("Charges: %d/%d", m.selectedItem.Charges, m.selectedItem.MaxCharges)))
+		if hoveredItem.Charges > 0 || hoveredItem.MaxCharges > 0 {
+			lines = append(lines, dimStyle.Render(fmt.Sprintf("Charges: %d/%d", hoveredItem.Charges, hoveredItem.MaxCharges)))
 		}
 	}
 
