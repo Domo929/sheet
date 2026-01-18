@@ -136,7 +136,8 @@
         "damage": "1d6",
         "damageType": "bludgeoning",
         "properties": [
-          "versatile"
+          "versatile",
+          "topple"
         ],
         "versatileDamage": "1d8"
       },

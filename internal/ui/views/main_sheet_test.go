@@ -588,11 +588,13 @@ func TestMainSheetModelWeaponAttackBonus(t *testing.T) {
 	char.AbilityScores.Strength.Base = 16  // +3 modifier
 	char.AbilityScores.Dexterity.Base = 14 // +2 modifier
 	char.Info.Level = 5                     // +3 proficiency
+	char.Proficiencies.Weapons = []string{"Simple Weapons", "Martial Weapons"}
 
 	// Test regular melee weapon (uses STR)
 	sword := models.NewItem("sword-1", "Longsword", models.ItemTypeWeapon)
 	sword.Damage = "1d8"
 	sword.DamageType = "slashing"
+	sword.SubCategory = "Martial Melee Weapons"
 	char.Inventory.AddItem(sword)
 
 	model := NewMainSheetModel(char, nil)
@@ -606,6 +608,7 @@ func TestMainSheetModelWeaponAttackBonus(t *testing.T) {
 	dagger := models.NewItem("dagger-1", "Dagger", models.ItemTypeWeapon)
 	dagger.Damage = "1d4"
 	dagger.DamageType = "piercing"
+	dagger.SubCategory = "Simple Melee Weapons"
 	dagger.WeaponProps = []string{"finesse", "light", "thrown"}
 
 	bonus = model.getWeaponAttackBonus(dagger)

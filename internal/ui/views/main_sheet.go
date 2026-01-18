@@ -934,11 +934,42 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		lines = append(lines, titleStyle.Render("Attacks"))
 		for _, w := range weapons {
 			attackBonus := m.getWeaponAttackBonus(w)
-			lines = append(lines, fmt.Sprintf("%s %s %s",
-				valueStyle.Render(w.Name),
-				labelStyle.Render(formatModifier(attackBonus)),
-				labelStyle.Render(w.Damage+" "+w.DamageType),
+			damageMod := m.getWeaponDamageMod(w)
+			
+			// Format: "Name: +X to hit, damage type"
+			hitStr := formatModifier(attackBonus)
+			damageStr := w.Damage
+			if damageMod != 0 {
+				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
+			}
+			damageStr += " " + w.DamageType
+			
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(w.Name)))
+			lines = append(lines, fmt.Sprintf("    %s %s, %s %s",
+				labelStyle.Render("Hit:"),
+				valueStyle.Render(hitStr),
+				labelStyle.Render("Dmg:"),
+				valueStyle.Render(damageStr),
 			))
+			
+			// Show properties if any
+			if len(w.WeaponProps) > 0 {
+				propStrs := make([]string, 0, len(w.WeaponProps))
+				for _, prop := range w.WeaponProps {
+					propStr := strings.Title(prop)
+					// Add versatile damage if applicable
+					if prop == "versatile" && w.VersatileDamage != "" {
+						propStr = fmt.Sprintf("Versatile (%s)", w.VersatileDamage)
+					}
+					// Add range if applicable
+					if (prop == "thrown" || prop == "ammunition") && w.RangeNormal > 0 {
+						propStr = fmt.Sprintf("%s (%d/%d)", strings.Title(prop), w.RangeNormal, w.RangeLong)
+					}
+					propStrs = append(propStrs, propStr)
+				}
+				propsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
+				lines = append(lines, fmt.Sprintf("    %s", propsStyle.Render(strings.Join(propStrs, ", "))))
+			}
 		}
 	}
 
@@ -1062,7 +1093,30 @@ func (m *MainSheetModel) getWeapons() []models.Item {
 // getWeaponAttackBonus calculates the attack bonus for a weapon.
 func (m *MainSheetModel) getWeaponAttackBonus(weapon models.Item) int {
 	char := m.character
-	profBonus := char.GetProficiencyBonus()
+
+	// Get ability modifier
+	abilityMod := m.getWeaponAbilityMod(weapon)
+
+	// Add proficiency bonus only if proficient
+	profBonus := 0
+	if m.isProficientWithWeapon(weapon) {
+		profBonus = char.GetProficiencyBonus()
+	}
+
+	// Add magic bonus if any
+	magicBonus := weapon.MagicBonus
+
+	return abilityMod + profBonus + magicBonus
+}
+
+// getWeaponDamageMod returns the damage modifier for a weapon (ability mod + magic bonus).
+func (m *MainSheetModel) getWeaponDamageMod(weapon models.Item) int {
+	return m.getWeaponAbilityMod(weapon) + weapon.MagicBonus
+}
+
+// getWeaponAbilityMod returns the ability modifier used for a weapon.
+func (m *MainSheetModel) getWeaponAbilityMod(weapon models.Item) int {
+	char := m.character
 
 	// Check for finesse property - use better of STR/DEX
 	isFinesse := false
@@ -1071,30 +1125,51 @@ func (m *MainSheetModel) getWeaponAttackBonus(weapon models.Item) int {
 		if prop == "finesse" {
 			isFinesse = true
 		}
-		if prop == "ammunition" || prop == "thrown" {
+		if prop == "ammunition" {
 			isRanged = true
 		}
 	}
 
-	var abilityMod int
 	if isFinesse {
 		strMod := char.AbilityScores.Strength.Modifier()
 		dexMod := char.AbilityScores.Dexterity.Modifier()
 		if dexMod > strMod {
-			abilityMod = dexMod
-		} else {
-			abilityMod = strMod
+			return dexMod
 		}
+		return strMod
 	} else if isRanged {
-		abilityMod = char.AbilityScores.Dexterity.Modifier()
-	} else {
-		abilityMod = char.AbilityScores.Strength.Modifier()
+		return char.AbilityScores.Dexterity.Modifier()
+	}
+	return char.AbilityScores.Strength.Modifier()
+}
+
+// isProficientWithWeapon checks if the character is proficient with the given weapon.
+func (m *MainSheetModel) isProficientWithWeapon(weapon models.Item) bool {
+	char := m.character
+	weaponName := strings.ToLower(weapon.Name)
+	subCategory := strings.ToLower(weapon.SubCategory)
+
+	for _, prof := range char.Proficiencies.Weapons {
+		profLower := strings.ToLower(prof)
+		
+		// Check for category proficiency (e.g., "Simple Weapons", "Martial Weapons")
+		if profLower == "simple weapons" && strings.Contains(subCategory, "simple") {
+			return true
+		}
+		if profLower == "martial weapons" && strings.Contains(subCategory, "martial") {
+			return true
+		}
+		
+		// Check for specific weapon proficiency (e.g., "Longsword", "Hand Crossbows")
+		if strings.Contains(weaponName, strings.TrimSuffix(profLower, "s")) {
+			return true
+		}
+		if strings.Contains(profLower, weaponName) {
+			return true
+		}
 	}
 
-	// Add magic bonus if any
-	magicBonus := weapon.MagicBonus
-
-	return abilityMod + profBonus + magicBonus
+	return false
 }
 
 // formatModifier formats an integer as a modifier string (e.g., +2 or -1).
