@@ -794,11 +794,21 @@ func (m *MainSheetModel) renderSkills(width int) string {
 	var lines []string
 	lines = append(lines, titleStyle.Render("Skills"))
 
-	// Passive Perception - important enough to highlight
+	// Passive skills - Perception, Investigation, Insight
 	passivePerception := 10 + char.GetSkillModifier(models.SkillPerception)
+	passiveInvestigation := 10 + char.GetSkillModifier(models.SkillInvestigation)
+	passiveInsight := 10 + char.GetSkillModifier(models.SkillInsight)
 	lines = append(lines, fmt.Sprintf("%s %s",
 		labelStyle.Render("Passive Perception:"),
 		modStyle.Render(fmt.Sprintf("%d", passivePerception)),
+	))
+	lines = append(lines, fmt.Sprintf("%s %s",
+		labelStyle.Render("Passive Investigation:"),
+		modStyle.Render(fmt.Sprintf("%d", passiveInvestigation)),
+	))
+	lines = append(lines, fmt.Sprintf("%s %s",
+		labelStyle.Render("Passive Insight:"),
+		modStyle.Render(fmt.Sprintf("%d", passiveInsight)),
 	))
 	lines = append(lines, "")
 
@@ -1068,19 +1078,13 @@ func (m *MainSheetModel) renderActions(width int) string {
 		// Weapon attacks (including unarmed strike)
 		lines = append(lines, titleStyle.Render("Weapon Attacks"))
 		
-		// Unarmed Strike first
-		unarmedBonus := char.AbilityScores.Strength.Modifier() + char.GetProficiencyBonus()
-		unarmedDmg := char.AbilityScores.Strength.Modifier()
-		unarmedDmgStr := "1"
-		if unarmedDmg != 0 {
-			unarmedDmgStr = fmt.Sprintf("1%s", formatModifier(unarmedDmg))
-		}
+		// Unarmed Strike first (base rules: no proficiency, no ability mod to damage)
 		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Unarmed Strike")))
 		lines = append(lines, fmt.Sprintf("    %s %s, %s %s bludgeoning",
 			labelStyle.Render("Hit:"),
-			valueStyle.Render(formatModifier(unarmedBonus)),
+			valueStyle.Render(formatModifier(char.AbilityScores.Strength.Modifier())),
 			labelStyle.Render("Dmg:"),
-			valueStyle.Render(unarmedDmgStr),
+			valueStyle.Render("1"),
 		))
 		
 		// Equipped weapons
