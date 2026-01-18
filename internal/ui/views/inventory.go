@@ -32,10 +32,14 @@ type InventoryModel struct {
 	statusMessage string
 
 	// Item list navigation
-	itemCursor    int
-	itemScroll    int
-	selectedItem  *models.Item
-	itemsPerPage  int
+	itemCursor   int
+	itemScroll   int
+	itemsPerPage int
+
+	// Container viewing (for backpacks, etc.)
+	viewingContainer  *models.Item // The container we're viewing into
+	containerCursor   int
+	containerParentID string // ID of parent item when in container view
 
 	// Equipment slot navigation
 	equipCursor int
@@ -110,6 +114,15 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Back):
+			// If viewing a container, exit to main inventory first
+			if m.viewingContainer != nil {
+				m.viewingContainer = nil
+				m.containerParentID = ""
+				m.containerCursor = 0
+				m.itemScroll = 0
+				m.statusMessage = "Back to inventory"
+				return m, nil
+			}
 			return m, func() tea.Msg { return BackToSheetMsg{} }
 		case key.Matches(msg, m.keys.Tab):
 			m.focus = (m.focus + 1) % numInventoryFocusAreas
@@ -146,10 +159,11 @@ func (m *InventoryModel) handleUp() (*InventoryModel, tea.Cmd) {
 			m.equipCursor--
 		}
 	case FocusItems:
-		if m.itemCursor > 0 {
-			m.itemCursor--
-			if m.itemCursor < m.itemScroll {
-				m.itemScroll = m.itemCursor
+		cursor := m.getCurrentCursor()
+		if cursor > 0 {
+			m.setCurrentCursor(cursor - 1)
+			if m.getCurrentCursor() < m.itemScroll {
+				m.itemScroll = m.getCurrentCursor()
 			}
 		}
 	case FocusCurrency:
@@ -168,10 +182,11 @@ func (m *InventoryModel) handleDown() (*InventoryModel, tea.Cmd) {
 			m.equipCursor++
 		}
 	case FocusItems:
-		itemCount := len(m.character.Inventory.Items)
-		if m.itemCursor < itemCount-1 {
-			m.itemCursor++
-			if m.itemCursor >= m.itemScroll+m.itemsPerPage {
+		items := m.getDisplayItems()
+		cursor := m.getCurrentCursor()
+		if cursor < len(items)-1 {
+			m.setCurrentCursor(cursor + 1)
+			if m.getCurrentCursor() >= m.itemScroll+m.itemsPerPage {
 				m.itemScroll++
 			}
 		}
@@ -186,10 +201,22 @@ func (m *InventoryModel) handleDown() (*InventoryModel, tea.Cmd) {
 func (m *InventoryModel) handleEnter() (*InventoryModel, tea.Cmd) {
 	switch m.focus {
 	case FocusItems:
+		// If viewing a container, Enter does nothing special
+		if m.viewingContainer != nil {
+			return m, nil
+		}
+		
+		// Check if hovered item is a container with contents
 		items := m.character.Inventory.Items
 		if m.itemCursor < len(items) {
-			m.selectedItem = &items[m.itemCursor]
-			m.statusMessage = fmt.Sprintf("Selected: %s", m.selectedItem.Name)
+			item := &items[m.itemCursor]
+			if len(item.Contents) > 0 {
+				// Enter the container
+				m.viewingContainer = item
+				m.containerParentID = item.ID
+				m.containerCursor = 0
+				m.statusMessage = fmt.Sprintf("Viewing contents of %s", item.Name)
+			}
 		}
 	case FocusCurrency:
 		m.currencyMode = true
@@ -199,13 +226,50 @@ func (m *InventoryModel) handleEnter() (*InventoryModel, tea.Cmd) {
 	return m, nil
 }
 
+// getDisplayItems returns either main inventory or container contents
+func (m *InventoryModel) getDisplayItems() []models.Item {
+	if m.viewingContainer != nil {
+		return m.viewingContainer.Contents
+	}
+	return m.character.Inventory.Items
+}
+
+// getCurrentCursor returns the appropriate cursor for current view
+func (m *InventoryModel) getCurrentCursor() int {
+	if m.viewingContainer != nil {
+		return m.containerCursor
+	}
+	return m.itemCursor
+}
+
+// setCurrentCursor sets the appropriate cursor for current view
+func (m *InventoryModel) setCurrentCursor(val int) {
+	if m.viewingContainer != nil {
+		m.containerCursor = val
+	} else {
+		m.itemCursor = val
+	}
+}
+
 func (m *InventoryModel) handleAdd() (*InventoryModel, tea.Cmd) {
 	switch m.focus {
 	case FocusItems:
-		if m.selectedItem != nil {
-			m.selectedItem.Quantity++
-			m.saveCharacter()
-			m.statusMessage = fmt.Sprintf("Added 1 %s (now %d)", m.selectedItem.Name, m.selectedItem.Quantity)
+		cursor := m.getCurrentCursor()
+		if m.viewingContainer != nil {
+			// Editing container contents
+			if cursor < len(m.viewingContainer.Contents) {
+				m.viewingContainer.Contents[cursor].Quantity++
+				m.saveCharacter()
+				m.statusMessage = fmt.Sprintf("Added 1 %s (now %d)", m.viewingContainer.Contents[cursor].Name, m.viewingContainer.Contents[cursor].Quantity)
+			}
+		} else {
+			// Editing main inventory
+			items := m.character.Inventory.Items
+			if cursor < len(items) {
+				items[cursor].Quantity++
+				m.saveCharacter()
+				m.statusMessage = fmt.Sprintf("Added 1 %s (now %d)", items[cursor].Name, items[cursor].Quantity)
+			}
 		}
 	case FocusCurrency:
 		m.currencyMode = true
@@ -218,20 +282,39 @@ func (m *InventoryModel) handleAdd() (*InventoryModel, tea.Cmd) {
 func (m *InventoryModel) handleRemove() (*InventoryModel, tea.Cmd) {
 	switch m.focus {
 	case FocusItems:
-		if m.selectedItem != nil && m.selectedItem.Quantity > 0 {
-			m.selectedItem.Quantity--
-			if m.selectedItem.Quantity == 0 {
-				// Remove item from inventory
-				m.character.Inventory.RemoveItem(m.selectedItem.ID)
-				m.selectedItem = nil
-				if m.itemCursor > 0 {
-					m.itemCursor--
+		cursor := m.getCurrentCursor()
+		if m.viewingContainer != nil {
+			// Editing container contents
+			if cursor < len(m.viewingContainer.Contents) && m.viewingContainer.Contents[cursor].Quantity > 0 {
+				m.viewingContainer.Contents[cursor].Quantity--
+				if m.viewingContainer.Contents[cursor].Quantity == 0 {
+					// Remove from container
+					m.viewingContainer.Contents = append(m.viewingContainer.Contents[:cursor], m.viewingContainer.Contents[cursor+1:]...)
+					if cursor > 0 && cursor >= len(m.viewingContainer.Contents) {
+						m.containerCursor--
+					}
+					m.statusMessage = "Item removed from container"
+				} else {
+					m.statusMessage = fmt.Sprintf("Removed 1 (now %d)", m.viewingContainer.Contents[cursor].Quantity)
 				}
-				m.statusMessage = "Item removed from inventory"
-			} else {
-				m.statusMessage = fmt.Sprintf("Removed 1 (now %d)", m.selectedItem.Quantity)
+				m.saveCharacter()
 			}
-			m.saveCharacter()
+		} else {
+			// Editing main inventory
+			items := m.character.Inventory.Items
+			if cursor < len(items) && items[cursor].Quantity > 0 {
+				items[cursor].Quantity--
+				if items[cursor].Quantity == 0 {
+					m.character.Inventory.RemoveItem(items[cursor].ID)
+					if cursor > 0 && cursor >= len(m.character.Inventory.Items) {
+						m.itemCursor--
+					}
+					m.statusMessage = "Item removed from inventory"
+				} else {
+					m.statusMessage = fmt.Sprintf("Removed 1 (now %d)", items[cursor].Quantity)
+				}
+				m.saveCharacter()
+			}
 		}
 	case FocusCurrency:
 		m.currencyMode = true
@@ -587,12 +670,25 @@ func (m *InventoryModel) renderItems(width int) string {
 	typeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("141"))
 
 	var lines []string
-	lines = append(lines, titleStyle.Render("🎒 Items"))
+	
+	// Title changes based on whether we're in a container
+	if m.viewingContainer != nil {
+		lines = append(lines, titleStyle.Render(fmt.Sprintf("📦 %s Contents", m.viewingContainer.Name)))
+		lines = append(lines, dimStyle.Render("  (esc to go back)"))
+	} else {
+		lines = append(lines, titleStyle.Render("🎒 Items"))
+	}
 	lines = append(lines, "")
 
-	items := m.character.Inventory.Items
+	items := m.getDisplayItems()
+	cursor := m.getCurrentCursor()
+	
 	if len(items) == 0 {
-		lines = append(lines, dimStyle.Render("  No items in inventory"))
+		if m.viewingContainer != nil {
+			lines = append(lines, dimStyle.Render("  Container is empty"))
+		} else {
+			lines = append(lines, dimStyle.Render("  No items in inventory"))
+		}
 	} else {
 		// Show items with scrolling
 		endIdx := m.itemScroll + m.itemsPerPage
@@ -605,7 +701,7 @@ func (m *InventoryModel) renderItems(width int) string {
 			prefix := "  "
 			style := itemStyle
 
-			if focused && i == m.itemCursor {
+			if focused && i == cursor {
 				prefix = "▶ "
 				style = selectedStyle
 			}
@@ -614,6 +710,11 @@ func (m *InventoryModel) renderItems(width int) string {
 			name := item.Name
 			if item.Magical {
 				name = "✨ " + name
+			}
+			
+			// Show container indicator if item has contents
+			if len(item.Contents) > 0 {
+				name = "📦 " + name
 			}
 
 			qty := ""
@@ -635,8 +736,8 @@ func (m *InventoryModel) renderItems(width int) string {
 	}
 
 	// Show details for hovered item (no selection required)
-	if len(items) > 0 && m.itemCursor < len(items) {
-		hoveredItem := items[m.itemCursor]
+	if len(items) > 0 && cursor < len(items) {
+		hoveredItem := items[cursor]
 		lines = append(lines, "")
 		lines = append(lines, dimStyle.Render("─── Details ───"))
 		lines = append(lines, itemStyle.Render(hoveredItem.Name))
@@ -655,6 +756,9 @@ func (m *InventoryModel) renderItems(width int) string {
 		}
 		if hoveredItem.Charges > 0 || hoveredItem.MaxCharges > 0 {
 			lines = append(lines, dimStyle.Render(fmt.Sprintf("Charges: %d/%d", hoveredItem.Charges, hoveredItem.MaxCharges)))
+		}
+		if len(hoveredItem.Contents) > 0 {
+			lines = append(lines, dimStyle.Render(fmt.Sprintf("Contains: %d items (Enter to view)", len(hoveredItem.Contents))))
 		}
 	}
 
@@ -743,7 +847,11 @@ func (m *InventoryModel) renderFooter(width int) string {
 	case FocusEquipment:
 		help = "↑/↓: navigate • tab: next panel • esc: back to sheet"
 	case FocusItems:
-		help = "↑/↓: navigate • enter: select • +/a: add qty • -/d: remove • e: equip • tab: next panel • esc: back"
+		if m.viewingContainer != nil {
+			help = "↑/↓: navigate • +/a: add qty • -/d: remove • esc: back to inventory"
+		} else {
+			help = "↑/↓: navigate • enter: open container • +/a: add qty • -/d: remove • e: equip • tab: next panel • esc: back"
+		}
 	case FocusCurrency:
 		help = "↑/↓: select currency • +/a: add • -/d: spend • enter: edit • tab: next panel • esc: back"
 	}

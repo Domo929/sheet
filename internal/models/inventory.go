@@ -221,6 +221,9 @@ type Item struct {
 	// Consumable properties
 	Charges    int `json:"charges,omitempty"`
 	MaxCharges int `json:"maxCharges,omitempty"`
+
+	// Container properties (for backpacks, pouches, etc.)
+	Contents []Item `json:"contents,omitempty"`
 }
 
 // NewItem creates a basic item with the given name and type.
