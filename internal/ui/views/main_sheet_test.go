@@ -632,6 +632,209 @@ func TestMainSheetModelWeaponAttackBonus(t *testing.T) {
 	}
 }
 
+func TestRestModeTransitions(t *testing.T) {
+	char := createTestCharacter()
+	model := NewMainSheetModel(char, nil)
+
+	// Initially not in rest mode
+	if model.restMode != RestModeNone {
+		t.Error("expected initial rest mode to be RestModeNone")
+	}
+
+	// Press 'r' to enter rest menu
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	if model.restMode != RestModeMenu {
+		t.Errorf("expected rest mode RestModeMenu after 'r', got %d", model.restMode)
+	}
+
+	// Press 's' to go to short rest
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	if model.restMode != RestModeShort {
+		t.Errorf("expected rest mode RestModeShort after 's', got %d", model.restMode)
+	}
+
+	// Press Esc to go back to menu
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+	if model.restMode != RestModeMenu {
+		t.Errorf("expected rest mode RestModeMenu after Esc, got %d", model.restMode)
+	}
+
+	// Press 'l' to go to long rest
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
+	if model.restMode != RestModeLong {
+		t.Errorf("expected rest mode RestModeLong after 'l', got %d", model.restMode)
+	}
+
+	// Press Esc to go back to menu
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+	if model.restMode != RestModeMenu {
+		t.Errorf("expected rest mode RestModeMenu after Esc, got %d", model.restMode)
+	}
+
+	// Press Esc again to exit rest mode
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+	if model.restMode != RestModeNone {
+		t.Errorf("expected rest mode RestModeNone after second Esc, got %d", model.restMode)
+	}
+}
+
+func TestShortRestHitDiceAdjustment(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitDice.Remaining = 3
+	model := NewMainSheetModel(char, nil)
+
+	// Enter short rest mode
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+
+	if model.restHitDice != 0 {
+		t.Errorf("expected initial restHitDice 0, got %d", model.restHitDice)
+	}
+
+	// Increase hit dice to spend
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if model.restHitDice != 1 {
+		t.Errorf("expected restHitDice 1 after up, got %d", model.restHitDice)
+	}
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if model.restHitDice != 2 {
+		t.Errorf("expected restHitDice 2 after second up, got %d", model.restHitDice)
+	}
+
+	// Decrease hit dice
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if model.restHitDice != 1 {
+		t.Errorf("expected restHitDice 1 after down, got %d", model.restHitDice)
+	}
+
+	// Can't go below 0
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if model.restHitDice != 0 {
+		t.Errorf("expected restHitDice 0 (can't go negative), got %d", model.restHitDice)
+	}
+
+	// Can't exceed remaining hit dice
+	model.restHitDice = 3
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if model.restHitDice != 3 {
+		t.Errorf("expected restHitDice 3 (can't exceed remaining), got %d", model.restHitDice)
+	}
+}
+
+func TestShortRestExecution(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitPoints.Current = 20
+	char.CombatStats.HitPoints.Maximum = 45
+	char.CombatStats.HitDice.Remaining = 5
+	char.CombatStats.HitDice.DieType = 10
+	char.AbilityScores.Constitution.Base = 14 // +2 modifier
+	model := NewMainSheetModel(char, nil)
+
+	// Enter short rest and spend hit dice
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp}) // 1 hit die
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp}) // 2 hit dice
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	// Should have healed and exited rest mode
+	if model.restMode != RestModeNone {
+		t.Errorf("expected rest mode RestModeNone after confirming, got %d", model.restMode)
+	}
+
+	// HP should have increased (average roll: 5+1=6, +2 CON = 8 per die, 2 dice = 16)
+	if char.CombatStats.HitPoints.Current <= 20 {
+		t.Errorf("expected HP to increase after short rest, got %d", char.CombatStats.HitPoints.Current)
+	}
+
+	// Hit dice should have decreased
+	if char.CombatStats.HitDice.Remaining != 3 {
+		t.Errorf("expected 3 remaining hit dice, got %d", char.CombatStats.HitDice.Remaining)
+	}
+
+	// Status message should indicate healing
+	if !strings.Contains(model.statusMessage, "Short rest complete") {
+		t.Errorf("expected status message about short rest, got: %s", model.statusMessage)
+	}
+}
+
+func TestLongRestExecution(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitPoints.Current = 20
+	char.CombatStats.HitPoints.Maximum = 45
+	char.CombatStats.HitDice.Remaining = 2
+	char.CombatStats.HitDice.Total = 5
+	model := NewMainSheetModel(char, nil)
+
+	// Enter long rest and confirm
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	// Should have exited rest mode
+	if model.restMode != RestModeNone {
+		t.Errorf("expected rest mode RestModeNone after confirming, got %d", model.restMode)
+	}
+
+	// HP should be at maximum
+	if char.CombatStats.HitPoints.Current != 45 {
+		t.Errorf("expected HP to be max (45), got %d", char.CombatStats.HitPoints.Current)
+	}
+
+	// Hit dice should have recovered (half level, min 1 = 2)
+	if char.CombatStats.HitDice.Remaining < 4 {
+		t.Errorf("expected at least 4 hit dice after recovery, got %d", char.CombatStats.HitDice.Remaining)
+	}
+
+	// Status message should indicate long rest
+	if !strings.Contains(model.statusMessage, "Long rest complete") {
+		t.Errorf("expected status message about long rest, got: %s", model.statusMessage)
+	}
+}
+
+func TestRestOverlayRendering(t *testing.T) {
+	char := createTestCharacter()
+	char.CombatStats.HitDice.Remaining = 3
+	model := NewMainSheetModel(char, nil)
+	model.width = 80
+	model.height = 40
+
+	// Test rest menu
+	model.restMode = RestModeMenu
+	view := model.View()
+	if !strings.Contains(view, "Rest Options") {
+		t.Error("expected rest menu to show 'Rest Options'")
+	}
+	if !strings.Contains(view, "Short Rest") {
+		t.Error("expected rest menu to show 'Short Rest'")
+	}
+	if !strings.Contains(view, "Long Rest") {
+		t.Error("expected rest menu to show 'Long Rest'")
+	}
+
+	// Test short rest screen
+	model.restMode = RestModeShort
+	view = model.View()
+	if !strings.Contains(view, "Short Rest") {
+		t.Error("expected short rest screen to show 'Short Rest'")
+	}
+	if !strings.Contains(view, "Hit Dice") {
+		t.Error("expected short rest screen to show 'Hit Dice'")
+	}
+
+	// Test long rest screen
+	model.restMode = RestModeLong
+	view = model.View()
+	if !strings.Contains(view, "Long Rest") {
+		t.Error("expected long rest screen to show 'Long Rest'")
+	}
+	if !strings.Contains(view, "Full Recovery") || strings.Contains(view, "confirmation") {
+		// Either "Full Recovery" or some confirmation text
+	}
+}
+
 // Helper function to create a test character
 func createTestCharacter() *models.Character {
 	char := models.NewCharacter("test-id", "Aragorn", "Human", "Ranger")

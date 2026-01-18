@@ -33,6 +33,11 @@ type MainSheetModel struct {
 
 	// Action type selection (for Actions panel)
 	selectedActionType ActionType
+
+	// Rest mode
+	restMode       RestMode
+	restHitDice    int  // Number of hit dice to spend on short rest
+	restConfirming bool // Confirming long rest
 }
 
 // HPInputMode represents the current HP modification mode.
@@ -43,6 +48,16 @@ const (
 	HPInputDamage
 	HPInputHeal
 	HPInputTemp
+)
+
+// RestMode represents the current rest interaction mode.
+type RestMode int
+
+const (
+	RestModeNone RestMode = iota
+	RestModeMenu          // Choosing between short/long rest
+	RestModeShort         // Short rest - spending hit dice
+	RestModeLong          // Long rest - confirming
 )
 
 // FocusArea represents which panel is currently focused.
@@ -255,6 +270,11 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			return m.handleConditionInput(msg)
 		}
 
+		// Handle rest mode
+		if m.restMode != RestModeNone {
+			return m.handleRestInput(msg)
+		}
+
 		// Clear status message on any key press
 		m.statusMessage = ""
 		
@@ -286,7 +306,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			m.statusMessage = "Combat tracker coming soon..."
 			return m, nil
 		case key.Matches(msg, m.keys.Rest):
-			m.statusMessage = "Rest options coming soon..."
+			m.restMode = RestModeMenu
 			return m, nil
 		case key.Matches(msg, m.keys.Damage):
 			if m.focusArea == FocusCombat {
@@ -491,6 +511,119 @@ func (m *MainSheetModel) handleConditionInput(msg tea.KeyMsg) (*MainSheetModel, 
 	return m, nil
 }
 
+// handleRestInput handles keyboard input when in rest mode.
+func (m *MainSheetModel) handleRestInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd) {
+	switch m.restMode {
+	case RestModeMenu:
+		switch msg.String() {
+		case "s", "1":
+			// Short rest
+			m.restMode = RestModeShort
+			m.restHitDice = 0
+			return m, nil
+		case "l", "2":
+			// Long rest
+			m.restMode = RestModeLong
+			return m, nil
+		case "esc", "q":
+			m.restMode = RestModeNone
+			return m, nil
+		}
+
+	case RestModeShort:
+		switch msg.String() {
+		case "up", "k", "+", "=":
+			// Add hit die to spend (if available)
+			hd := m.character.CombatStats.HitDice
+			if m.restHitDice < hd.Remaining {
+				m.restHitDice++
+			}
+			return m, nil
+		case "down", "j", "-":
+			// Remove hit die to spend
+			if m.restHitDice > 0 {
+				m.restHitDice--
+			}
+			return m, nil
+		case "enter":
+			// Perform short rest with hit dice spending
+			m.performShortRest()
+			return m, nil
+		case "esc":
+			m.restMode = RestModeMenu
+			m.restHitDice = 0
+			return m, nil
+		}
+
+	case RestModeLong:
+		switch msg.String() {
+		case "enter", "y":
+			// Perform long rest
+			m.performLongRest()
+			return m, nil
+		case "esc", "n":
+			m.restMode = RestModeMenu
+			return m, nil
+		}
+	}
+
+	return m, nil
+}
+
+// performShortRest executes a short rest with hit dice spending.
+func (m *MainSheetModel) performShortRest() {
+	char := m.character
+	hd := &char.CombatStats.HitDice
+	hp := &char.CombatStats.HitPoints
+
+	// Spend hit dice and heal
+	totalHealed := 0
+	for i := 0; i < m.restHitDice && hd.Remaining > 0; i++ {
+		if hd.Use() {
+			// Roll hit die + CON modifier (we'll use average for simplicity)
+			avgRoll := (hd.DieType / 2) + 1 // Average roll
+			conMod := char.AbilityScores.Constitution.Modifier()
+			healing := avgRoll + conMod
+			if healing < 1 {
+				healing = 1
+			}
+			hp.Heal(healing)
+			totalHealed += healing
+		}
+	}
+
+	// Call character's short rest method for other effects (warlock slots, etc)
+	char.ShortRest()
+
+	m.saveCharacter()
+	m.restMode = RestModeNone
+	m.restHitDice = 0
+	if totalHealed > 0 {
+		m.statusMessage = fmt.Sprintf("Short rest complete! Healed %d HP.", totalHealed)
+	} else {
+		m.statusMessage = "Short rest complete!"
+	}
+}
+
+// performLongRest executes a long rest.
+func (m *MainSheetModel) performLongRest() {
+	char := m.character
+	oldHP := char.CombatStats.HitPoints.Current
+	oldHitDice := char.CombatStats.HitDice.Remaining
+
+	char.LongRest()
+
+	newHP := char.CombatStats.HitPoints.Current
+	newHitDice := char.CombatStats.HitDice.Remaining
+
+	m.saveCharacter()
+	m.restMode = RestModeNone
+
+	hpRestored := newHP - oldHP
+	hitDiceRestored := newHitDice - oldHitDice
+	m.statusMessage = fmt.Sprintf("Long rest complete! HP restored: %d, Hit dice recovered: %d", hpRestored, hitDiceRestored)
+}
+
 // View renders the main sheet.
 func (m *MainSheetModel) View() string {
 	if m.character == nil {
@@ -545,6 +678,19 @@ func (m *MainSheetModel) View() string {
 
 	// Footer with navigation help
 	footer := m.renderFooter(width)
+
+	// Rest overlay if in rest mode
+	if m.restMode != RestModeNone {
+		restOverlay := m.renderRestOverlay(width)
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			header,
+			"",
+			restOverlay,
+			"",
+			footer,
+		)
+	}
 
 	// Join all sections vertically
 	return lipgloss.JoinVertical(
@@ -1144,6 +1290,152 @@ func (m *MainSheetModel) renderActions(width int) string {
 		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Fall prone (no cost)")))
 		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Stand Up")))
 		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Costs half your Speed")))
+	}
+
+	return panelStyle.Render(strings.Join(lines, "\n"))
+}
+
+func (m *MainSheetModel) renderRestOverlay(width int) string {
+	panelStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("99")).
+		Padding(1, 2).
+		Width(width - 4)
+
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+
+	var lines []string
+
+	switch m.restMode {
+	case RestModeMenu:
+		lines = append(lines, titleStyle.Render("⛺ Rest Options"))
+		lines = append(lines, "")
+		lines = append(lines, labelStyle.Render("[S] Short Rest - Spend hit dice to recover HP"))
+		lines = append(lines, labelStyle.Render("[L] Long Rest  - Full recovery (8 hours)"))
+		lines = append(lines, "")
+		lines = append(lines, dimStyle.Render("Press Esc to cancel"))
+
+	case RestModeShort:
+		hd := m.character.CombatStats.HitDice
+		hp := m.character.CombatStats.HitPoints
+		conMod := m.character.AbilityScores.Constitution.Modifier()
+
+		lines = append(lines, titleStyle.Render("⛺ Short Rest - Spend Hit Dice"))
+		lines = append(lines, "")
+		lines = append(lines, fmt.Sprintf(
+			"%s %s%s%s",
+			labelStyle.Render("Current HP:"),
+			valueStyle.Render(fmt.Sprintf("%d", hp.Current)),
+			dimStyle.Render("/"),
+			fmt.Sprintf("%d", hp.Maximum),
+		))
+		lines = append(lines, fmt.Sprintf(
+			"%s %s%s%s",
+			labelStyle.Render("Hit Dice:"),
+			valueStyle.Render(fmt.Sprintf("%d", hd.Remaining)),
+			dimStyle.Render("/"),
+			fmt.Sprintf("%d (d%d)", hd.Total, hd.DieType),
+		))
+		lines = append(lines, "")
+
+		// Show hit dice to spend
+		lines = append(lines, fmt.Sprintf(
+			"%s %s",
+			labelStyle.Render("Hit Dice to Spend:"),
+			valueStyle.Render(fmt.Sprintf("%d", m.restHitDice)),
+		))
+
+		// Show expected healing
+		if m.restHitDice > 0 {
+			avgPerDie := (hd.DieType / 2) + 1 + conMod
+			if avgPerDie < 1 {
+				avgPerDie = 1
+			}
+			expectedHealing := avgPerDie * m.restHitDice
+			lines = append(lines, fmt.Sprintf(
+				"%s %s %s",
+				labelStyle.Render("Expected Healing:"),
+				valueStyle.Render(fmt.Sprintf("~%d HP", expectedHealing)),
+				dimStyle.Render(fmt.Sprintf("(avg %d per die)", avgPerDie)),
+			))
+		}
+		lines = append(lines, "")
+		lines = append(lines, dimStyle.Render("↑/↓: Adjust hit dice • Enter: Confirm • Esc: Back"))
+
+	case RestModeLong:
+		hp := m.character.CombatStats.HitPoints
+		hd := m.character.CombatStats.HitDice
+
+		lines = append(lines, titleStyle.Render("🌙 Long Rest - Full Recovery"))
+		lines = append(lines, "")
+		lines = append(lines, labelStyle.Render("A long rest requires 8 hours. After resting:"))
+		lines = append(lines, "")
+
+		// HP restoration
+		hpToRestore := hp.Maximum - hp.Current
+		if hpToRestore > 0 {
+			lines = append(lines, fmt.Sprintf(
+				"  • %s %s",
+				labelStyle.Render("Restore HP:"),
+				valueStyle.Render(fmt.Sprintf("+%d (to %d)", hpToRestore, hp.Maximum)),
+			))
+		} else {
+			lines = append(lines, fmt.Sprintf(
+				"  • %s %s",
+				labelStyle.Render("HP:"),
+				dimStyle.Render("Already at maximum"),
+			))
+		}
+
+		// Hit dice recovery (half, min 1)
+		hitDiceToRecover := hd.Total / 2
+		if hitDiceToRecover < 1 {
+			hitDiceToRecover = 1
+		}
+		if hd.Remaining < hd.Total {
+			canRecover := hitDiceToRecover
+			if hd.Remaining+canRecover > hd.Total {
+				canRecover = hd.Total - hd.Remaining
+			}
+			lines = append(lines, fmt.Sprintf(
+				"  • %s %s",
+				labelStyle.Render("Recover Hit Dice:"),
+				valueStyle.Render(fmt.Sprintf("+%d (to %d/%d)", canRecover, hd.Remaining+canRecover, hd.Total)),
+			))
+		} else {
+			lines = append(lines, fmt.Sprintf(
+				"  • %s %s",
+				labelStyle.Render("Hit Dice:"),
+				dimStyle.Render("Already at maximum"),
+			))
+		}
+
+		// Spell slots restoration
+		lines = append(lines, fmt.Sprintf("  • %s", labelStyle.Render("Restore all spell slots")))
+
+		// Exhaustion reduction
+		exhaustion := 0
+		for _, cond := range m.character.CombatStats.Conditions {
+			if strings.HasPrefix(string(cond), "Exhaustion") {
+				exhaustion++
+			}
+		}
+		if exhaustion > 0 {
+			lines = append(lines, fmt.Sprintf(
+				"  • %s %s",
+				labelStyle.Render("Reduce exhaustion:"),
+				valueStyle.Render("-1 level"),
+			))
+		}
+
+		// Reset death saves
+		lines = append(lines, fmt.Sprintf("  • %s", labelStyle.Render("Reset death saves")))
+
+		lines = append(lines, "")
+		lines = append(lines, dimStyle.Render("Enter/Y: Confirm • Esc/N: Cancel"))
 	}
 
 	return panelStyle.Render(strings.Join(lines, "\n"))
