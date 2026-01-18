@@ -66,7 +66,7 @@ type inventoryKeyMap struct {
 
 func defaultInventoryKeyMap() inventoryKeyMap {
 	return inventoryKeyMap{
-		Quit:     key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "quit")),
+		Quit:     key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
 		Tab:      key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next panel")),
 		ShiftTab: key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "prev panel")),
 		Up:       key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
