@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/charmbracelet/bubbles/key"
@@ -61,6 +62,12 @@ type InventoryModel struct {
 	currencyType   int // 0=CP, 1=SP, 2=EP, 3=GP, 4=PP
 	currencyBuffer string
 	currencyAdding bool
+
+	// Add item mode
+	addingItem     bool
+	itemSearchTerm string
+	searchResults  []models.Item
+	searchCursor   int
 }
 
 type inventoryKeyMap struct {
@@ -75,6 +82,8 @@ type inventoryKeyMap struct {
 	Quantity  key.Binding
 	Delete    key.Binding
 	Equip     key.Binding
+	Add       key.Binding
+	Spend     key.Binding
 }
 
 func defaultInventoryKeyMap() inventoryKeyMap {
@@ -90,6 +99,8 @@ func defaultInventoryKeyMap() inventoryKeyMap {
 		Quantity:  key.NewBinding(key.WithKeys("n", "#"), key.WithHelp("n/#", "adjust quantity")),
 		Delete:    key.NewBinding(key.WithKeys("x", "delete"), key.WithHelp("x", "delete item")),
 		Equip:     key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "equip/unequip")),
+		Add:       key.NewBinding(key.WithKeys("a", "+"), key.WithHelp("a/+", "add item/currency")),
+		Spend:     key.NewBinding(key.WithKeys("s", "-"), key.WithHelp("s/-", "spend currency")),
 	}
 }
 
@@ -148,6 +159,11 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 			return m.handleQuantityInput(msg)
 		}
 
+		// Handle add item mode
+		if m.addingItem {
+			return m.handleAddItemInput(msg)
+		}
+
 		// Ctrl+C always quits immediately
 		if key.Matches(msg, m.keys.ForceQuit) {
 			return m, tea.Quit
@@ -198,6 +214,10 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 			return m.handleDelete()
 		case key.Matches(msg, m.keys.Equip):
 			return m.handleEquip()
+		case key.Matches(msg, m.keys.Add):
+			return m.handleAdd()
+		case key.Matches(msg, m.keys.Spend):
+			return m.handleSpend()
 		}
 	}
 
@@ -405,6 +425,217 @@ func (m *InventoryModel) handleQuantityInput(msg tea.KeyMsg) (*InventoryModel, t
 	}
 
 	return m, nil
+}
+
+// handleAdd adds currency (currency panel) or starts add item mode (items panel)
+func (m *InventoryModel) handleAdd() (*InventoryModel, tea.Cmd) {
+	switch m.focus {
+	case FocusCurrency:
+		m.currencyMode = true
+		m.currencyBuffer = ""
+		m.currencyAdding = true
+		m.statusMessage = fmt.Sprintf("Add %s: type amount and press Enter", currencyName(m.currencyType))
+	case FocusItems:
+		m.addingItem = true
+		m.itemSearchTerm = ""
+		m.searchResults = nil
+		m.searchCursor = 0
+		m.statusMessage = "Type to search items, Enter to add, Esc to cancel"
+	}
+	return m, nil
+}
+
+// handleSpend starts spend currency mode
+func (m *InventoryModel) handleSpend() (*InventoryModel, tea.Cmd) {
+	if m.focus != FocusCurrency {
+		return m, nil
+	}
+	m.currencyMode = true
+	m.currencyBuffer = ""
+	m.currencyAdding = false
+	m.statusMessage = fmt.Sprintf("Spend %s: type amount and press Enter", currencyName(m.currencyType))
+	return m, nil
+}
+
+// handleAddItemInput handles input in add item mode
+func (m *InventoryModel) handleAddItemInput(msg tea.KeyMsg) (*InventoryModel, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEscape:
+		m.addingItem = false
+		m.itemSearchTerm = ""
+		m.searchResults = nil
+		m.statusMessage = ""
+		return m, nil
+
+	case tea.KeyUp:
+		if m.searchCursor > 0 {
+			m.searchCursor--
+		}
+		return m, nil
+
+	case tea.KeyDown:
+		if m.searchCursor < len(m.searchResults)-1 {
+			m.searchCursor++
+		}
+		return m, nil
+
+	case tea.KeyEnter:
+		if len(m.searchResults) > 0 && m.searchCursor < len(m.searchResults) {
+			selectedItem := m.searchResults[m.searchCursor]
+			// Create a copy with new ID
+			newItem := selectedItem
+			newItem.ID = fmt.Sprintf("%s-%d", selectedItem.ID, len(m.character.Inventory.Items)+1)
+			newItem.Quantity = 1
+			m.character.Inventory.AddItem(newItem)
+			m.saveCharacter()
+			m.statusMessage = fmt.Sprintf("Added %s to inventory", newItem.Name)
+		}
+		m.addingItem = false
+		m.itemSearchTerm = ""
+		m.searchResults = nil
+		return m, nil
+
+	case tea.KeyBackspace:
+		if len(m.itemSearchTerm) > 0 {
+			m.itemSearchTerm = m.itemSearchTerm[:len(m.itemSearchTerm)-1]
+			m.updateSearchResults()
+		}
+		return m, nil
+
+	case tea.KeyRunes:
+		m.itemSearchTerm += string(msg.Runes)
+		m.updateSearchResults()
+		m.searchCursor = 0
+		return m, nil
+	}
+
+	return m, nil
+}
+
+// updateSearchResults searches equipment database for matching items
+func (m *InventoryModel) updateSearchResults() {
+	if len(m.itemSearchTerm) < 2 {
+		m.searchResults = nil
+		return
+	}
+
+	searchLower := strings.ToLower(m.itemSearchTerm)
+	var results []models.Item
+
+	// Get equipment from the data package using loader
+	loader := data.NewLoader("data")
+	equipment, err := loader.GetEquipment()
+	if err != nil {
+		m.statusMessage = "Error loading equipment"
+		return
+	}
+
+	// Search weapons
+	for _, w := range equipment.Weapons.GetAllWeapons() {
+		if strings.Contains(strings.ToLower(w.Name), searchLower) {
+			results = append(results, models.Item{
+				ID:       w.ID,
+				Name:     w.Name,
+				Type:     models.ItemTypeWeapon,
+				Weight:   w.Weight,
+				Value:    costMapToCurrency(w.Cost),
+				Quantity: 1,
+			})
+			if len(results) >= 10 {
+				break
+			}
+		}
+	}
+
+	// Search armor
+	if len(results) < 10 {
+		for _, a := range equipment.Armor.GetAllArmor() {
+			if strings.Contains(strings.ToLower(a.Name), searchLower) {
+				results = append(results, models.Item{
+					ID:       a.ID,
+					Name:     a.Name,
+					Type:     models.ItemTypeArmor,
+					Weight:   a.Weight,
+					Value:    costMapToCurrency(a.Cost),
+					Quantity: 1,
+				})
+				if len(results) >= 10 {
+					break
+				}
+			}
+		}
+	}
+
+	// Search gear
+	if len(results) < 10 {
+		for _, g := range equipment.Gear {
+			if strings.Contains(strings.ToLower(g.Name), searchLower) {
+				results = append(results, models.Item{
+					ID:       g.ID,
+					Name:     g.Name,
+					Type:     models.ItemTypeGeneral,
+					Weight:   g.Weight,
+					Value:    costMapToCurrency(g.Cost),
+					Quantity: 1,
+				})
+				if len(results) >= 10 {
+					break
+				}
+			}
+		}
+	}
+
+	// Search tools
+	if len(results) < 10 {
+		for _, t := range equipment.Tools {
+			if strings.Contains(strings.ToLower(t.Name), searchLower) {
+				results = append(results, models.Item{
+					ID:       t.ID,
+					Name:     t.Name,
+					Type:     models.ItemTypeTool,
+					Weight:   t.Weight,
+					Value:    costMapToCurrency(t.Cost),
+					Quantity: 1,
+				})
+				if len(results) >= 10 {
+					break
+				}
+			}
+		}
+	}
+
+	m.searchResults = results
+}
+
+// costMapToCurrency converts a cost map to a Currency struct
+func costMapToCurrency(cost map[string]int) models.Currency {
+	return models.Currency{
+		Copper:   cost["cp"],
+		Silver:   cost["sp"],
+		Electrum: cost["ep"],
+		Gold:     cost["gp"],
+		Platinum: cost["pp"],
+	}
+}
+
+// formatCost formats a Currency struct into a display string
+func formatCost(c models.Currency) string {
+	if c.Platinum > 0 {
+		return fmt.Sprintf("%d PP", c.Platinum)
+	}
+	if c.Gold > 0 {
+		return fmt.Sprintf("%d GP", c.Gold)
+	}
+	if c.Electrum > 0 {
+		return fmt.Sprintf("%d EP", c.Electrum)
+	}
+	if c.Silver > 0 {
+		return fmt.Sprintf("%d SP", c.Silver)
+	}
+	if c.Copper > 0 {
+		return fmt.Sprintf("%d CP", c.Copper)
+	}
+	return "—"
 }
 
 // handleDelete prompts to delete the hovered item
@@ -689,10 +920,55 @@ func (m *InventoryModel) View() string {
 
 	columns := lipgloss.JoinHorizontal(lipgloss.Top, equipment, items, currency)
 
+	// Add item overlay
+	if m.addingItem {
+		overlay := m.renderAddItemOverlay(width)
+		columns = lipgloss.JoinVertical(lipgloss.Left, columns, "", overlay)
+	}
+
 	// Footer
 	footer := m.renderFooter(width)
 
 	return lipgloss.JoinVertical(lipgloss.Left, header, "", columns, "", footer)
+}
+
+func (m *InventoryModel) renderAddItemOverlay(width int) string {
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("99")).
+		Padding(0, 1).
+		Width(width - 4)
+
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
+	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
+	normalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+
+	var lines []string
+	lines = append(lines, titleStyle.Render("Add Item to Inventory"))
+	lines = append(lines, "")
+	lines = append(lines, fmt.Sprintf("Search: %s_", m.itemSearchTerm))
+	lines = append(lines, "")
+
+	if len(m.searchResults) == 0 {
+		if len(m.itemSearchTerm) < 2 {
+			lines = append(lines, normalStyle.Render("Type at least 2 characters to search..."))
+		} else {
+			lines = append(lines, normalStyle.Render("No items found"))
+		}
+	} else {
+		for i, item := range m.searchResults {
+			costStr := formatCost(item.Value)
+			var line string
+			if i == m.searchCursor {
+				line = selectedStyle.Render(fmt.Sprintf("▶ %s (%s)", item.Name, costStr))
+			} else {
+				line = normalStyle.Render(fmt.Sprintf("  %s (%s)", item.Name, costStr))
+			}
+			lines = append(lines, line)
+		}
+	}
+
+	return boxStyle.Render(strings.Join(lines, "\n"))
 }
 
 func (m *InventoryModel) renderHeader(width int) string {
@@ -1025,18 +1301,20 @@ func (m *InventoryModel) renderFooter(width int) string {
 		help = "y: confirm delete • any other key: cancel"
 	} else if m.confirmingQuit {
 		help = "y: quit • any other key: cancel"
+	} else if m.addingItem {
+		help = "type to search • ↑/↓: select • enter: add item • esc: cancel"
 	} else {
 		switch m.focus {
 		case FocusEquipment:
 			help = "↑/↓: navigate • e: unequip • enter: view pack • tab: next panel • esc: back"
 		case FocusItems:
 			if m.viewingContainer != nil {
-				help = "↑/↓: navigate • n: quantity • x: delete • esc: back to inventory"
+				help = "↑/↓: navigate • a: add item • n: quantity • x: delete • esc: back to inventory"
 			} else {
-				help = "↑/↓: navigate • enter: open pack • n: quantity • x: delete • e: equip • tab: next • esc: back"
+				help = "↑/↓: navigate • a: add item • n: quantity • x: delete • e: equip • tab: next • esc: back"
 			}
 		case FocusCurrency:
-			help = "↑/↓: select • enter: add/spend • tab: next panel • esc: back"
+			help = "↑/↓: select • a: add • s: spend • tab: next panel • esc: back"
 		}
 	}
 
