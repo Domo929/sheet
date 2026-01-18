@@ -22,6 +22,9 @@ type MainSheetModel struct {
 	keys          mainSheetKeyMap
 	statusMessage string
 
+	// Quit confirmation
+	confirmingQuit bool
+
 	// HP input mode
 	hpInputMode   HPInputMode
 	hpInputBuffer string
@@ -137,6 +140,7 @@ var allConditions = []models.Condition{
 
 type mainSheetKeyMap struct {
 	Quit           key.Binding
+	ForceQuit      key.Binding
 	Tab            key.Binding
 	ShiftTab       key.Binding
 	Inventory      key.Binding
@@ -160,8 +164,12 @@ type mainSheetKeyMap struct {
 func defaultMainSheetKeyMap() mainSheetKeyMap {
 	return mainSheetKeyMap{
 		Quit: key.NewBinding(
-			key.WithKeys("q", "ctrl+c"),
+			key.WithKeys("q"),
 			key.WithHelp("q", "quit"),
+		),
+		ForceQuit: key.NewBinding(
+			key.WithKeys("ctrl+c"),
+			key.WithHelp("ctrl+c", "force quit"),
 		),
 		Tab: key.NewBinding(
 			key.WithKeys("tab"),
@@ -262,6 +270,23 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// Handle quit confirmation
+		if m.confirmingQuit {
+			switch msg.String() {
+			case "y", "Y", "enter":
+				return m, tea.Quit
+			default:
+				m.confirmingQuit = false
+				m.statusMessage = ""
+				return m, nil
+			}
+		}
+
+		// Ctrl+C always quits immediately
+		if key.Matches(msg, m.keys.ForceQuit) {
+			return m, tea.Quit
+		}
+
 		// Handle HP input mode
 		if m.hpInputMode != HPInputNone {
 			return m.handleHPInput(msg)
@@ -282,7 +307,9 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		
 		switch {
 		case key.Matches(msg, m.keys.Quit):
-			return m, tea.Quit
+			m.confirmingQuit = true
+			m.statusMessage = "Quit? (y/n)"
+			return m, nil
 		case key.Matches(msg, m.keys.Tab):
 			m.focusArea = (m.focusArea + 1) % numFocusAreas
 			return m, nil

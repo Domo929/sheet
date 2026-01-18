@@ -31,6 +31,9 @@ type InventoryModel struct {
 	keys          inventoryKeyMap
 	statusMessage string
 
+	// Quit confirmation
+	confirmingQuit bool
+
 	// Item list navigation
 	itemCursor   int
 	itemScroll   int
@@ -44,6 +47,15 @@ type InventoryModel struct {
 	// Equipment slot navigation
 	equipCursor int
 
+	// Quantity adjustment mode
+	quantityMode   bool
+	quantityBuffer string
+	quantityItem   *models.Item // Item being adjusted
+
+	// Delete confirmation
+	confirmingDelete bool
+	deleteItem       *models.Item
+
 	// Currency editing
 	currencyMode   bool
 	currencyType   int // 0=CP, 1=SP, 2=EP, 3=GP, 4=PP
@@ -52,30 +64,32 @@ type InventoryModel struct {
 }
 
 type inventoryKeyMap struct {
-	Quit     key.Binding
-	Tab      key.Binding
-	ShiftTab key.Binding
-	Up       key.Binding
-	Down     key.Binding
-	Enter    key.Binding
-	Back     key.Binding
-	Add      key.Binding
-	Remove   key.Binding
-	Equip    key.Binding
+	Quit      key.Binding
+	ForceQuit key.Binding
+	Tab       key.Binding
+	ShiftTab  key.Binding
+	Up        key.Binding
+	Down      key.Binding
+	Enter     key.Binding
+	Back      key.Binding
+	Quantity  key.Binding
+	Delete    key.Binding
+	Equip     key.Binding
 }
 
 func defaultInventoryKeyMap() inventoryKeyMap {
 	return inventoryKeyMap{
-		Quit:     key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
-		Tab:      key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next panel")),
-		ShiftTab: key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "prev panel")),
-		Up:       key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
-		Down:     key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
-		Enter:    key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
-		Back:     key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "back")),
-		Add:      key.NewBinding(key.WithKeys("+", "a"), key.WithHelp("+/a", "add")),
-		Remove:   key.NewBinding(key.WithKeys("-", "d"), key.WithHelp("-/d", "remove")),
-		Equip:    key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "equip/unequip")),
+		Quit:      key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "quit")),
+		ForceQuit: key.NewBinding(key.WithKeys("ctrl+c"), key.WithHelp("ctrl+c", "force quit")),
+		Tab:       key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next panel")),
+		ShiftTab:  key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "prev panel")),
+		Up:        key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
+		Down:      key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
+		Enter:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
+		Back:      key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "back")),
+		Quantity:  key.NewBinding(key.WithKeys("n", "#"), key.WithHelp("n/#", "adjust quantity")),
+		Delete:    key.NewBinding(key.WithKeys("x", "delete"), key.WithHelp("x", "delete item")),
+		Equip:     key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "equip/unequip")),
 	}
 }
 
@@ -103,6 +117,42 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// Handle quit confirmation
+		if m.confirmingQuit {
+			switch msg.String() {
+			case "y", "Y", "enter":
+				return m, tea.Quit
+			default:
+				m.confirmingQuit = false
+				m.statusMessage = ""
+				return m, nil
+			}
+		}
+
+		// Handle delete confirmation
+		if m.confirmingDelete {
+			switch msg.String() {
+			case "y", "Y":
+				m.performDelete()
+				return m, nil
+			default:
+				m.confirmingDelete = false
+				m.deleteItem = nil
+				m.statusMessage = "Delete cancelled"
+				return m, nil
+			}
+		}
+
+		// Handle quantity mode
+		if m.quantityMode {
+			return m.handleQuantityInput(msg)
+		}
+
+		// Ctrl+C always quits immediately
+		if key.Matches(msg, m.keys.ForceQuit) {
+			return m, tea.Quit
+		}
+
 		// Handle currency input mode
 		if m.currencyMode {
 			return m.handleCurrencyInput(msg)
@@ -112,7 +162,9 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 
 		switch {
 		case key.Matches(msg, m.keys.Quit):
-			return m, tea.Quit
+			m.confirmingQuit = true
+			m.statusMessage = "Quit? (y/n)"
+			return m, nil
 		case key.Matches(msg, m.keys.Back):
 			// If viewing a container, exit to main inventory first
 			if m.viewingContainer != nil {
@@ -140,10 +192,10 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 			return m.handleDown()
 		case key.Matches(msg, m.keys.Enter):
 			return m.handleEnter()
-		case key.Matches(msg, m.keys.Add):
-			return m.handleAdd()
-		case key.Matches(msg, m.keys.Remove):
-			return m.handleRemove()
+		case key.Matches(msg, m.keys.Quantity):
+			return m.handleQuantity()
+		case key.Matches(msg, m.keys.Delete):
+			return m.handleDelete()
 		case key.Matches(msg, m.keys.Equip):
 			return m.handleEquip()
 		}
@@ -200,6 +252,29 @@ func (m *InventoryModel) handleDown() (*InventoryModel, tea.Cmd) {
 
 func (m *InventoryModel) handleEnter() (*InventoryModel, tea.Cmd) {
 	switch m.focus {
+	case FocusEquipment:
+		// Allow viewing pack contents from equipment panel
+		equip := &m.character.Inventory.Equipment
+		slots := []models.EquipmentSlot{
+			models.SlotMainHand,
+			models.SlotOffHand,
+			models.SlotHead,
+			models.SlotBody,
+			models.SlotCloak,
+			models.SlotGloves,
+			models.SlotBoots,
+			models.SlotAmulet,
+		}
+		if m.equipCursor < len(slots) {
+			item := equip.GetSlot(slots[m.equipCursor])
+			if item != nil && len(item.Contents) > 0 {
+				m.viewingContainer = item
+				m.containerParentID = item.ID
+				m.containerCursor = 0
+				m.focus = FocusItems // Switch to items panel to view contents
+				m.statusMessage = fmt.Sprintf("Viewing contents of %s", item.Name)
+			}
+		}
 	case FocusItems:
 		// If viewing a container, Enter does nothing special
 		if m.viewingContainer != nil {
@@ -251,80 +326,141 @@ func (m *InventoryModel) setCurrentCursor(val int) {
 	}
 }
 
-func (m *InventoryModel) handleAdd() (*InventoryModel, tea.Cmd) {
-	switch m.focus {
-	case FocusItems:
-		cursor := m.getCurrentCursor()
-		if m.viewingContainer != nil {
-			// Editing container contents
-			if cursor < len(m.viewingContainer.Contents) {
-				m.viewingContainer.Contents[cursor].Quantity++
-				m.saveCharacter()
-				m.statusMessage = fmt.Sprintf("Added 1 %s (now %d)", m.viewingContainer.Contents[cursor].Name, m.viewingContainer.Contents[cursor].Quantity)
-			}
-		} else {
-			// Editing main inventory
-			items := m.character.Inventory.Items
-			if cursor < len(items) {
-				items[cursor].Quantity++
-				m.saveCharacter()
-				m.statusMessage = fmt.Sprintf("Added 1 %s (now %d)", items[cursor].Name, items[cursor].Quantity)
-			}
-		}
-	case FocusCurrency:
-		m.currencyMode = true
-		m.currencyBuffer = ""
-		m.currencyAdding = true
+// handleQuantity opens quantity adjustment mode for the hovered item
+func (m *InventoryModel) handleQuantity() (*InventoryModel, tea.Cmd) {
+	if m.focus != FocusItems {
+		return m, nil
 	}
+
+	items := m.getDisplayItems()
+	cursor := m.getCurrentCursor()
+	if cursor >= len(items) {
+		return m, nil
+	}
+
+	m.quantityItem = &items[cursor]
+	m.quantityMode = true
+	m.quantityBuffer = fmt.Sprintf("%d", m.quantityItem.Quantity)
+	m.statusMessage = fmt.Sprintf("Adjust quantity for %s", m.quantityItem.Name)
 	return m, nil
 }
 
-func (m *InventoryModel) handleRemove() (*InventoryModel, tea.Cmd) {
-	switch m.focus {
-	case FocusItems:
-		cursor := m.getCurrentCursor()
-		if m.viewingContainer != nil {
-			// Editing container contents
-			if cursor < len(m.viewingContainer.Contents) && m.viewingContainer.Contents[cursor].Quantity > 0 {
-				m.viewingContainer.Contents[cursor].Quantity--
-				if m.viewingContainer.Contents[cursor].Quantity == 0 {
-					// Remove from container
-					m.viewingContainer.Contents = append(m.viewingContainer.Contents[:cursor], m.viewingContainer.Contents[cursor+1:]...)
-					if cursor > 0 && cursor >= len(m.viewingContainer.Contents) {
-						m.containerCursor--
-					}
-					m.statusMessage = "Item removed from container"
-				} else {
-					m.statusMessage = fmt.Sprintf("Removed 1 (now %d)", m.viewingContainer.Contents[cursor].Quantity)
-				}
-				m.saveCharacter()
+// handleQuantityInput handles input while in quantity adjustment mode
+func (m *InventoryModel) handleQuantityInput(msg tea.KeyMsg) (*InventoryModel, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEscape:
+		m.quantityMode = false
+		m.quantityBuffer = ""
+		m.quantityItem = nil
+		m.statusMessage = ""
+		return m, nil
+
+	case tea.KeyEnter:
+		if m.quantityBuffer != "" && m.quantityItem != nil {
+			var newQty int
+			fmt.Sscanf(m.quantityBuffer, "%d", &newQty)
+			if newQty < 1 {
+				newQty = 1
 			}
-		} else {
-			// Editing main inventory
-			items := m.character.Inventory.Items
-			if cursor < len(items) && items[cursor].Quantity > 0 {
-				items[cursor].Quantity--
-				if items[cursor].Quantity == 0 {
-					m.character.Inventory.RemoveItem(items[cursor].ID)
-					if cursor > 0 && cursor >= len(m.character.Inventory.Items) {
-						m.itemCursor--
-					}
-					m.statusMessage = "Item removed from inventory"
-				} else {
-					m.statusMessage = fmt.Sprintf("Removed 1 (now %d)", items[cursor].Quantity)
-				}
-				m.saveCharacter()
+			m.quantityItem.Quantity = newQty
+			m.saveCharacter()
+			m.statusMessage = fmt.Sprintf("Set %s quantity to %d", m.quantityItem.Name, newQty)
+		}
+		m.quantityMode = false
+		m.quantityBuffer = ""
+		m.quantityItem = nil
+		return m, nil
+
+	case tea.KeyUp:
+		// Increment
+		if m.quantityItem != nil {
+			m.quantityItem.Quantity++
+			m.quantityBuffer = fmt.Sprintf("%d", m.quantityItem.Quantity)
+			m.saveCharacter()
+		}
+		return m, nil
+
+	case tea.KeyDown:
+		// Decrement (min 1)
+		if m.quantityItem != nil && m.quantityItem.Quantity > 1 {
+			m.quantityItem.Quantity--
+			m.quantityBuffer = fmt.Sprintf("%d", m.quantityItem.Quantity)
+			m.saveCharacter()
+		}
+		return m, nil
+
+	case tea.KeyBackspace:
+		if len(m.quantityBuffer) > 0 {
+			m.quantityBuffer = m.quantityBuffer[:len(m.quantityBuffer)-1]
+		}
+		return m, nil
+
+	case tea.KeyRunes:
+		for _, r := range msg.Runes {
+			if r >= '0' && r <= '9' {
+				m.quantityBuffer += string(r)
 			}
 		}
-	case FocusCurrency:
-		m.currencyMode = true
-		m.currencyBuffer = ""
-		m.currencyAdding = false
+		return m, nil
 	}
+
 	return m, nil
+}
+
+// handleDelete prompts to delete the hovered item
+func (m *InventoryModel) handleDelete() (*InventoryModel, tea.Cmd) {
+	if m.focus != FocusItems {
+		return m, nil
+	}
+
+	items := m.getDisplayItems()
+	cursor := m.getCurrentCursor()
+	if cursor >= len(items) {
+		return m, nil
+	}
+
+	m.deleteItem = &items[cursor]
+	m.confirmingDelete = true
+	m.statusMessage = fmt.Sprintf("Delete %s? (y/n)", m.deleteItem.Name)
+	return m, nil
+}
+
+// performDelete actually removes the item after confirmation
+func (m *InventoryModel) performDelete() {
+	if m.deleteItem == nil {
+		return
+	}
+
+	cursor := m.getCurrentCursor()
+
+	if m.viewingContainer != nil {
+		// Remove from container
+		if cursor < len(m.viewingContainer.Contents) {
+			m.viewingContainer.Contents = append(m.viewingContainer.Contents[:cursor], m.viewingContainer.Contents[cursor+1:]...)
+			if cursor > 0 && cursor >= len(m.viewingContainer.Contents) {
+				m.containerCursor--
+			}
+		}
+	} else {
+		// Remove from main inventory
+		m.character.Inventory.RemoveItem(m.deleteItem.ID)
+		if cursor > 0 && cursor >= len(m.character.Inventory.Items) {
+			m.itemCursor--
+		}
+	}
+
+	m.saveCharacter()
+	m.statusMessage = fmt.Sprintf("Deleted %s", m.deleteItem.Name)
+	m.confirmingDelete = false
+	m.deleteItem = nil
 }
 
 func (m *InventoryModel) handleEquip() (*InventoryModel, tea.Cmd) {
+	// Handle Equipment panel - unequip items
+	if m.focus == FocusEquipment {
+		return m.handleUnequipFromSlot()
+	}
+
 	if m.focus != FocusItems {
 		return m, nil
 	}
@@ -397,6 +533,44 @@ func (m *InventoryModel) handleEquip() (*InventoryModel, tea.Cmd) {
 	}
 
 	m.saveCharacter()
+	return m, nil
+}
+
+// handleUnequipFromSlot unequips an item from the selected equipment slot
+func (m *InventoryModel) handleUnequipFromSlot() (*InventoryModel, tea.Cmd) {
+	equip := &m.character.Inventory.Equipment
+	slots := []models.EquipmentSlot{
+		models.SlotMainHand,
+		models.SlotOffHand,
+		models.SlotHead,
+		models.SlotBody,
+		models.SlotCloak,
+		models.SlotGloves,
+		models.SlotBoots,
+		models.SlotAmulet,
+	}
+
+	if m.equipCursor < len(slots) {
+		slot := slots[m.equipCursor]
+		item := equip.GetSlot(slot)
+		if item != nil {
+			equip.SetSlot(slot, nil)
+			m.saveCharacter()
+			m.statusMessage = fmt.Sprintf("Unequipped %s", item.Name)
+		} else {
+			m.statusMessage = "Nothing equipped in this slot"
+		}
+	} else if m.equipCursor == len(slots) {
+		// Rings - unequip first ring if any
+		rings := equip.GetRings()
+		if len(rings) > 0 {
+			equip.UnequipRing(0)
+			m.saveCharacter()
+			m.statusMessage = fmt.Sprintf("Unequipped %s", rings[0].Name)
+		} else {
+			m.statusMessage = "No rings equipped"
+		}
+	}
 	return m, nil
 }
 
@@ -843,17 +1017,27 @@ func (m *InventoryModel) renderFooter(width int) string {
 		Width(width)
 
 	var help string
-	switch m.focus {
-	case FocusEquipment:
-		help = "↑/↓: navigate • tab: next panel • esc: back to sheet"
-	case FocusItems:
-		if m.viewingContainer != nil {
-			help = "↑/↓: navigate • +/a: add qty • -/d: remove • esc: back to inventory"
-		} else {
-			help = "↑/↓: navigate • enter: open container • +/a: add qty • -/d: remove • e: equip • tab: next panel • esc: back"
+
+	// Show special prompts
+	if m.quantityMode {
+		help = "↑/↓: adjust • type number • enter: confirm • esc: cancel"
+	} else if m.confirmingDelete {
+		help = "y: confirm delete • any other key: cancel"
+	} else if m.confirmingQuit {
+		help = "y: quit • any other key: cancel"
+	} else {
+		switch m.focus {
+		case FocusEquipment:
+			help = "↑/↓: navigate • e: unequip • enter: view pack • tab: next panel • esc: back"
+		case FocusItems:
+			if m.viewingContainer != nil {
+				help = "↑/↓: navigate • n: quantity • x: delete • esc: back to inventory"
+			} else {
+				help = "↑/↓: navigate • enter: open pack • n: quantity • x: delete • e: equip • tab: next • esc: back"
+			}
+		case FocusCurrency:
+			help = "↑/↓: select • enter: add/spend • tab: next panel • esc: back"
 		}
-	case FocusCurrency:
-		help = "↑/↓: select currency • +/a: add • -/d: spend • enter: edit • tab: next panel • esc: back"
 	}
 
 	if m.statusMessage != "" {
