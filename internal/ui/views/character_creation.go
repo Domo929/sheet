@@ -1503,6 +1503,13 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 		m.character.Skills.SetProficiency(skillNameToKey(skillName), models.Proficient)
 	}
 	
+	// Set weapon, armor, and tool proficiencies from class
+	if m.selectedClass != nil {
+		m.character.Proficiencies.Weapons = append(m.character.Proficiencies.Weapons, m.selectedClass.WeaponProficiencies...)
+		m.character.Proficiencies.Armor = append(m.character.Proficiencies.Armor, m.selectedClass.ArmorProficiencies...)
+		m.character.Proficiencies.Tools = append(m.character.Proficiencies.Tools, m.selectedClass.ToolProficiencies...)
+	}
+	
 	// Set combat stats
 	hitDieType := 8 // default
 	if m.selectedClass != nil {
@@ -1549,6 +1556,38 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 			categoryToItemType(equipItem.Category),
 		)
 		item.Quantity = equipItem.Quantity
+		
+		// Look up weapon data from equipment database
+		if equipItem.Category == "weapon" {
+			if weapon := m.lookupWeapon(equipItem.Name); weapon != nil {
+				item.Damage = weapon.Damage
+				item.DamageType = weapon.DamageType
+				item.WeaponProps = weapon.Properties
+				item.Weight = weapon.Weight
+				item.VersatileDamage = weapon.VersatileDamage
+				if weapon.Range != nil {
+					item.RangeNormal = weapon.Range.Normal
+					item.RangeLong = weapon.Range.Long
+				}
+				item.SubCategory = weapon.SubCategory
+			}
+		}
+		
+		// Look up armor data from equipment database
+		if equipItem.Category == "armor" {
+			if armor := m.lookupArmor(equipItem.Name); armor != nil {
+				item.Weight = armor.Weight
+				item.StealthDisadvantage = armor.StealthDisadvantage
+				// Parse AC from armor class string (e.g., "14 + Dex (max 2)")
+				// For now, just store the base AC number
+				if armor.ArmorClass != "" {
+					var baseAC int
+					fmt.Sscanf(armor.ArmorClass, "%d", &baseAC)
+					item.ArmorClass = baseAC
+				}
+			}
+		}
+		
 		m.character.Inventory.AddItem(item)
 	}
 	
@@ -2440,6 +2479,42 @@ func (m *CharacterCreationModel) getPackContents(packName string) []string {
 	for _, pack := range equipment.Packs {
 		if pack.Name == packName {
 			return pack.Contents
+		}
+	}
+	
+	return nil
+}
+
+// lookupWeapon finds a weapon by name in the equipment database.
+func (m *CharacterCreationModel) lookupWeapon(name string) *data.Weapon {
+	equipment, err := m.loader.GetEquipment()
+	if err != nil || equipment == nil {
+		return nil
+	}
+	
+	normalizedName := strings.ToLower(strings.TrimSpace(name))
+	
+	for _, w := range equipment.Weapons.GetAllWeapons() {
+		if strings.ToLower(w.Name) == normalizedName {
+			return &w
+		}
+	}
+	
+	return nil
+}
+
+// lookupArmor finds an armor item by name in the equipment database.
+func (m *CharacterCreationModel) lookupArmor(name string) *data.ArmorItem {
+	equipment, err := m.loader.GetEquipment()
+	if err != nil || equipment == nil {
+		return nil
+	}
+	
+	normalizedName := strings.ToLower(strings.TrimSpace(name))
+	
+	for _, a := range equipment.Armor.GetAllArmor() {
+		if strings.ToLower(a.Name) == normalizedName {
+			return &a
 		}
 	}
 	
