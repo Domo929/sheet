@@ -1609,9 +1609,16 @@ func (m *MainSheetModel) renderFooter(width int) string {
 // getWeapons returns weapons from the character's inventory.
 func (m *MainSheetModel) getWeapons() []models.Item {
 	var weapons []models.Item
-	for _, item := range m.character.Inventory.Items {
-		if item.Type == models.ItemTypeWeapon && item.Damage != "" {
-			weapons = append(weapons, item)
+	equip := &m.character.Inventory.Equipment
+	
+	// Only show equipped weapons (main hand and off hand)
+	if equip.MainHand != nil && equip.MainHand.Type == models.ItemTypeWeapon && equip.MainHand.Damage != "" {
+		weapons = append(weapons, *equip.MainHand)
+	}
+	if equip.OffHand != nil && equip.OffHand.Type == models.ItemTypeWeapon && equip.OffHand.Damage != "" {
+		// Don't duplicate if same weapon in both hands
+		if equip.MainHand == nil || equip.OffHand.ID != equip.MainHand.ID {
+			weapons = append(weapons, *equip.OffHand)
 		}
 	}
 	return weapons

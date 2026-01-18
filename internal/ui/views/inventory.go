@@ -247,22 +247,64 @@ func (m *InventoryModel) handleEquip() (*InventoryModel, tea.Cmd) {
 	}
 
 	item := m.selectedItem
-	slot := item.EquipmentSlot
+	equip := &m.character.Inventory.Equipment
 
+	// Weapons go to main hand or off hand
+	if item.Type == models.ItemTypeWeapon {
+		// Check if already in main hand
+		if equip.MainHand != nil && equip.MainHand.ID == item.ID {
+			equip.MainHand = nil
+			m.statusMessage = fmt.Sprintf("Unequipped %s from Main Hand", item.Name)
+		} else if equip.OffHand != nil && equip.OffHand.ID == item.ID {
+			// Already in off hand, unequip
+			equip.OffHand = nil
+			m.statusMessage = fmt.Sprintf("Unequipped %s from Off Hand", item.Name)
+		} else if equip.MainHand == nil {
+			// Equip to main hand
+			equip.MainHand = item
+			m.statusMessage = fmt.Sprintf("Equipped %s to Main Hand", item.Name)
+		} else if equip.OffHand == nil {
+			// Main hand full, equip to off hand
+			equip.OffHand = item
+			m.statusMessage = fmt.Sprintf("Equipped %s to Off Hand", item.Name)
+		} else {
+			// Both hands full, replace main hand
+			equip.MainHand = item
+			m.statusMessage = fmt.Sprintf("Equipped %s to Main Hand (replaced)", item.Name)
+		}
+		m.saveCharacter()
+		return m, nil
+	}
+
+	// Shields go to off hand
+	if item.Type == models.ItemTypeShield {
+		if equip.OffHand != nil && equip.OffHand.ID == item.ID {
+			equip.OffHand = nil
+			m.statusMessage = fmt.Sprintf("Unequipped %s", item.Name)
+		} else {
+			equip.OffHand = item
+			m.statusMessage = fmt.Sprintf("Equipped %s to Off Hand", item.Name)
+		}
+		m.saveCharacter()
+		return m, nil
+	}
+
+	// Other equipment uses its slot
+	slot := item.EquipmentSlot
 	if slot == "" {
 		m.statusMessage = "This item cannot be equipped"
 		return m, nil
 	}
 
 	// Check if already equipped
-	equipped := m.character.Inventory.Equipment.GetSlot(slot)
+	equipped := equip.GetSlot(slot)
 	if equipped != nil && equipped.ID == item.ID {
 		// Unequip
-		m.character.Inventory.Equipment.SetSlot(slot, nil)
+		equip.SetSlot(slot, nil)
 		m.statusMessage = fmt.Sprintf("Unequipped %s", item.Name)
 	} else {
 		// Equip
-		m.character.Inventory.Equipment.SetSlot(slot, item)
+		equip.SetSlot(slot, item)
 		m.statusMessage = fmt.Sprintf("Equipped %s to %s", item.Name, slot)
 	}
 
@@ -666,7 +708,10 @@ func (m *InventoryModel) renderCurrency(width int) string {
 	lines = append(lines, "")
 	gp, cp := currency.TotalInGold()
 	lines = append(lines, labelStyle.Render("─── Total ───"))
-	lines = append(lines, valueStyle.Render(fmt.Sprintf("%d GP %d CP", gp, cp)))
+	gpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("220")) // Gold color
+	cpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("166")) // Copper color
+	totalLine := gpStyle.Render(fmt.Sprintf("%d GP", gp)) + " " + cpStyle.Render(fmt.Sprintf("%d CP", cp))
+	lines = append(lines, totalLine)
 
 	// Currency input mode
 	if m.currencyMode {
