@@ -296,8 +296,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Navigation):
 			return m, func() tea.Msg { return BackToSelectionMsg{} }
 		case key.Matches(msg, m.keys.Inventory):
-			m.statusMessage = "Inventory view coming soon..."
-			return m, nil
+			return m, func() tea.Msg { return OpenInventoryMsg{} }
 		case key.Matches(msg, m.keys.Spellbook):
 			m.statusMessage = "Spellbook view coming soon..."
 			return m, nil
