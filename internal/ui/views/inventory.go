@@ -1288,8 +1288,13 @@ func (m *InventoryModel) renderCurrency(width int) string {
 }
 
 func (m *InventoryModel) renderFooter(width int) string {
-	footerStyle := lipgloss.NewStyle().
+	helpStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("244")).
+		Width(width)
+
+	statusStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("42")).
+		Bold(true).
 		Width(width)
 
 	var help string
@@ -1318,11 +1323,13 @@ func (m *InventoryModel) renderFooter(width int) string {
 		}
 	}
 
+	var lines []string
 	if m.statusMessage != "" {
-		help = m.statusMessage + " | " + help
+		lines = append(lines, statusStyle.Render(m.statusMessage))
 	}
+	lines = append(lines, helpStyle.Render(help))
 
-	return footerStyle.Render(help)
+	return strings.Join(lines, "\n")
 }
 
 // BackToSheetMsg signals to return to the main sheet.
