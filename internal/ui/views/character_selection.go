@@ -23,6 +23,7 @@ type CharacterSelectionModel struct {
 	confirmingDelete bool
 	deleteTarget     string
 	quitting         bool
+	confirmingQuit   bool
 }
 
 // NewCharacterSelectionModel creates a new character selection model.
@@ -137,10 +138,26 @@ func (m *CharacterSelectionModel) Update(msg tea.Msg) (*CharacterSelectionModel,
 		}
 
 		// Normal key handling
+		// Handle quit confirmation
+		if m.confirmingQuit {
+			switch msg.String() {
+			case "y", "Y", "enter":
+				m.quitting = true
+				return m, tea.Quit
+			default:
+				m.confirmingQuit = false
+				return m, nil
+			}
+		}
+
 		switch msg.String() {
-		case "q", "ctrl+c":
+		case "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
+
+		case "q":
+			m.confirmingQuit = true
+			return m, nil
 
 		case "up", "k":
 			if !m.loading && len(m.characters) > 0 {
@@ -244,6 +261,17 @@ func (m *CharacterSelectionModel) View() string {
 		content.WriteString(confirmStyle.Render(fmt.Sprintf("Delete character '%s'?", m.deleteTarget)))
 		content.WriteString("\n")
 		content.WriteString("Press Y to confirm, N to cancel\n\n")
+		return content.String()
+	}
+
+	// Quit confirmation prompt
+	if m.confirmingQuit {
+		confirmStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("11")).
+			Bold(true)
+		content.WriteString(confirmStyle.Render("Quit?"))
+		content.WriteString("\n")
+		content.WriteString("Press Y to confirm, any other key to cancel\n\n")
 		return content.String()
 	}
 

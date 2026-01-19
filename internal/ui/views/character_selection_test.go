@@ -272,8 +272,18 @@ func TestCharacterSelectionQuitAction(t *testing.T) {
 	model := NewCharacterSelectionModel(store)
 	model.loading = false
 
-	// Press 'q' to quit
-	_, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	// Press 'q' to initiate quit - should show confirmation
+	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+
+	if cmd != nil {
+		t.Error("Expected no command yet, should be confirming")
+	}
+	if !updatedModel.confirmingQuit {
+		t.Fatal("Expected to be in quit confirmation mode")
+	}
+
+	// Press 'y' to confirm quit
+	_, cmd = updatedModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
 
 	if cmd == nil {
 		t.Fatal("Expected quit command to be returned")
@@ -310,8 +320,18 @@ func TestCharacterSelectionQuitKey(t *testing.T) {
 	store, _ := storage.NewCharacterStorage(t.TempDir())
 	model := NewCharacterSelectionModel(store)
 
-	// Press 'q' key
-	_, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	// Press 'q' key - should show confirmation
+	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+
+	if cmd != nil {
+		t.Error("Expected no command yet, should be confirming")
+	}
+	if !updatedModel.confirmingQuit {
+		t.Fatal("Expected to be in quit confirmation mode")
+	}
+
+	// Press 'y' to confirm quit
+	_, cmd = updatedModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
 
 	if cmd == nil {
 		t.Fatal("Expected quit command")

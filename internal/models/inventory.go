@@ -160,6 +160,73 @@ func (c *Currency) SpendPlatinum(amount int) error {
 	return c.Spend(0, 0, 0, 0, amount)
 }
 
+// SpendFromTotal spends an amount in gold pieces from total wealth.
+// Automatically converts currency as needed and redistributes optimally.
+// For example, spending 20 GP when you have 3 PP and 7 GP will work.
+func (c *Currency) SpendFromTotal(goldAmount int) error {
+	// Convert cost to copper
+	costInCopper := goldAmount * 100
+
+	// Calculate total wealth in copper
+	totalCopper := c.Copper +
+		c.Silver*10 +
+		c.Electrum*50 +
+		c.Gold*100 +
+		c.Platinum*1000
+
+	if totalCopper < costInCopper {
+		return ErrInsufficientFunds
+	}
+
+	// Calculate remaining copper after spending
+	remainingCopper := totalCopper - costInCopper
+
+	// Redistribute optimally (largest denominations first)
+	c.Platinum = remainingCopper / 1000
+	remainingCopper %= 1000
+
+	c.Gold = remainingCopper / 100
+	remainingCopper %= 100
+
+	c.Electrum = 0 // Skip electrum for cleaner distribution
+
+	c.Silver = remainingCopper / 10
+	remainingCopper %= 10
+
+	c.Copper = remainingCopper
+
+	return nil
+}
+
+// SpendFromTotalWithChange spends an amount and returns change breakdown.
+// Returns the amount spent from each denomination for display purposes.
+func (c *Currency) SpendFromTotalWithChange(goldAmount int) (spent Currency, err error) {
+	// Store original values
+	original := Currency{
+		Copper:   c.Copper,
+		Silver:   c.Silver,
+		Electrum: c.Electrum,
+		Gold:     c.Gold,
+		Platinum: c.Platinum,
+	}
+
+	err = c.SpendFromTotal(goldAmount)
+	if err != nil {
+		return Currency{}, err
+	}
+
+	// Calculate what was spent from each denomination
+	spent = Currency{
+		Copper:   original.Copper - c.Copper,
+		Silver:   original.Silver - c.Silver,
+		Electrum: original.Electrum - c.Electrum,
+		Gold:     original.Gold - c.Gold,
+		Platinum: original.Platinum - c.Platinum,
+	}
+
+	return spent, nil
+}
+
 // ItemType categorizes items.
 type ItemType string
 
@@ -221,6 +288,9 @@ type Item struct {
 	// Consumable properties
 	Charges    int `json:"charges,omitempty"`
 	MaxCharges int `json:"maxCharges,omitempty"`
+
+	// Container properties (for backpacks, pouches, etc.)
+	Contents []Item `json:"contents,omitempty"`
 }
 
 // NewItem creates a basic item with the given name and type.
