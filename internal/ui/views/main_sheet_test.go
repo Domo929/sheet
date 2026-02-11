@@ -739,9 +739,14 @@ func TestShortRestExecution(t *testing.T) {
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp}) // 2 hit dice
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-	// Should have healed and exited rest mode
-	if model.restMode != RestModeNone {
-		t.Errorf("expected rest mode RestModeNone after confirming, got %d", model.restMode)
+	// After confirming, rest transitions to result screen first
+	if model.restMode != RestModeResult {
+		t.Errorf("expected rest mode RestModeResult after confirming, got %d", model.restMode)
+	}
+
+	// Result should contain rest summary
+	if !strings.Contains(model.restResult, "SHORT REST COMPLETE") {
+		t.Errorf("expected rest result about short rest, got: %s", model.restResult)
 	}
 
 	// HP should have increased (average roll: 5+1=6, +2 CON = 8 per die, 2 dice = 16)
@@ -754,9 +759,11 @@ func TestShortRestExecution(t *testing.T) {
 		t.Errorf("expected 3 remaining hit dice, got %d", char.CombatStats.HitDice.Remaining)
 	}
 
-	// Status message should indicate healing
-	if !strings.Contains(model.statusMessage, "Short rest complete") {
-		t.Errorf("expected status message about short rest, got: %s", model.statusMessage)
+	// Dismiss the result screen
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	if model.restMode != RestModeNone {
+		t.Errorf("expected rest mode RestModeNone after dismissing result, got %d", model.restMode)
 	}
 }
 
@@ -773,9 +780,14 @@ func TestLongRestExecution(t *testing.T) {
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-	// Should have exited rest mode
-	if model.restMode != RestModeNone {
-		t.Errorf("expected rest mode RestModeNone after confirming, got %d", model.restMode)
+	// After confirming, rest transitions to result screen first
+	if model.restMode != RestModeResult {
+		t.Errorf("expected rest mode RestModeResult after confirming, got %d", model.restMode)
+	}
+
+	// Result should contain rest summary
+	if !strings.Contains(model.restResult, "LONG REST COMPLETE") {
+		t.Errorf("expected rest result about long rest, got: %s", model.restResult)
 	}
 
 	// HP should be at maximum
@@ -788,9 +800,11 @@ func TestLongRestExecution(t *testing.T) {
 		t.Errorf("expected at least 4 hit dice after recovery, got %d", char.CombatStats.HitDice.Remaining)
 	}
 
-	// Status message should indicate long rest
-	if !strings.Contains(model.statusMessage, "Long rest complete") {
-		t.Errorf("expected status message about long rest, got: %s", model.statusMessage)
+	// Dismiss the result screen
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	if model.restMode != RestModeNone {
+		t.Errorf("expected rest mode RestModeNone after dismissing result, got %d", model.restMode)
 	}
 }
 
