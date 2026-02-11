@@ -1,6 +1,11 @@
 package models
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 func TestAbilityScoreModifier(t *testing.T) {
 	tests := []struct {
@@ -32,9 +37,7 @@ func TestAbilityScoreModifier(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ability := AbilityScore{Base: tt.score}
-			if got := ability.Modifier(); got != tt.expected {
-				t.Errorf("AbilityScore{Base: %d}.Modifier() = %d, want %d", tt.score, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, ability.Modifier(), "AbilityScore{Base: %d}.Modifier()", tt.score)
 		})
 	}
 }
@@ -54,9 +57,7 @@ func TestAbilityScoreTotal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ability := AbilityScore{Base: tt.base, Temporary: tt.temporary}
-			if got := ability.Total(); got != tt.expected {
-				t.Errorf("AbilityScore.Total() = %d, want %d", got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, ability.Total())
 		})
 	}
 }
@@ -64,56 +65,30 @@ func TestAbilityScoreTotal(t *testing.T) {
 func TestAbilityScoreModifierWithTemporary(t *testing.T) {
 	ability := AbilityScore{Base: 14, Temporary: 2}
 	// Total is 16, modifier should be +3
-	if got := ability.Modifier(); got != 3 {
-		t.Errorf("AbilityScore{14, +2 temp}.Modifier() = %d, want 3", got)
-	}
+	assert.Equal(t, 3, ability.Modifier(), "AbilityScore{14, +2 temp}.Modifier()")
 }
 
 func TestNewAbilityScores(t *testing.T) {
 	scores := NewAbilityScores()
 
 	// All scores should be 10
-	if scores.Strength.Base != 10 {
-		t.Errorf("NewAbilityScores().Strength.Base = %d, want 10", scores.Strength.Base)
-	}
-	if scores.Dexterity.Base != 10 {
-		t.Errorf("NewAbilityScores().Dexterity.Base = %d, want 10", scores.Dexterity.Base)
-	}
-	if scores.Constitution.Base != 10 {
-		t.Errorf("NewAbilityScores().Constitution.Base = %d, want 10", scores.Constitution.Base)
-	}
-	if scores.Intelligence.Base != 10 {
-		t.Errorf("NewAbilityScores().Intelligence.Base = %d, want 10", scores.Intelligence.Base)
-	}
-	if scores.Wisdom.Base != 10 {
-		t.Errorf("NewAbilityScores().Wisdom.Base = %d, want 10", scores.Wisdom.Base)
-	}
-	if scores.Charisma.Base != 10 {
-		t.Errorf("NewAbilityScores().Charisma.Base = %d, want 10", scores.Charisma.Base)
-	}
+	assert.Equal(t, 10, scores.Strength.Base, "Strength.Base")
+	assert.Equal(t, 10, scores.Dexterity.Base, "Dexterity.Base")
+	assert.Equal(t, 10, scores.Constitution.Base, "Constitution.Base")
+	assert.Equal(t, 10, scores.Intelligence.Base, "Intelligence.Base")
+	assert.Equal(t, 10, scores.Wisdom.Base, "Wisdom.Base")
+	assert.Equal(t, 10, scores.Charisma.Base, "Charisma.Base")
 }
 
 func TestNewAbilityScoresFromValues(t *testing.T) {
 	scores := NewAbilityScoresFromValues(15, 14, 13, 12, 10, 8)
 
-	if scores.Strength.Base != 15 {
-		t.Errorf("Strength = %d, want 15", scores.Strength.Base)
-	}
-	if scores.Dexterity.Base != 14 {
-		t.Errorf("Dexterity = %d, want 14", scores.Dexterity.Base)
-	}
-	if scores.Constitution.Base != 13 {
-		t.Errorf("Constitution = %d, want 13", scores.Constitution.Base)
-	}
-	if scores.Intelligence.Base != 12 {
-		t.Errorf("Intelligence = %d, want 12", scores.Intelligence.Base)
-	}
-	if scores.Wisdom.Base != 10 {
-		t.Errorf("Wisdom = %d, want 10", scores.Wisdom.Base)
-	}
-	if scores.Charisma.Base != 8 {
-		t.Errorf("Charisma = %d, want 8", scores.Charisma.Base)
-	}
+	assert.Equal(t, 15, scores.Strength.Base, "Strength")
+	assert.Equal(t, 14, scores.Dexterity.Base, "Dexterity")
+	assert.Equal(t, 13, scores.Constitution.Base, "Constitution")
+	assert.Equal(t, 12, scores.Intelligence.Base, "Intelligence")
+	assert.Equal(t, 10, scores.Wisdom.Base, "Wisdom")
+	assert.Equal(t, 8, scores.Charisma.Base, "Charisma")
 }
 
 func TestAbilityScoresGet(t *testing.T) {
@@ -134,9 +109,7 @@ func TestAbilityScoresGet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.ability), func(t *testing.T) {
 			score := scores.Get(tt.ability)
-			if score.Base != tt.expected {
-				t.Errorf("Get(%s).Base = %d, want %d", tt.ability, score.Base, tt.expected)
-			}
+			assert.Equal(t, tt.expected, score.Base, "Get(%s).Base", tt.ability)
 		})
 	}
 }
@@ -145,9 +118,7 @@ func TestAbilityScoresGetInvalid(t *testing.T) {
 	scores := NewAbilityScores()
 	got := scores.Get(Ability("invalid"))
 	// Should return default value (Base: 10)
-	if got.Base != 10 {
-		t.Errorf("Get(invalid).Base = %d, want 10", got.Base)
-	}
+	assert.Equal(t, 10, got.Base, "Get(invalid).Base")
 }
 
 func TestAbilityScoresGetModifier(t *testing.T) {
@@ -167,9 +138,7 @@ func TestAbilityScoresGetModifier(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.ability), func(t *testing.T) {
-			if got := scores.GetModifier(tt.ability); got != tt.expected {
-				t.Errorf("GetModifier(%s) = %d, want %d", tt.ability, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, scores.GetModifier(tt.ability), "GetModifier(%s)", tt.ability)
 		})
 	}
 }
@@ -178,15 +147,8 @@ func TestStandardArray(t *testing.T) {
 	arr := StandardArray()
 	expected := []int{15, 14, 13, 12, 10, 8}
 
-	if len(arr) != len(expected) {
-		t.Fatalf("StandardArray() length = %d, want %d", len(arr), len(expected))
-	}
-
-	for i, v := range expected {
-		if arr[i] != v {
-			t.Errorf("StandardArray()[%d] = %d, want %d", i, arr[i], v)
-		}
-	}
+	require.Len(t, arr, len(expected), "StandardArray() length")
+	assert.Equal(t, expected, arr)
 }
 
 func TestPointBuyCost(t *testing.T) {
@@ -208,10 +170,7 @@ func TestPointBuyCost(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(rune(tt.score)), func(t *testing.T) {
-			got := PointBuyCost(tt.score)
-			if got != tt.expected {
-				t.Errorf("PointBuyCost(%d) = %d, want %d", tt.score, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, PointBuyCost(tt.score), "PointBuyCost(%d)", tt.score)
 		})
 	}
 }
@@ -270,12 +229,8 @@ func TestValidatePointBuy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotPts, gotValid := ValidatePointBuy(tt.scores)
-			if gotPts != tt.expectedPts {
-				t.Errorf("ValidatePointBuy() points = %d, want %d", gotPts, tt.expectedPts)
-			}
-			if gotValid != tt.expectedValid {
-				t.Errorf("ValidatePointBuy() valid = %v, want %v", gotValid, tt.expectedValid)
-			}
+			assert.Equal(t, tt.expectedPts, gotPts, "ValidatePointBuy() points")
+			assert.Equal(t, tt.expectedValid, gotValid, "ValidatePointBuy() valid")
 		})
 	}
 }
@@ -283,7 +238,5 @@ func TestValidatePointBuy(t *testing.T) {
 func TestCalculatePointBuyTotal(t *testing.T) {
 	scores := NewAbilityScoresFromValues(15, 14, 13, 12, 10, 8)
 	total := CalculatePointBuyTotal(scores)
-	if total != 27 {
-		t.Errorf("CalculatePointBuyTotal() = %d, want 27", total)
-	}
+	assert.Equal(t, 27, total)
 }

@@ -6,23 +6,17 @@ import (
 
 	"github.com/Domo929/sheet/internal/models"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewMainSheetModel(t *testing.T) {
 	char := createTestCharacter()
 	model := NewMainSheetModel(char, nil)
 
-	if model == nil {
-		t.Fatal("NewMainSheetModel returned nil")
-	}
-
-	if model.character != char {
-		t.Error("character not set correctly")
-	}
-
-	if model.focusArea != FocusAbilitiesAndSaves {
-		t.Errorf("expected initial focus area to be FocusAbilitiesAndSaves, got %d", model.focusArea)
-	}
+	require.NotNil(t, model, "NewMainSheetModel returned nil")
+	assert.Equal(t, char, model.character, "character not set correctly")
+	assert.Equal(t, FocusAbilitiesAndSaves, model.focusArea, "expected initial focus area to be FocusAbilitiesAndSaves")
 }
 
 func TestMainSheetModelInit(t *testing.T) {
@@ -30,9 +24,7 @@ func TestMainSheetModelInit(t *testing.T) {
 	model := NewMainSheetModel(char, nil)
 
 	cmd := model.Init()
-	if cmd != nil {
-		t.Error("Init should return nil command")
-	}
+	assert.Nil(t, cmd, "Init should return nil command")
 }
 
 func TestMainSheetModelUpdate(t *testing.T) {
@@ -42,12 +34,8 @@ func TestMainSheetModelUpdate(t *testing.T) {
 	// Set initial size
 	model, _ = model.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
 
-	if model.width != 120 {
-		t.Errorf("expected width 120, got %d", model.width)
-	}
-	if model.height != 40 {
-		t.Errorf("expected height 40, got %d", model.height)
-	}
+	assert.Equal(t, 120, model.width, "expected width 120")
+	assert.Equal(t, 40, model.height, "expected height 40")
 }
 
 func TestMainSheetModelTabNavigation(t *testing.T) {
@@ -55,33 +43,23 @@ func TestMainSheetModelTabNavigation(t *testing.T) {
 	model := NewMainSheetModel(char, nil)
 
 	// Initial focus should be FocusAbilitiesAndSaves (0)
-	if model.focusArea != FocusAbilitiesAndSaves {
-		t.Errorf("expected initial focus to be FocusAbilitiesAndSaves (0), got %d", model.focusArea)
-	}
+	assert.Equal(t, FocusAbilitiesAndSaves, model.focusArea, "expected initial focus to be FocusAbilitiesAndSaves (0)")
 
 	// Tab to next panel
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	if model.focusArea != FocusSkills {
-		t.Errorf("expected focus to be FocusSkills (1) after tab, got %d", model.focusArea)
-	}
+	assert.Equal(t, FocusSkills, model.focusArea, "expected focus to be FocusSkills (1) after tab")
 
 	// Tab again
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	if model.focusArea != FocusCombat {
-		t.Errorf("expected focus to be FocusCombat (2) after tab, got %d", model.focusArea)
-	}
+	assert.Equal(t, FocusCombat, model.focusArea, "expected focus to be FocusCombat (2) after tab")
 
 	// Tab to Actions
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	if model.focusArea != FocusActions {
-		t.Errorf("expected focus to be FocusActions (3) after tab, got %d", model.focusArea)
-	}
+	assert.Equal(t, FocusActions, model.focusArea, "expected focus to be FocusActions (3) after tab")
 
 	// Tab wraps around
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	if model.focusArea != FocusAbilitiesAndSaves {
-		t.Errorf("expected focus to wrap to FocusAbilitiesAndSaves (0), got %d", model.focusArea)
-	}
+	assert.Equal(t, FocusAbilitiesAndSaves, model.focusArea, "expected focus to wrap to FocusAbilitiesAndSaves (0)")
 }
 
 func TestMainSheetModelShiftTabNavigation(t *testing.T) {
@@ -93,15 +71,11 @@ func TestMainSheetModelShiftTabNavigation(t *testing.T) {
 
 	// Shift+Tab to previous panel
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	if model.focusArea != FocusAbilitiesAndSaves {
-		t.Errorf("expected focus to be FocusAbilitiesAndSaves (0) after shift+tab, got %d", model.focusArea)
-	}
+	assert.Equal(t, FocusAbilitiesAndSaves, model.focusArea, "expected focus to be FocusAbilitiesAndSaves (0) after shift+tab")
 
 	// Shift+Tab wraps around from 0 to 3 (Actions)
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	if model.focusArea != FocusActions {
-		t.Errorf("expected focus to wrap to FocusActions (3), got %d", model.focusArea)
-	}
+	assert.Equal(t, FocusActions, model.focusArea, "expected focus to wrap to FocusActions (3)")
 }
 
 func TestMainSheetModelView(t *testing.T) {
@@ -113,40 +87,24 @@ func TestMainSheetModelView(t *testing.T) {
 	view := model.View()
 
 	// Check that character name is displayed
-	if !strings.Contains(view, char.Info.Name) {
-		t.Error("view should contain character name")
-	}
+	assert.Contains(t, view, char.Info.Name, "view should contain character name")
 
 	// Check that race and class are displayed
-	if !strings.Contains(view, char.Info.Race) {
-		t.Error("view should contain character race")
-	}
-	if !strings.Contains(view, char.Info.Class) {
-		t.Error("view should contain character class")
-	}
+	assert.Contains(t, view, char.Info.Race, "view should contain character race")
+	assert.Contains(t, view, char.Info.Class, "view should contain character class")
 
 	// Check that section headers are displayed
-	if !strings.Contains(view, "Abilities") {
-		t.Error("view should contain Abilities header")
-	}
-	if !strings.Contains(view, "Skills") {
-		t.Error("view should contain Skills header")
-	}
-	if !strings.Contains(view, "Combat") {
-		t.Error("view should contain Combat header")
-	}
-	if !strings.Contains(view, "Saving Throws") {
-		t.Error("view should contain Saving Throws header")
-	}
+	assert.Contains(t, view, "Abilities", "view should contain Abilities header")
+	assert.Contains(t, view, "Skills", "view should contain Skills header")
+	assert.Contains(t, view, "Combat", "view should contain Combat header")
+	assert.Contains(t, view, "Saving Throws", "view should contain Saving Throws header")
 }
 
 func TestMainSheetModelViewNoCharacter(t *testing.T) {
 	model := NewMainSheetModel(nil, nil)
 	view := model.View()
 
-	if view != "No character loaded" {
-		t.Errorf("expected 'No character loaded', got %s", view)
-	}
+	assert.Equal(t, "No character loaded", view)
 }
 
 func TestMainSheetModelViewAbilityScores(t *testing.T) {
@@ -163,24 +121,12 @@ func TestMainSheetModelViewAbilityScores(t *testing.T) {
 	view := model.View()
 
 	// Check ability names are present (full names in new layout)
-	if !strings.Contains(view, "Strength") {
-		t.Error("view should contain Strength")
-	}
-	if !strings.Contains(view, "Dexterity") {
-		t.Error("view should contain Dexterity")
-	}
-	if !strings.Contains(view, "Constitution") {
-		t.Error("view should contain Constitution")
-	}
-	if !strings.Contains(view, "Intelligence") {
-		t.Error("view should contain Intelligence")
-	}
-	if !strings.Contains(view, "Wisdom") {
-		t.Error("view should contain Wisdom")
-	}
-	if !strings.Contains(view, "Charisma") {
-		t.Error("view should contain Charisma")
-	}
+	assert.Contains(t, view, "Strength", "view should contain Strength")
+	assert.Contains(t, view, "Dexterity", "view should contain Dexterity")
+	assert.Contains(t, view, "Constitution", "view should contain Constitution")
+	assert.Contains(t, view, "Intelligence", "view should contain Intelligence")
+	assert.Contains(t, view, "Wisdom", "view should contain Wisdom")
+	assert.Contains(t, view, "Charisma", "view should contain Charisma")
 }
 
 func TestMainSheetModelViewSkills(t *testing.T) {
@@ -197,28 +143,16 @@ func TestMainSheetModelViewSkills(t *testing.T) {
 	view := model.View()
 
 	// Check some skill names are present
-	if !strings.Contains(view, "Stealth") {
-		t.Error("view should contain Stealth skill")
-	}
-	if !strings.Contains(view, "Perception") {
-		t.Error("view should contain Perception skill")
-	}
-	if !strings.Contains(view, "Acrobatics") {
-		t.Error("view should contain Acrobatics skill")
-	}
+	assert.Contains(t, view, "Stealth", "view should contain Stealth skill")
+	assert.Contains(t, view, "Perception", "view should contain Perception skill")
+	assert.Contains(t, view, "Acrobatics", "view should contain Acrobatics skill")
 
 	// Check passive perception is displayed
-	if !strings.Contains(view, "Passive Perception") {
-		t.Error("view should contain Passive Perception")
-	}
+	assert.Contains(t, view, "Passive Perception", "view should contain Passive Perception")
 
 	// Check legend is present in header
-	if !strings.Contains(view, "Proficient") {
-		t.Error("view should contain proficiency legend in header")
-	}
-	if !strings.Contains(view, "Expertise") {
-		t.Error("view should contain expertise legend in header")
-	}
+	assert.Contains(t, view, "Proficient", "view should contain proficiency legend in header")
+	assert.Contains(t, view, "Expertise", "view should contain expertise legend in header")
 }
 
 func TestMainSheetModelViewCombatStats(t *testing.T) {
@@ -235,18 +169,10 @@ func TestMainSheetModelViewCombatStats(t *testing.T) {
 	view := model.View()
 
 	// Check combat stat labels are present
-	if !strings.Contains(view, "HP:") {
-		t.Error("view should contain HP label")
-	}
-	if !strings.Contains(view, "AC:") {
-		t.Error("view should contain AC label")
-	}
-	if !strings.Contains(view, "Speed:") {
-		t.Error("view should contain Speed label")
-	}
-	if !strings.Contains(view, "Initiative:") {
-		t.Error("view should contain Initiative label")
-	}
+	assert.Contains(t, view, "HP:", "view should contain HP label")
+	assert.Contains(t, view, "AC:", "view should contain AC label")
+	assert.Contains(t, view, "Speed:", "view should contain Speed label")
+	assert.Contains(t, view, "Initiative:", "view should contain Initiative label")
 }
 
 func TestMainSheetModelViewSpellcasting(t *testing.T) {
@@ -264,15 +190,9 @@ func TestMainSheetModelViewSpellcasting(t *testing.T) {
 	view := model.View()
 
 	// Check spellcasting section is present
-	if !strings.Contains(view, "Spellcasting") {
-		t.Error("view should contain Spellcasting section for spellcasters")
-	}
-	if !strings.Contains(view, "Spell Save DC:") {
-		t.Error("view should contain Spell Save DC")
-	}
-	if !strings.Contains(view, "Spell Attack:") {
-		t.Error("view should contain Spell Attack")
-	}
+	assert.Contains(t, view, "Spellcasting", "view should contain Spellcasting section for spellcasters")
+	assert.Contains(t, view, "Spell Save DC:", "view should contain Spell Save DC")
+	assert.Contains(t, view, "Spell Attack:", "view should contain Spell Attack")
 }
 
 func TestMainSheetModelViewConditions(t *testing.T) {
@@ -287,9 +207,7 @@ func TestMainSheetModelViewConditions(t *testing.T) {
 	view := model.View()
 
 	// Check conditions section is present
-	if !strings.Contains(view, "Conditions") {
-		t.Error("view should contain Conditions section when character has conditions")
-	}
+	assert.Contains(t, view, "Conditions", "view should contain Conditions section when character has conditions")
 }
 
 func TestMainSheetModelViewDeathSaves(t *testing.T) {
@@ -306,9 +224,7 @@ func TestMainSheetModelViewDeathSaves(t *testing.T) {
 	view := model.View()
 
 	// Check death saves section is present
-	if !strings.Contains(view, "Death Saves") {
-		t.Error("view should contain Death Saves section when HP is 0")
-	}
+	assert.Contains(t, view, "Death Saves", "view should contain Death Saves section when HP is 0")
 }
 
 func TestMainSheetModelViewFooter(t *testing.T) {
@@ -320,12 +236,8 @@ func TestMainSheetModelViewFooter(t *testing.T) {
 	view := model.View()
 
 	// Check help text is present
-	if !strings.Contains(view, "quit") {
-		t.Error("view should contain quit help")
-	}
-	if !strings.Contains(view, "inventory") {
-		t.Error("view should contain inventory help")
-	}
+	assert.Contains(t, view, "quit", "view should contain quit help")
+	assert.Contains(t, view, "inventory", "view should contain inventory help")
 }
 
 func TestFormatModifier(t *testing.T) {
@@ -342,9 +254,7 @@ func TestFormatModifier(t *testing.T) {
 
 	for _, test := range tests {
 		result := formatModifier(test.input)
-		if result != test.expected {
-			t.Errorf("formatModifier(%d) = %s, expected %s", test.input, result, test.expected)
-		}
+		assert.Equal(t, test.expected, result, "formatModifier(%d)", test.input)
 	}
 }
 
@@ -358,24 +268,16 @@ func TestMainSheetModelHPInputMode(t *testing.T) {
 
 	// Test entering damage mode
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
-	if model.hpInputMode != HPInputDamage {
-		t.Errorf("expected HPInputDamage mode, got %d", model.hpInputMode)
-	}
+	assert.Equal(t, HPInputDamage, model.hpInputMode, "expected HPInputDamage mode")
 
 	// Test entering numbers
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1', '0'}})
-	if model.hpInputBuffer != "10" {
-		t.Errorf("expected buffer '10', got '%s'", model.hpInputBuffer)
-	}
+	assert.Equal(t, "10", model.hpInputBuffer, "expected buffer '10'")
 
 	// Test applying damage
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	if model.character.CombatStats.HitPoints.Current != 35 {
-		t.Errorf("expected HP 35 after 10 damage, got %d", model.character.CombatStats.HitPoints.Current)
-	}
-	if model.hpInputMode != HPInputNone {
-		t.Error("expected to exit input mode after enter")
-	}
+	assert.Equal(t, 35, model.character.CombatStats.HitPoints.Current, "expected HP 35 after 10 damage")
+	assert.Equal(t, HPInputNone, model.hpInputMode, "expected to exit input mode after enter")
 }
 
 func TestMainSheetModelHPHeal(t *testing.T) {
@@ -391,9 +293,7 @@ func TestMainSheetModelHPHeal(t *testing.T) {
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1', '0'}})
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-	if model.character.CombatStats.HitPoints.Current != 40 {
-		t.Errorf("expected HP 40 after healing 10, got %d", model.character.CombatStats.HitPoints.Current)
-	}
+	assert.Equal(t, 40, model.character.CombatStats.HitPoints.Current, "expected HP 40 after healing 10")
 }
 
 func TestMainSheetModelHPTempHP(t *testing.T) {
@@ -410,9 +310,7 @@ func TestMainSheetModelHPTempHP(t *testing.T) {
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'5'}})
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-	if model.character.CombatStats.HitPoints.Temporary != 5 {
-		t.Errorf("expected temp HP 5, got %d", model.character.CombatStats.HitPoints.Temporary)
-	}
+	assert.Equal(t, 5, model.character.CombatStats.HitPoints.Temporary, "expected temp HP 5")
 }
 
 func TestMainSheetModelHPInputCancel(t *testing.T) {
@@ -427,12 +325,8 @@ func TestMainSheetModelHPInputCancel(t *testing.T) {
 	// Cancel with escape
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
 
-	if model.hpInputMode != HPInputNone {
-		t.Error("expected to exit input mode on escape")
-	}
-	if model.hpInputBuffer != "" {
-		t.Error("expected buffer to be cleared on escape")
-	}
+	assert.Equal(t, HPInputNone, model.hpInputMode, "expected to exit input mode on escape")
+	assert.Empty(t, model.hpInputBuffer, "expected buffer to be cleared on escape")
 }
 
 func TestMainSheetModelHPBar(t *testing.T) {
@@ -447,9 +341,7 @@ func TestMainSheetModelHPBar(t *testing.T) {
 	view := model.View()
 
 	// Check HP bar brackets are present
-	if !strings.Contains(view, "[") || !strings.Contains(view, "]") {
-		t.Error("view should contain HP bar with brackets")
-	}
+	assert.True(t, strings.Contains(view, "[") && strings.Contains(view, "]"), "view should contain HP bar with brackets")
 }
 
 func TestMainSheetModelDeathSaves(t *testing.T) {
@@ -461,21 +353,16 @@ func TestMainSheetModelDeathSaves(t *testing.T) {
 
 	// Test adding death save success
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
-	if char.CombatStats.DeathSaves.Successes != 1 {
-		t.Errorf("expected 1 success, got %d", char.CombatStats.DeathSaves.Successes)
-	}
+	assert.Equal(t, 1, char.CombatStats.DeathSaves.Successes, "expected 1 success")
 
 	// Test adding death save failure
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
-	if char.CombatStats.DeathSaves.Failures != 1 {
-		t.Errorf("expected 1 failure, got %d", char.CombatStats.DeathSaves.Failures)
-	}
+	assert.Equal(t, 1, char.CombatStats.DeathSaves.Failures, "expected 1 failure")
 
 	// Test reset
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
-	if char.CombatStats.DeathSaves.Successes != 0 || char.CombatStats.DeathSaves.Failures != 0 {
-		t.Error("expected death saves to be reset")
-	}
+	assert.Equal(t, 0, char.CombatStats.DeathSaves.Successes, "expected death saves successes to be reset")
+	assert.Equal(t, 0, char.CombatStats.DeathSaves.Failures, "expected death saves failures to be reset")
 }
 
 func TestMainSheetModelDeathSavesStabilized(t *testing.T) {
@@ -489,9 +376,7 @@ func TestMainSheetModelDeathSavesStabilized(t *testing.T) {
 
 	view := model.View()
 
-	if !strings.Contains(view, "STABILIZED") {
-		t.Error("view should show STABILIZED when 3 successes")
-	}
+	assert.Contains(t, view, "STABILIZED", "view should show STABILIZED when 3 successes")
 }
 
 func TestMainSheetModelConditionAdd(t *testing.T) {
@@ -501,18 +386,12 @@ func TestMainSheetModelConditionAdd(t *testing.T) {
 
 	// Enter condition add mode
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'+'}})
-	if !model.conditionMode || !model.conditionAdding {
-		t.Error("expected to be in condition add mode")
-	}
+	assert.True(t, model.conditionMode && model.conditionAdding, "expected to be in condition add mode")
 
 	// Select and add first condition
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	if len(char.CombatStats.Conditions) != 1 {
-		t.Errorf("expected 1 condition, got %d", len(char.CombatStats.Conditions))
-	}
-	if model.conditionMode {
-		t.Error("expected to exit condition mode after adding")
-	}
+	assert.Len(t, char.CombatStats.Conditions, 1, "expected 1 condition")
+	assert.False(t, model.conditionMode, "expected to exit condition mode after adding")
 }
 
 func TestMainSheetModelConditionRemove(t *testing.T) {
@@ -525,15 +404,11 @@ func TestMainSheetModelConditionRemove(t *testing.T) {
 
 	// Enter condition remove mode
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'-'}})
-	if !model.conditionMode || model.conditionAdding {
-		t.Error("expected to be in condition remove mode")
-	}
+	assert.True(t, model.conditionMode && !model.conditionAdding, "expected to be in condition remove mode")
 
 	// Remove first condition
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	if len(char.CombatStats.Conditions) != 1 {
-		t.Errorf("expected 1 condition after removal, got %d", len(char.CombatStats.Conditions))
-	}
+	assert.Len(t, char.CombatStats.Conditions, 1, "expected 1 condition after removal")
 }
 
 func TestMainSheetModelConditionNavigation(t *testing.T) {
@@ -546,21 +421,15 @@ func TestMainSheetModelConditionNavigation(t *testing.T) {
 
 	// Navigate down
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
-	if model.conditionCursor != 1 {
-		t.Errorf("expected cursor at 1, got %d", model.conditionCursor)
-	}
+	assert.Equal(t, 1, model.conditionCursor, "expected cursor at 1")
 
 	// Navigate up
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
-	if model.conditionCursor != 0 {
-		t.Errorf("expected cursor at 0, got %d", model.conditionCursor)
-	}
+	assert.Equal(t, 0, model.conditionCursor, "expected cursor at 0")
 
 	// Cancel
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
-	if model.conditionMode {
-		t.Error("expected to exit condition mode on escape")
-	}
+	assert.False(t, model.conditionMode, "expected to exit condition mode on escape")
 }
 
 func TestMainSheetModelWeaponAttacks(t *testing.T) {
@@ -581,15 +450,9 @@ func TestMainSheetModelWeaponAttacks(t *testing.T) {
 	view := model.View()
 
 	// Check weapon is displayed
-	if !strings.Contains(view, "Attacks") {
-		t.Error("view should contain Attacks section when weapons present")
-	}
-	if !strings.Contains(view, "Longsword") {
-		t.Error("view should contain weapon name")
-	}
-	if !strings.Contains(view, "1d8") {
-		t.Error("view should contain weapon damage")
-	}
+	assert.Contains(t, view, "Attacks", "view should contain Attacks section when weapons present")
+	assert.Contains(t, view, "Longsword", "view should contain weapon name")
+	assert.Contains(t, view, "1d8", "view should contain weapon damage")
 }
 
 func TestMainSheetModelWeaponAttackBonus(t *testing.T) {
@@ -609,9 +472,7 @@ func TestMainSheetModelWeaponAttackBonus(t *testing.T) {
 	model := NewMainSheetModel(char, nil)
 	bonus := model.getWeaponAttackBonus(sword)
 	// STR (+3) + Prof (+3) = +6
-	if bonus != 6 {
-		t.Errorf("expected attack bonus 6, got %d", bonus)
-	}
+	assert.Equal(t, 6, bonus, "expected attack bonus 6")
 
 	// Test finesse weapon (uses better of STR/DEX)
 	dagger := models.NewItem("dagger-1", "Dagger", models.ItemTypeWeapon)
@@ -622,17 +483,13 @@ func TestMainSheetModelWeaponAttackBonus(t *testing.T) {
 
 	bonus = model.getWeaponAttackBonus(dagger)
 	// Better of STR (+3) or DEX (+2) = STR (+3) + Prof (+3) = +6
-	if bonus != 6 {
-		t.Errorf("expected finesse attack bonus 6, got %d", bonus)
-	}
+	assert.Equal(t, 6, bonus, "expected finesse attack bonus 6")
 
 	// Test with higher DEX
 	char.AbilityScores.Dexterity.Base = 18 // +4 modifier
 	bonus = model.getWeaponAttackBonus(dagger)
 	// Better of STR (+3) or DEX (+4) = DEX (+4) + Prof (+3) = +7
-	if bonus != 7 {
-		t.Errorf("expected finesse attack bonus 7 with higher DEX, got %d", bonus)
-	}
+	assert.Equal(t, 7, bonus, "expected finesse attack bonus 7 with higher DEX")
 }
 
 func TestRestModeTransitions(t *testing.T) {
@@ -640,45 +497,31 @@ func TestRestModeTransitions(t *testing.T) {
 	model := NewMainSheetModel(char, nil)
 
 	// Initially not in rest mode
-	if model.restMode != RestModeNone {
-		t.Error("expected initial rest mode to be RestModeNone")
-	}
+	assert.Equal(t, RestModeNone, model.restMode, "expected initial rest mode to be RestModeNone")
 
 	// Press 'r' to enter rest menu
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
-	if model.restMode != RestModeMenu {
-		t.Errorf("expected rest mode RestModeMenu after 'r', got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeMenu, model.restMode, "expected rest mode RestModeMenu after 'r'")
 
 	// Press 's' to go to short rest
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
-	if model.restMode != RestModeShort {
-		t.Errorf("expected rest mode RestModeShort after 's', got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeShort, model.restMode, "expected rest mode RestModeShort after 's'")
 
 	// Press Esc to go back to menu
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
-	if model.restMode != RestModeMenu {
-		t.Errorf("expected rest mode RestModeMenu after Esc, got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeMenu, model.restMode, "expected rest mode RestModeMenu after Esc")
 
 	// Press 'l' to go to long rest
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-	if model.restMode != RestModeLong {
-		t.Errorf("expected rest mode RestModeLong after 'l', got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeLong, model.restMode, "expected rest mode RestModeLong after 'l'")
 
 	// Press Esc to go back to menu
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
-	if model.restMode != RestModeMenu {
-		t.Errorf("expected rest mode RestModeMenu after Esc, got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeMenu, model.restMode, "expected rest mode RestModeMenu after Esc")
 
 	// Press Esc again to exit rest mode
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
-	if model.restMode != RestModeNone {
-		t.Errorf("expected rest mode RestModeNone after second Esc, got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeNone, model.restMode, "expected rest mode RestModeNone after second Esc")
 }
 
 func TestShortRestHitDiceAdjustment(t *testing.T) {
@@ -690,40 +533,28 @@ func TestShortRestHitDiceAdjustment(t *testing.T) {
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
 
-	if model.restHitDice != 0 {
-		t.Errorf("expected initial restHitDice 0, got %d", model.restHitDice)
-	}
+	assert.Equal(t, 0, model.restHitDice, "expected initial restHitDice 0")
 
 	// Increase hit dice to spend
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
-	if model.restHitDice != 1 {
-		t.Errorf("expected restHitDice 1 after up, got %d", model.restHitDice)
-	}
+	assert.Equal(t, 1, model.restHitDice, "expected restHitDice 1 after up")
 
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
-	if model.restHitDice != 2 {
-		t.Errorf("expected restHitDice 2 after second up, got %d", model.restHitDice)
-	}
+	assert.Equal(t, 2, model.restHitDice, "expected restHitDice 2 after second up")
 
 	// Decrease hit dice
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
-	if model.restHitDice != 1 {
-		t.Errorf("expected restHitDice 1 after down, got %d", model.restHitDice)
-	}
+	assert.Equal(t, 1, model.restHitDice, "expected restHitDice 1 after down")
 
 	// Can't go below 0
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
-	if model.restHitDice != 0 {
-		t.Errorf("expected restHitDice 0 (can't go negative), got %d", model.restHitDice)
-	}
+	assert.Equal(t, 0, model.restHitDice, "expected restHitDice 0 (can't go negative)")
 
 	// Can't exceed remaining hit dice
 	model.restHitDice = 3
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
-	if model.restHitDice != 3 {
-		t.Errorf("expected restHitDice 3 (can't exceed remaining), got %d", model.restHitDice)
-	}
+	assert.Equal(t, 3, model.restHitDice, "expected restHitDice 3 (can't exceed remaining)")
 }
 
 func TestShortRestExecution(t *testing.T) {
@@ -743,31 +574,21 @@ func TestShortRestExecution(t *testing.T) {
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
 	// After confirming, rest transitions to result screen first
-	if model.restMode != RestModeResult {
-		t.Errorf("expected rest mode RestModeResult after confirming, got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeResult, model.restMode, "expected rest mode RestModeResult after confirming")
 
 	// Result should contain rest summary
-	if !strings.Contains(model.restResult, "SHORT REST COMPLETE") {
-		t.Errorf("expected rest result about short rest, got: %s", model.restResult)
-	}
+	assert.Contains(t, model.restResult, "SHORT REST COMPLETE", "expected rest result about short rest")
 
 	// HP should have increased (average roll: 5+1=6, +2 CON = 8 per die, 2 dice = 16)
-	if char.CombatStats.HitPoints.Current <= 20 {
-		t.Errorf("expected HP to increase after short rest, got %d", char.CombatStats.HitPoints.Current)
-	}
+	assert.Greater(t, char.CombatStats.HitPoints.Current, 20, "expected HP to increase after short rest")
 
 	// Hit dice should have decreased
-	if char.CombatStats.HitDice.Remaining != 3 {
-		t.Errorf("expected 3 remaining hit dice, got %d", char.CombatStats.HitDice.Remaining)
-	}
+	assert.Equal(t, 3, char.CombatStats.HitDice.Remaining, "expected 3 remaining hit dice")
 
 	// Dismiss the result screen
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-	if model.restMode != RestModeNone {
-		t.Errorf("expected rest mode RestModeNone after dismissing result, got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeNone, model.restMode, "expected rest mode RestModeNone after dismissing result")
 }
 
 func TestLongRestExecution(t *testing.T) {
@@ -784,31 +605,21 @@ func TestLongRestExecution(t *testing.T) {
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
 	// After confirming, rest transitions to result screen first
-	if model.restMode != RestModeResult {
-		t.Errorf("expected rest mode RestModeResult after confirming, got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeResult, model.restMode, "expected rest mode RestModeResult after confirming")
 
 	// Result should contain rest summary
-	if !strings.Contains(model.restResult, "LONG REST COMPLETE") {
-		t.Errorf("expected rest result about long rest, got: %s", model.restResult)
-	}
+	assert.Contains(t, model.restResult, "LONG REST COMPLETE", "expected rest result about long rest")
 
 	// HP should be at maximum
-	if char.CombatStats.HitPoints.Current != 45 {
-		t.Errorf("expected HP to be max (45), got %d", char.CombatStats.HitPoints.Current)
-	}
+	assert.Equal(t, 45, char.CombatStats.HitPoints.Current, "expected HP to be max (45)")
 
 	// Hit dice should have recovered (half level, min 1 = 2)
-	if char.CombatStats.HitDice.Remaining < 4 {
-		t.Errorf("expected at least 4 hit dice after recovery, got %d", char.CombatStats.HitDice.Remaining)
-	}
+	assert.GreaterOrEqual(t, char.CombatStats.HitDice.Remaining, 4, "expected at least 4 hit dice after recovery")
 
 	// Dismiss the result screen
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-	if model.restMode != RestModeNone {
-		t.Errorf("expected rest mode RestModeNone after dismissing result, got %d", model.restMode)
-	}
+	assert.Equal(t, RestModeNone, model.restMode, "expected rest mode RestModeNone after dismissing result")
 }
 
 func TestRestOverlayRendering(t *testing.T) {
@@ -821,35 +632,20 @@ func TestRestOverlayRendering(t *testing.T) {
 	// Test rest menu
 	model.restMode = RestModeMenu
 	view := model.View()
-	if !strings.Contains(view, "Rest Options") {
-		t.Error("expected rest menu to show 'Rest Options'")
-	}
-	if !strings.Contains(view, "Short Rest") {
-		t.Error("expected rest menu to show 'Short Rest'")
-	}
-	if !strings.Contains(view, "Long Rest") {
-		t.Error("expected rest menu to show 'Long Rest'")
-	}
+	assert.Contains(t, view, "Rest Options", "expected rest menu to show 'Rest Options'")
+	assert.Contains(t, view, "Short Rest", "expected rest menu to show 'Short Rest'")
+	assert.Contains(t, view, "Long Rest", "expected rest menu to show 'Long Rest'")
 
 	// Test short rest screen
 	model.restMode = RestModeShort
 	view = model.View()
-	if !strings.Contains(view, "Short Rest") {
-		t.Error("expected short rest screen to show 'Short Rest'")
-	}
-	if !strings.Contains(view, "Hit Dice") {
-		t.Error("expected short rest screen to show 'Hit Dice'")
-	}
+	assert.Contains(t, view, "Short Rest", "expected short rest screen to show 'Short Rest'")
+	assert.Contains(t, view, "Hit Dice", "expected short rest screen to show 'Hit Dice'")
 
 	// Test long rest screen
 	model.restMode = RestModeLong
 	view = model.View()
-	if !strings.Contains(view, "Long Rest") {
-		t.Error("expected long rest screen to show 'Long Rest'")
-	}
-	if !strings.Contains(view, "Full Recovery") || strings.Contains(view, "confirmation") {
-		// Either "Full Recovery" or some confirmation text
-	}
+	assert.Contains(t, view, "Long Rest", "expected long rest screen to show 'Long Rest'")
 }
 
 // Helper function to create a test character

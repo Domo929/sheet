@@ -1,12 +1,14 @@
 package models
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestAllSkillsCount(t *testing.T) {
 	skills := AllSkills()
-	if len(skills) != 18 {
-		t.Errorf("AllSkills() returned %d skills, want 18", len(skills))
-	}
+	assert.Len(t, skills, 18)
 }
 
 func TestSkillAbilityMapping(t *testing.T) {
@@ -36,9 +38,7 @@ func TestSkillAbilityMapping(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.skill), func(t *testing.T) {
-			if got := GetSkillAbility(tt.skill); got != tt.ability {
-				t.Errorf("GetSkillAbility(%s) = %s, want %s", tt.skill, got, tt.ability)
-			}
+			assert.Equal(t, tt.ability, GetSkillAbility(tt.skill))
 		})
 	}
 }
@@ -49,37 +49,27 @@ func TestSkillsGet(t *testing.T) {
 
 	for _, skillName := range AllSkills() {
 		skill := skills.Get(skillName)
-		if skill == nil {
-			t.Errorf("Skills.Get(%s) returned nil", skillName)
-		}
+		assert.NotNil(t, skill, "Skills.Get(%s) returned nil", skillName)
 	}
 
 	// Check specific skill we modified
 	stealth := skills.Get(SkillStealth)
-	if stealth.Proficiency != Expertise {
-		t.Errorf("Stealth proficiency = %d, want %d", stealth.Proficiency, Expertise)
-	}
+	assert.Equal(t, Expertise, stealth.Proficiency)
 }
 
 func TestSkillsGetInvalid(t *testing.T) {
 	skills := NewSkills()
-	if got := skills.Get(SkillName("invalid")); got != nil {
-		t.Errorf("Skills.Get(invalid) = %v, want nil", got)
-	}
+	assert.Nil(t, skills.Get(SkillName("invalid")))
 }
 
 func TestSkillsSetProficiency(t *testing.T) {
 	skills := NewSkills()
 
 	skills.SetProficiency(SkillPerception, Proficient)
-	if skills.Perception.Proficiency != Proficient {
-		t.Errorf("Perception proficiency = %d, want %d", skills.Perception.Proficiency, Proficient)
-	}
+	assert.Equal(t, Proficient, skills.Perception.Proficiency)
 
 	skills.SetProficiency(SkillStealth, Expertise)
-	if skills.Stealth.Proficiency != Expertise {
-		t.Errorf("Stealth proficiency = %d, want %d", skills.Stealth.Proficiency, Expertise)
-	}
+	assert.Equal(t, Expertise, skills.Stealth.Proficiency)
 }
 
 func TestCalculateSkillModifier(t *testing.T) {
@@ -103,9 +93,7 @@ func TestCalculateSkillModifier(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			skill := &Skill{Proficiency: tt.proficiency}
 			got := CalculateSkillModifier(skill, tt.abilityMod, tt.proficiencyBonus)
-			if got != tt.expected {
-				t.Errorf("CalculateSkillModifier() = %d, want %d", got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -113,7 +101,5 @@ func TestCalculateSkillModifier(t *testing.T) {
 func TestCalculateSkillModifierNilSkill(t *testing.T) {
 	// Nil skill should just return ability modifier
 	got := CalculateSkillModifier(nil, 3, 2)
-	if got != 3 {
-		t.Errorf("CalculateSkillModifier(nil, 3, 2) = %d, want 3", got)
-	}
+	assert.Equal(t, 3, got)
 }
