@@ -39,14 +39,13 @@ sheet/
 ├── cmd/
 │   └── sheet/          # Main application entry point
 ├── internal/
-│   ├── models/         # Data models
-│   ├── ui/            # UI components
-│   ├── engine/        # Calculation engine
-│   ├── data/          # Data loading
-│   └── storage/       # File management
-├── data/              # External JSON data files
-├── DESIGN.md          # Design documentation
-└── IMPLEMENTATION.md  # Implementation plan
+│   ├── models/         # Data models and calculation logic
+│   ├── ui/             # UI components and views
+│   ├── data/           # Data loading and caching
+│   └── storage/        # File management
+├── data/               # External JSON data files (races, classes, spells, etc.)
+├── DESIGN.md           # Design documentation
+└── IMPLEMENTATION.md   # Implementation plan
 ```
 
 ### Building
