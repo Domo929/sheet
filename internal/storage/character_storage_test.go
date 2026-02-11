@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/Domo929/sheet/internal/models"
 )
@@ -387,13 +388,18 @@ func TestAutoSave(t *testing.T) {
 	char := createTestCharacter("AutoSaved", "Tiefling", "Warlock")
 	oldUpdatedAt := char.UpdatedAt
 
+	// Ensure enough time elapses for the timestamp to differ.
+	// Windows system clock granularity can be ~15ms, so a brief sleep
+	// guarantees MarkUpdated() produces a distinct timestamp.
+	time.Sleep(20 * time.Millisecond)
+
 	// AutoSave should update the timestamp
 	err := storage.AutoSave(char)
 	if err != nil {
 		t.Fatalf("AutoSave() error = %v", err)
 	}
 
-	if char.UpdatedAt.Equal(oldUpdatedAt) {
+	if !char.UpdatedAt.After(oldUpdatedAt) {
 		t.Error("AutoSave() should update the UpdatedAt timestamp")
 	}
 
