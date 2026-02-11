@@ -570,6 +570,9 @@ func TestMainSheetModelWeaponAttacks(t *testing.T) {
 	sword.Damage = "1d8"
 	sword.DamageType = "slashing"
 	char.Inventory.AddItem(sword)
+	
+	// Equip the weapon to main hand
+	char.Inventory.Equipment.MainHand = &sword
 
 	model := NewMainSheetModel(char, nil)
 	model.width = 120
