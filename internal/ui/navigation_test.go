@@ -3,40 +3,30 @@ package ui
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func TestDefaultKeyMap(t *testing.T) {
 	km := DefaultKeyMap()
 
-	if len(km.Up) == 0 {
-		t.Error("Up keys should not be empty")
-	}
-	if len(km.Down) == 0 {
-		t.Error("Down keys should not be empty")
-	}
-	if len(km.Quit) == 0 {
-		t.Error("Quit keys should not be empty")
-	}
+	assert.NotEmpty(t, km.Up, "Up keys should not be empty")
+	assert.NotEmpty(t, km.Down, "Down keys should not be empty")
+	assert.NotEmpty(t, km.Quit, "Quit keys should not be empty")
 }
 
 func TestIsKey(t *testing.T) {
 	keys := []string{"up", "k"}
 
 	upMsg := tea.KeyMsg{Type: tea.KeyUp}
-	if !IsKey(upMsg, keys) {
-		t.Error("Should match 'up' key")
-	}
+	assert.True(t, IsKey(upMsg, keys), "Should match 'up' key")
 
 	kMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}}
-	if !IsKey(kMsg, keys) {
-		t.Error("Should match 'k' key")
-	}
+	assert.True(t, IsKey(kMsg, keys), "Should match 'k' key")
 
 	downMsg := tea.KeyMsg{Type: tea.KeyDown}
-	if IsKey(downMsg, keys) {
-		t.Error("Should not match 'down' key")
-	}
+	assert.False(t, IsKey(downMsg, keys), "Should not match 'down' key")
 }
 
 func TestNavigationHandler(t *testing.T) {
@@ -119,9 +109,7 @@ func TestNavigationHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.checkFn(tt.msg)
-			if result != tt.expected {
-				t.Errorf("%s check returned %v, want %v", tt.name, result, tt.expected)
-			}
+			assert.Equal(t, tt.expected, result, "%s check returned unexpected result", tt.name)
 		})
 	}
 }
@@ -132,17 +120,11 @@ func TestNavigationHandlerWrongKeys(t *testing.T) {
 	downMsg := tea.KeyMsg{Type: tea.KeyDown}
 
 	// Down key should not match Up check
-	if nav.IsUp(downMsg) {
-		t.Error("Down key should not match IsUp")
-	}
+	assert.False(t, nav.IsUp(downMsg), "Down key should not match IsUp")
 
 	// Down key should not match Left check
-	if nav.IsLeft(downMsg) {
-		t.Error("Down key should not match IsLeft")
-	}
+	assert.False(t, nav.IsLeft(downMsg), "Down key should not match IsLeft")
 
 	// Down key should not match Quit check
-	if nav.IsQuit(downMsg) {
-		t.Error("Down key should not match IsQuit")
-	}
+	assert.False(t, nav.IsQuit(downMsg), "Down key should not match IsQuit")
 }

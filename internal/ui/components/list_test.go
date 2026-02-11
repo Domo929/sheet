@@ -1,8 +1,10 @@
 package components
 
 import (
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewList(t *testing.T) {
@@ -13,15 +15,9 @@ func TestNewList(t *testing.T) {
 
 	list := NewList("Test List", items)
 
-	if list.Title != "Test List" {
-		t.Errorf("Title = %s, want Test List", list.Title)
-	}
-	if len(list.Items) != 2 {
-		t.Errorf("len(Items) = %d, want 2", len(list.Items))
-	}
-	if list.SelectedIndex != 0 {
-		t.Errorf("SelectedIndex = %d, want 0", list.SelectedIndex)
-	}
+	assert.Equal(t, "Test List", list.Title)
+	assert.Equal(t, 2, len(list.Items))
+	assert.Equal(t, 0, list.SelectedIndex)
 }
 
 func TestListNavigation(t *testing.T) {
@@ -35,37 +31,25 @@ func TestListNavigation(t *testing.T) {
 
 	// Test moving down
 	list.MoveDown()
-	if list.SelectedIndex != 1 {
-		t.Errorf("After MoveDown: SelectedIndex = %d, want 1", list.SelectedIndex)
-	}
+	assert.Equal(t, 1, list.SelectedIndex, "After MoveDown")
 
 	list.MoveDown()
-	if list.SelectedIndex != 2 {
-		t.Errorf("After second MoveDown: SelectedIndex = %d, want 2", list.SelectedIndex)
-	}
+	assert.Equal(t, 2, list.SelectedIndex, "After second MoveDown")
 
 	// Test boundary - shouldn't go past last item
 	list.MoveDown()
-	if list.SelectedIndex != 2 {
-		t.Errorf("After third MoveDown: SelectedIndex = %d, want 2 (boundary)", list.SelectedIndex)
-	}
+	assert.Equal(t, 2, list.SelectedIndex, "After third MoveDown (boundary)")
 
 	// Test moving up
 	list.MoveUp()
-	if list.SelectedIndex != 1 {
-		t.Errorf("After MoveUp: SelectedIndex = %d, want 1", list.SelectedIndex)
-	}
+	assert.Equal(t, 1, list.SelectedIndex, "After MoveUp")
 
 	list.MoveUp()
-	if list.SelectedIndex != 0 {
-		t.Errorf("After second MoveUp: SelectedIndex = %d, want 0", list.SelectedIndex)
-	}
+	assert.Equal(t, 0, list.SelectedIndex, "After second MoveUp")
 
 	// Test boundary - shouldn't go below 0
 	list.MoveUp()
-	if list.SelectedIndex != 0 {
-		t.Errorf("After third MoveUp: SelectedIndex = %d, want 0 (boundary)", list.SelectedIndex)
-	}
+	assert.Equal(t, 0, list.SelectedIndex, "After third MoveUp (boundary)")
 }
 
 func TestListSelected(t *testing.T) {
@@ -77,30 +61,20 @@ func TestListSelected(t *testing.T) {
 	list := NewList("Test", items)
 
 	selected := list.Selected()
-	if selected == nil {
-		t.Fatal("Selected() returned nil")
-	}
-	if selected.Title != "Item 1" {
-		t.Errorf("Selected().Title = %s, want Item 1", selected.Title)
-	}
-	if selected.Value != "value1" {
-		t.Errorf("Selected().Value = %v, want value1", selected.Value)
-	}
+	require.NotNil(t, selected, "Selected() returned nil")
+	assert.Equal(t, "Item 1", selected.Title)
+	assert.Equal(t, "value1", selected.Value)
 
 	list.MoveDown()
 	selected = list.Selected()
-	if selected.Title != "Item 2" {
-		t.Errorf("After MoveDown: Selected().Title = %s, want Item 2", selected.Title)
-	}
+	assert.Equal(t, "Item 2", selected.Title, "After MoveDown")
 }
 
 func TestListEmptySelected(t *testing.T) {
 	list := NewList("Test", []ListItem{})
 
 	selected := list.Selected()
-	if selected != nil {
-		t.Error("Selected() should return nil for empty list")
-	}
+	assert.Nil(t, selected, "Selected() should return nil for empty list")
 }
 
 func TestListRender(t *testing.T) {
@@ -114,31 +88,21 @@ func TestListRender(t *testing.T) {
 	rendered := list.Render()
 
 	// Should contain title
-	if !strings.Contains(rendered, "My List") {
-		t.Error("Rendered output should contain title")
-	}
+	assert.Contains(t, rendered, "My List", "Rendered output should contain title")
 
 	// Should contain items
-	if !strings.Contains(rendered, "First") {
-		t.Error("Rendered output should contain first item")
-	}
-	if !strings.Contains(rendered, "Second") {
-		t.Error("Rendered output should contain second item")
-	}
+	assert.Contains(t, rendered, "First", "Rendered output should contain first item")
+	assert.Contains(t, rendered, "Second", "Rendered output should contain second item")
 
 	// Should show selection cursor
-	if !strings.Contains(rendered, "> ") {
-		t.Error("Rendered output should contain selection cursor")
-	}
+	assert.Contains(t, rendered, "> ", "Rendered output should contain selection cursor")
 }
 
 func TestListEmptyRender(t *testing.T) {
 	list := NewList("Empty", []ListItem{})
 
 	rendered := list.Render()
-	if rendered != "No items" {
-		t.Errorf("Empty list render = %s, want 'No items'", rendered)
-	}
+	assert.Equal(t, "No items", rendered)
 }
 
 func TestListSetSize(t *testing.T) {
@@ -146,10 +110,6 @@ func TestListSetSize(t *testing.T) {
 
 	list.SetSize(80, 20)
 
-	if list.Width != 80 {
-		t.Errorf("Width = %d, want 80", list.Width)
-	}
-	if list.Height != 20 {
-		t.Errorf("Height = %d, want 20", list.Height)
-	}
+	assert.Equal(t, 80, list.Width)
+	assert.Equal(t, 20, list.Height)
 }

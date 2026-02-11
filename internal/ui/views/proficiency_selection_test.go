@@ -5,6 +5,7 @@ import (
 
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewProficiencySelectionManager(t *testing.T) {
@@ -30,37 +31,21 @@ func TestNewProficiencySelectionManager(t *testing.T) {
 	psm := NewProficiencySelectionManager(class, background, race)
 
 	// Check skill setup
-	if psm.skillsRequired != 2 {
-		t.Errorf("expected 2 skills required, got %d", psm.skillsRequired)
-	}
-
-	if len(psm.skillOptions) != 3 {
-		t.Errorf("expected 3 skill options, got %d", len(psm.skillOptions))
-	}
-
-	if len(psm.backgroundSkills) != 2 {
-		t.Errorf("expected 2 background skills, got %d", len(psm.backgroundSkills))
-	}
+	assert.Equal(t, 2, psm.skillsRequired, "expected 2 skills required")
+	assert.Len(t, psm.skillOptions, 3, "expected 3 skill options")
+	assert.Len(t, psm.backgroundSkills, 2, "expected 2 background skills")
 
 	// Check tool setup
-	if psm.backgroundTool != "Calligrapher's Supplies" {
-		t.Errorf("expected background tool 'Calligrapher's Supplies', got '%s'", psm.backgroundTool)
-	}
+	assert.Equal(t, "Calligrapher's Supplies", psm.backgroundTool, "expected background tool 'Calligrapher's Supplies'")
 
 	// Check language setup
-	if len(psm.racialLanguages) != 2 {
-		t.Errorf("expected 2 racial languages, got %d", len(psm.racialLanguages))
-	}
+	assert.Len(t, psm.racialLanguages, 2, "expected 2 racial languages")
 
 	// Check initial section
-	if psm.currentSection != ProfSectionSkills {
-		t.Error("expected to start at skills section")
-	}
+	assert.Equal(t, ProfSectionSkills, psm.currentSection, "expected to start at skills section")
 
 	// Check completion status
-	if psm.IsComplete() {
-		t.Error("proficiency selection should not be complete initially")
-	}
+	assert.False(t, psm.IsComplete(), "proficiency selection should not be complete initially")
 }
 
 func TestProficiencySelectionNoSkillChoices(t *testing.T) {
@@ -83,17 +68,9 @@ func TestProficiencySelectionNoSkillChoices(t *testing.T) {
 
 	psm := NewProficiencySelectionManager(class, background, race)
 
-	if psm.skillsRequired != 0 {
-		t.Errorf("expected 0 skills required, got %d", psm.skillsRequired)
-	}
-
-	if !psm.skillsComplete {
-		t.Error("skills should be marked complete when no choices are required")
-	}
-
-	if !psm.IsComplete() {
-		t.Error("proficiency selection should be complete when no choices are required")
-	}
+	assert.Equal(t, 0, psm.skillsRequired, "expected 0 skills required")
+	assert.True(t, psm.skillsComplete, "skills should be marked complete when no choices are required")
+	assert.True(t, psm.IsComplete(), "proficiency selection should be complete when no choices are required")
 }
 
 func TestProficiencySelectionSectionNavigation(t *testing.T) {
@@ -116,20 +93,14 @@ func TestProficiencySelectionSectionNavigation(t *testing.T) {
 	psm := NewProficiencySelectionManager(class, background, race)
 
 	// Initially at skills
-	if psm.currentSection != ProfSectionSkills {
-		t.Error("should start at skills section")
-	}
+	assert.Equal(t, ProfSectionSkills, psm.currentSection, "should start at skills section")
 
 	// Since tools and languages are auto-complete, NextSection should return false
-	if psm.NextSection() {
-		t.Error("NextSection should return false when no more sections with choices")
-	}
+	assert.False(t, psm.NextSection(), "NextSection should return false when no more sections with choices")
 
 	// PreviousSection from skills should return false
 	psm.currentSection = ProfSectionSkills
-	if psm.PreviousSection() {
-		t.Error("PreviousSection from first section should return false")
-	}
+	assert.False(t, psm.PreviousSection(), "PreviousSection from first section should return false")
 }
 
 func TestApplyToCharacter(t *testing.T) {
@@ -161,36 +132,19 @@ func TestApplyToCharacter(t *testing.T) {
 	psm.ApplyToCharacter(char)
 
 	// Check class skill proficiencies were applied
-	if char.Skills.Get(models.SkillAthletics).Proficiency != models.Proficient {
-		t.Error("Athletics should be proficient")
-	}
-
-	if char.Skills.Get(models.SkillIntimidation).Proficiency != models.Proficient {
-		t.Error("Intimidation should be proficient")
-	}
+	assert.Equal(t, models.Proficient, char.Skills.Get(models.SkillAthletics).Proficiency, "Athletics should be proficient")
+	assert.Equal(t, models.Proficient, char.Skills.Get(models.SkillIntimidation).Proficiency, "Intimidation should be proficient")
 
 	// Check background skill proficiencies were applied
-	if char.Skills.Get(models.SkillInsight).Proficiency != models.Proficient {
-		t.Error("Insight from background should be proficient")
-	}
-
-	if char.Skills.Get(models.SkillReligion).Proficiency != models.Proficient {
-		t.Error("Religion from background should be proficient")
-	}
+	assert.Equal(t, models.Proficient, char.Skills.Get(models.SkillInsight).Proficiency, "Insight from background should be proficient")
+	assert.Equal(t, models.Proficient, char.Skills.Get(models.SkillReligion).Proficiency, "Religion from background should be proficient")
 
 	// Check tool proficiency
-	if !char.Proficiencies.HasTool("Calligrapher's Supplies") {
-		t.Error("Character should have Calligrapher's Supplies tool proficiency")
-	}
+	assert.True(t, char.Proficiencies.HasTool("Calligrapher's Supplies"), "Character should have Calligrapher's Supplies tool proficiency")
 
 	// Check languages
-	if !char.Proficiencies.HasLanguage("Common") {
-		t.Error("Character should know Common")
-	}
-
-	if !char.Proficiencies.HasLanguage("Elvish") {
-		t.Error("Character should know Elvish")
-	}
+	assert.True(t, char.Proficiencies.HasLanguage("Common"), "Character should know Common")
+	assert.True(t, char.Proficiencies.HasLanguage("Elvish"), "Character should know Elvish")
 }
 
 func TestSkillNameToKey(t *testing.T) {
@@ -207,9 +161,7 @@ func TestSkillNameToKey(t *testing.T) {
 
 	for _, tt := range tests {
 		result := skillNameToKey(tt.input)
-		if result != tt.expected {
-			t.Errorf("skillNameToKey(%q) = %v, want %v", tt.input, result, tt.expected)
-		}
+		assert.Equal(t, tt.expected, result, "skillNameToKey(%q)", tt.input)
 	}
 }
 
@@ -236,15 +188,11 @@ func TestGetSelectedMethods(t *testing.T) {
 	psm.skillSelector.SetSelected([]int{0, 1})
 
 	selectedSkills := psm.GetSelectedSkills()
-	if len(selectedSkills) != 2 {
-		t.Errorf("expected 2 selected skills, got %d", len(selectedSkills))
-	}
+	assert.Len(t, selectedSkills, 2, "expected 2 selected skills")
 
 	// Test with no selections required
 	class.SkillChoices.Count = 0
 	psm2 := NewProficiencySelectionManager(class, background, race)
 
-	if len(psm2.GetSelectedSkills()) != 0 {
-		t.Error("expected empty selection when no skills required")
-	}
+	assert.Empty(t, psm2.GetSelectedSkills(), "expected empty selection when no skills required")
 }

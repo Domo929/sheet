@@ -1,6 +1,11 @@
 package models
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 func TestCurrencyTotalInGold(t *testing.T) {
 	tests := []struct {
@@ -19,11 +24,8 @@ func TestCurrencyTotalInGold(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gp, cp := tt.currency.TotalInGold()
-			_ = cp // Ignore remaining copper for these tests
-			if gp != tt.expected {
-				t.Errorf("TotalInGold() = %d GP, want %d GP", gp, tt.expected)
-			}
+			gp, _ := tt.currency.TotalInGold()
+			assert.Equal(t, tt.expected, gp)
 		})
 	}
 }
@@ -32,21 +34,11 @@ func TestCurrencyAdd(t *testing.T) {
 	c := NewCurrency()
 	c.Add(10, 5, 2, 100, 1)
 
-	if c.Copper != 10 {
-		t.Errorf("Copper = %d, want 10", c.Copper)
-	}
-	if c.Silver != 5 {
-		t.Errorf("Silver = %d, want 5", c.Silver)
-	}
-	if c.Electrum != 2 {
-		t.Errorf("Electrum = %d, want 2", c.Electrum)
-	}
-	if c.Gold != 100 {
-		t.Errorf("Gold = %d, want 100", c.Gold)
-	}
-	if c.Platinum != 1 {
-		t.Errorf("Platinum = %d, want 1", c.Platinum)
-	}
+	assert.Equal(t, 10, c.Copper)
+	assert.Equal(t, 5, c.Silver)
+	assert.Equal(t, 2, c.Electrum)
+	assert.Equal(t, 100, c.Gold)
+	assert.Equal(t, 1, c.Platinum)
 }
 
 func TestSpendFromTotal(t *testing.T) {
@@ -97,19 +89,13 @@ func TestSpendFromTotal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.currency.SpendFromTotal(tt.spend)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SpendFromTotal() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
 			if tt.wantErr {
+				assert.Error(t, err)
 				return
 			}
-			if tt.currency.Gold != tt.wantGP {
-				t.Errorf("Gold = %d, want %d", tt.currency.Gold, tt.wantGP)
-			}
-			if tt.currency.Platinum != tt.wantPP {
-				t.Errorf("Platinum = %d, want %d", tt.currency.Platinum, tt.wantPP)
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantGP, tt.currency.Gold)
+			assert.Equal(t, tt.wantPP, tt.currency.Platinum)
 		})
 	}
 }
@@ -121,29 +107,21 @@ func TestItemCharges(t *testing.T) {
 
 	// Use some charges
 	for i := 0; i < 5; i++ {
-		if !item.UseCharge() {
-			t.Errorf("UseCharge() should succeed at %d charges", item.Charges+1)
-		}
+		assert.True(t, item.UseCharge(), "UseCharge() should succeed at %d charges", item.Charges+1)
 	}
 
-	if item.Charges != 2 {
-		t.Errorf("Charges = %d, want 2", item.Charges)
-	}
+	assert.Equal(t, 2, item.Charges)
 
 	// Recharge
 	item.Recharge(10) // More than max
-	if item.Charges != 7 {
-		t.Errorf("Charges after recharge = %d, want 7", item.Charges)
-	}
+	assert.Equal(t, 7, item.Charges)
 
 	// Use all charges
 	for item.Charges > 0 {
 		item.UseCharge()
 	}
 
-	if item.UseCharge() {
-		t.Error("UseCharge() should fail at 0 charges")
-	}
+	assert.False(t, item.UseCharge(), "UseCharge() should fail at 0 charges")
 }
 
 func TestEquipmentSlots(t *testing.T) {
@@ -157,21 +135,19 @@ func TestEquipmentSlots(t *testing.T) {
 	equip.SetSlot(SlotOffHand, &shield)
 
 	// Verify equipped
-	if equip.GetSlot(SlotMainHand) == nil || equip.GetSlot(SlotMainHand).Name != "Longsword" {
-		t.Error("Main hand should have Longsword")
-	}
-	if equip.GetSlot(SlotOffHand) == nil || equip.GetSlot(SlotOffHand).Name != "Shield" {
-		t.Error("Off hand should have Shield")
-	}
+	mainHand := equip.GetSlot(SlotMainHand)
+	require.NotNil(t, mainHand, "Main hand should have Longsword")
+	assert.Equal(t, "Longsword", mainHand.Name)
+
+	offHand := equip.GetSlot(SlotOffHand)
+	require.NotNil(t, offHand, "Off hand should have Shield")
+	assert.Equal(t, "Shield", offHand.Name)
 
 	// Unequip (replace with nil)
 	previous := equip.SetSlot(SlotMainHand, nil)
-	if previous == nil || previous.Name != "Longsword" {
-		t.Error("SetSlot should return previously equipped item")
-	}
-	if equip.GetSlot(SlotMainHand) != nil {
-		t.Error("Main hand should be empty after unequip")
-	}
+	require.NotNil(t, previous, "SetSlot should return previously equipped item")
+	assert.Equal(t, "Longsword", previous.Name)
+	assert.Nil(t, equip.GetSlot(SlotMainHand), "Main hand should be empty after unequip")
 }
 
 func TestEquipmentCountAttunedItems(t *testing.T) {
@@ -181,9 +157,7 @@ func TestEquipmentCountAttunedItems(t *testing.T) {
 	sword := NewItem("sword-1", "Longsword", ItemTypeWeapon)
 	equip.SetSlot(SlotMainHand, &sword)
 
-	if equip.CountAttunedItems() != 0 {
-		t.Error("Should have 0 attuned items")
-	}
+	assert.Equal(t, 0, equip.CountAttunedItems())
 
 	// Add attuned items
 	ring1 := NewItem("ring-1", "Ring of Protection", ItemTypeMagicItem)
@@ -194,9 +168,7 @@ func TestEquipmentCountAttunedItems(t *testing.T) {
 	cloak.Attuned = true
 	equip.SetSlot(SlotCloak, &cloak)
 
-	if equip.CountAttunedItems() != 2 {
-		t.Errorf("CountAttunedItems() = %d, want 2", equip.CountAttunedItems())
-	}
+	assert.Equal(t, 2, equip.CountAttunedItems())
 }
 
 func TestInventoryOperations(t *testing.T) {
@@ -213,37 +185,25 @@ func TestInventoryOperations(t *testing.T) {
 	inv.AddItem(potion)
 
 	// Verify items added
-	if len(inv.Items) != 2 {
-		t.Errorf("Items count = %d, want 2", len(inv.Items))
-	}
+	assert.Len(t, inv.Items, 2)
 
 	// Find item
 	found := inv.FindItem("sword-1")
-	if found == nil || found.Name != "Longsword" {
-		t.Error("FindItem should return the Longsword")
-	}
+	require.NotNil(t, found, "FindItem should return the Longsword")
+	assert.Equal(t, "Longsword", found.Name)
 
 	// Find non-existent
-	if inv.FindItem("nonexistent") != nil {
-		t.Error("FindItem should return nil for non-existent ID")
-	}
+	assert.Nil(t, inv.FindItem("nonexistent"), "FindItem should return nil for non-existent ID")
 
 	// Total weight: 3.0 + (0.5 * 3) = 4.5
-	if inv.TotalWeight() != 4.5 {
-		t.Errorf("TotalWeight() = %f, want 4.5", inv.TotalWeight())
-	}
+	assert.Equal(t, 4.5, inv.TotalWeight())
 
 	// Remove item
 	removed := inv.RemoveItem("sword-1")
-	if removed == nil || removed.Name != "Longsword" {
-		t.Error("RemoveItem should return the removed item")
-	}
-	if len(inv.Items) != 1 {
-		t.Errorf("Items count after remove = %d, want 1", len(inv.Items))
-	}
+	require.NotNil(t, removed, "RemoveItem should return the removed item")
+	assert.Equal(t, "Longsword", removed.Name)
+	assert.Len(t, inv.Items, 1)
 
 	// Remove non-existent
-	if inv.RemoveItem("nonexistent") != nil {
-		t.Error("RemoveItem should return nil for non-existent ID")
-	}
+	assert.Nil(t, inv.RemoveItem("nonexistent"), "RemoveItem should return nil for non-existent ID")
 }

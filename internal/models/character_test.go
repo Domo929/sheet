@@ -4,29 +4,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewCharacter(t *testing.T) {
 	c := NewCharacter("char-1", "Gandalf", "Human", "Wizard")
 
-	if c.ID != "char-1" {
-		t.Errorf("ID = %s, want char-1", c.ID)
-	}
-	if c.Info.Name != "Gandalf" {
-		t.Errorf("Name = %s, want Gandalf", c.Info.Name)
-	}
-	if c.Info.Race != "Human" {
-		t.Errorf("Race = %s, want Human", c.Info.Race)
-	}
-	if c.Info.Class != "Wizard" {
-		t.Errorf("Class = %s, want Wizard", c.Info.Class)
-	}
-	if c.Info.Level != 1 {
-		t.Errorf("Level = %d, want 1", c.Info.Level)
-	}
-	if c.CreatedAt.IsZero() {
-		t.Error("CreatedAt should be set")
-	}
+	assert.Equal(t, "char-1", c.ID)
+	assert.Equal(t, "Gandalf", c.Info.Name)
+	assert.Equal(t, "Human", c.Info.Race)
+	assert.Equal(t, "Wizard", c.Info.Class)
+	assert.Equal(t, 1, c.Info.Level)
+	assert.False(t, c.CreatedAt.IsZero(), "CreatedAt should be set")
 }
 
 func TestCharacterGetSkillModifier(t *testing.T) {
@@ -36,15 +27,11 @@ func TestCharacterGetSkillModifier(t *testing.T) {
 
 	// Stealth with expertise: +3 (DEX) + 4 (2x prof at level 1) = +7
 	mod := c.GetSkillModifier(SkillStealth)
-	if mod != 7 {
-		t.Errorf("Stealth modifier = %d, want 7 (+3 DEX + 4 expertise)", mod)
-	}
+	assert.Equal(t, 7, mod, "Stealth modifier (+3 DEX + 4 expertise)")
 
 	// Athletics without proficiency: +0 (STR)
 	mod = c.GetSkillModifier(SkillAthletics)
-	if mod != 0 {
-		t.Errorf("Athletics modifier = %d, want 0", mod)
-	}
+	assert.Equal(t, 0, mod, "Athletics modifier")
 }
 
 func TestCharacterGetSavingThrowModifier(t *testing.T) {
@@ -55,15 +42,11 @@ func TestCharacterGetSavingThrowModifier(t *testing.T) {
 
 	// STR save proficient: +3 (STR) + 2 (prof) = +5
 	mod := c.GetSavingThrowModifier(AbilityStrength)
-	if mod != 5 {
-		t.Errorf("STR save = %d, want 5", mod)
-	}
+	assert.Equal(t, 5, mod, "STR save")
 
 	// WIS save not proficient: +1 (WIS) = +1
 	mod = c.GetSavingThrowModifier(AbilityWisdom)
-	if mod != 1 {
-		t.Errorf("WIS save = %d, want 1", mod)
-	}
+	assert.Equal(t, 1, mod, "WIS save")
 }
 
 func TestCharacterSpellcasting(t *testing.T) {
@@ -77,29 +60,19 @@ func TestCharacterSpellcasting(t *testing.T) {
 
 	// Spell save DC: 8 + 4 (INT) + 3 (prof) = 15
 	dc := c.GetSpellSaveDC()
-	if dc != 15 {
-		t.Errorf("Spell save DC = %d, want 15", dc)
-	}
+	assert.Equal(t, 15, dc, "Spell save DC")
 
 	// Spell attack bonus: 4 (INT) + 3 (prof) = +7
 	atk := c.GetSpellAttackBonus()
-	if atk != 7 {
-		t.Errorf("Spell attack = %d, want 7", atk)
-	}
+	assert.Equal(t, 7, atk, "Spell attack")
 }
 
 func TestCharacterSpellcastingNil(t *testing.T) {
 	c := NewCharacter("char-1", "Test", "Human", "Fighter")
 
-	if c.GetSpellSaveDC() != 0 {
-		t.Error("Non-caster should have 0 spell save DC")
-	}
-	if c.GetSpellAttackBonus() != 0 {
-		t.Error("Non-caster should have 0 spell attack")
-	}
-	if c.IsSpellcaster() {
-		t.Error("Fighter should not be a spellcaster")
-	}
+	assert.Equal(t, 0, c.GetSpellSaveDC(), "Non-caster should have 0 spell save DC")
+	assert.Equal(t, 0, c.GetSpellAttackBonus(), "Non-caster should have 0 spell attack")
+	assert.False(t, c.IsSpellcaster(), "Fighter should not be a spellcaster")
 }
 
 func TestCharacterDamageAndHealing(t *testing.T) {
@@ -107,14 +80,10 @@ func TestCharacterDamageAndHealing(t *testing.T) {
 	c.CombatStats.HitPoints = NewHitPoints(20)
 
 	c.TakeDamage(8)
-	if c.CombatStats.HitPoints.Current != 12 {
-		t.Errorf("HP after damage = %d, want 12", c.CombatStats.HitPoints.Current)
-	}
+	assert.Equal(t, 12, c.CombatStats.HitPoints.Current, "HP after damage")
 
 	c.Heal(5)
-	if c.CombatStats.HitPoints.Current != 17 {
-		t.Errorf("HP after heal = %d, want 17", c.CombatStats.HitPoints.Current)
-	}
+	assert.Equal(t, 17, c.CombatStats.HitPoints.Current, "HP after heal")
 }
 
 func TestCharacterLongRest(t *testing.T) {
@@ -135,32 +104,21 @@ func TestCharacterLongRest(t *testing.T) {
 	c.LongRest()
 
 	// HP should be restored
-	if c.CombatStats.HitPoints.Current != 30 {
-		t.Errorf("HP after rest = %d, want 30", c.CombatStats.HitPoints.Current)
-	}
-	if c.CombatStats.HitPoints.Temporary != 0 {
-		t.Errorf("Temp HP after rest = %d, want 0", c.CombatStats.HitPoints.Temporary)
-	}
+	assert.Equal(t, 30, c.CombatStats.HitPoints.Current, "HP after rest")
+	assert.Equal(t, 0, c.CombatStats.HitPoints.Temporary, "Temp HP after rest")
 
 	// Hit dice should recover (half of 5 = 2)
-	if c.CombatStats.HitDice.Remaining != 2 {
-		t.Errorf("Hit dice after rest = %d, want 2", c.CombatStats.HitDice.Remaining)
-	}
+	assert.Equal(t, 2, c.CombatStats.HitDice.Remaining, "Hit dice after rest")
 
 	// Exhaustion should decrease by 1
-	if c.CombatStats.ExhaustionLevel != 1 {
-		t.Errorf("Exhaustion after rest = %d, want 1", c.CombatStats.ExhaustionLevel)
-	}
+	assert.Equal(t, 1, c.CombatStats.ExhaustionLevel, "Exhaustion after rest")
 
 	// Death saves should reset
-	if c.CombatStats.DeathSaves.Successes != 0 || c.CombatStats.DeathSaves.Failures != 0 {
-		t.Error("Death saves should reset after long rest")
-	}
+	assert.Equal(t, 0, c.CombatStats.DeathSaves.Successes, "Death saves successes should reset after long rest")
+	assert.Equal(t, 0, c.CombatStats.DeathSaves.Failures, "Death saves failures should reset after long rest")
 
 	// Spell slots should be restored
-	if c.Spellcasting.SpellSlots.Level1.Remaining != 4 {
-		t.Errorf("Level 1 slots = %d, want 4", c.Spellcasting.SpellSlots.Level1.Remaining)
-	}
+	assert.Equal(t, 4, c.Spellcasting.SpellSlots.Level1.Remaining, "Level 1 slots")
 }
 
 func TestCharacterShortRest(t *testing.T) {
@@ -176,9 +134,7 @@ func TestCharacterShortRest(t *testing.T) {
 	c.ShortRest()
 
 	// Pact magic should be restored
-	if c.Spellcasting.PactMagic.Remaining != 2 {
-		t.Errorf("Pact slots after short rest = %d, want 2", c.Spellcasting.PactMagic.Remaining)
-	}
+	assert.Equal(t, 2, c.Spellcasting.PactMagic.Remaining, "Pact slots after short rest")
 }
 
 func TestCharacterJSONRoundTrip(t *testing.T) {
@@ -190,66 +146,46 @@ func TestCharacterJSONRoundTrip(t *testing.T) {
 
 	// Serialize
 	data, err := c.ToJSON()
-	if err != nil {
-		t.Fatalf("ToJSON error: %v", err)
-	}
+	require.NoError(t, err, "ToJSON")
 
 	// Deserialize
 	c2, err := FromJSON(data)
-	if err != nil {
-		t.Fatalf("FromJSON error: %v", err)
-	}
+	require.NoError(t, err, "FromJSON")
 
 	// Verify
-	if c2.Info.Name != "Gandalf" {
-		t.Errorf("Name after round trip = %s, want Gandalf", c2.Info.Name)
-	}
-	if c2.AbilityScores.Intelligence.Base != 18 {
-		t.Errorf("INT after round trip = %d, want 18", c2.AbilityScores.Intelligence.Base)
-	}
-	if c2.Skills.Arcana.Proficiency != Proficient {
-		t.Error("Arcana proficiency should be preserved")
-	}
+	assert.Equal(t, "Gandalf", c2.Info.Name, "Name after round trip")
+	assert.Equal(t, 18, c2.AbilityScores.Intelligence.Base, "INT after round trip")
+	assert.Equal(t, Proficient, c2.Skills.Arcana.Proficiency, "Arcana proficiency should be preserved")
 }
 
 func TestCharacterValidate(t *testing.T) {
 	// Valid character
 	c := NewCharacter("char-1", "Test", "Human", "Fighter")
 	errors := c.Validate()
-	if len(errors) != 0 {
-		t.Errorf("Valid character has errors: %v", errors)
-	}
+	assert.Empty(t, errors, "Valid character should have no errors")
 
 	// Invalid: missing ID
 	c2 := NewCharacter("", "Test", "Human", "Fighter")
 	errors = c2.Validate()
-	if len(errors) == 0 {
-		t.Error("Character without ID should have validation error")
-	}
+	assert.NotEmpty(t, errors, "Character without ID should have validation error")
 
 	// Invalid: missing name
 	c3 := NewCharacter("id-1", "", "Human", "Fighter")
 	errors = c3.Validate()
-	if len(errors) == 0 {
-		t.Error("Character without name should have validation error")
-	}
+	assert.NotEmpty(t, errors, "Character without name should have validation error")
 
 	// Invalid: level out of range
 	c4 := NewCharacter("id-1", "Test", "Human", "Fighter")
 	c4.Info.Level = 25
 	errors = c4.Validate()
-	if len(errors) == 0 {
-		t.Error("Character with level 25 should have validation error")
-	}
+	assert.NotEmpty(t, errors, "Character with level 25 should have validation error")
 }
 
 func TestCharacterGetInitiative(t *testing.T) {
 	c := NewCharacter("char-1", "Test", "Human", "Fighter")
 	c.AbilityScores.Dexterity = AbilityScore{Base: 16} // +3 modifier
 
-	if c.GetInitiative() != 3 {
-		t.Errorf("Initiative = %d, want 3", c.GetInitiative())
-	}
+	assert.Equal(t, 3, c.GetInitiative())
 }
 
 func TestCharacterJSONStructure(t *testing.T) {
@@ -264,9 +200,7 @@ func TestCharacterJSONStructure(t *testing.T) {
 		"skills", "savingThrows", "combatStats", "inventory", "features", "proficiencies", "personality"}
 
 	for _, key := range expectedKeys {
-		if _, ok := result[key]; !ok {
-			t.Errorf("Missing expected key in JSON: %s", key)
-		}
+		assert.Contains(t, result, key, "Missing expected key in JSON")
 	}
 }
 
@@ -279,20 +213,15 @@ func TestCharacterWriteTo(t *testing.T) {
 	// Write to buffer
 	var buf bytes.Buffer
 	err := c.WriteTo(&buf)
-	if err != nil {
-		t.Fatalf("WriteTo() error = %v", err)
-	}
+	require.NoError(t, err, "WriteTo()")
 
 	// Verify we got JSON output
 	var result map[string]interface{}
-	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
-		t.Fatalf("Failed to unmarshal WriteTo output: %v", err)
-	}
+	err = json.Unmarshal(buf.Bytes(), &result)
+	require.NoError(t, err, "Failed to unmarshal WriteTo output")
 
 	// Verify some data
-	if result["id"] != "char-1" {
-		t.Errorf("id = %v, want char-1", result["id"])
-	}
+	assert.Equal(t, "char-1", result["id"])
 }
 
 func TestCharacterReadFrom(t *testing.T) {
@@ -304,38 +233,21 @@ func TestCharacterReadFrom(t *testing.T) {
 
 	// Write to buffer
 	var buf bytes.Buffer
-	if err := original.WriteTo(&buf); err != nil {
-		t.Fatalf("WriteTo() error = %v", err)
-	}
+	err := original.WriteTo(&buf)
+	require.NoError(t, err, "WriteTo()")
 
 	// Read back from buffer
 	loaded, err := ReadFrom(&buf)
-	if err != nil {
-		t.Fatalf("ReadFrom() error = %v", err)
-	}
+	require.NoError(t, err, "ReadFrom()")
 
 	// Verify loaded character
-	if loaded.ID != "char-2" {
-		t.Errorf("ID = %s, want char-2", loaded.ID)
-	}
-	if loaded.Info.Name != "ReadTest" {
-		t.Errorf("Name = %s, want ReadTest", loaded.Info.Name)
-	}
-	if loaded.Info.Race != "Dwarf" {
-		t.Errorf("Race = %s, want Dwarf", loaded.Info.Race)
-	}
-	if loaded.Info.Class != "Cleric" {
-		t.Errorf("Class = %s, want Cleric", loaded.Info.Class)
-	}
-	if loaded.Info.Level != 3 {
-		t.Errorf("Level = %d, want 3", loaded.Info.Level)
-	}
-	if loaded.AbilityScores.Wisdom.Base != 16 {
-		t.Errorf("Wisdom = %d, want 16", loaded.AbilityScores.Wisdom.Base)
-	}
-	if loaded.AbilityScores.Constitution.Base != 15 {
-		t.Errorf("Constitution = %d, want 15", loaded.AbilityScores.Constitution.Base)
-	}
+	assert.Equal(t, "char-2", loaded.ID)
+	assert.Equal(t, "ReadTest", loaded.Info.Name)
+	assert.Equal(t, "Dwarf", loaded.Info.Race)
+	assert.Equal(t, "Cleric", loaded.Info.Class)
+	assert.Equal(t, 3, loaded.Info.Level)
+	assert.Equal(t, 16, loaded.AbilityScores.Wisdom.Base)
+	assert.Equal(t, 15, loaded.AbilityScores.Constitution.Base)
 }
 
 func TestCharacterWriteToReadFromRoundTrip(t *testing.T) {
@@ -350,29 +262,16 @@ func TestCharacterWriteToReadFromRoundTrip(t *testing.T) {
 
 	// Write to buffer
 	var buf bytes.Buffer
-	if err := original.WriteTo(&buf); err != nil {
-		t.Fatalf("WriteTo() error = %v", err)
-	}
+	err := original.WriteTo(&buf)
+	require.NoError(t, err, "WriteTo()")
 
 	// Read back
 	loaded, err := ReadFrom(&buf)
-	if err != nil {
-		t.Fatalf("ReadFrom() error = %v", err)
-	}
+	require.NoError(t, err, "ReadFrom()")
 
 	// Verify key fields match
-	if loaded.ID != original.ID {
-		t.Errorf("ID mismatch: got %s, want %s", loaded.ID, original.ID)
-	}
-	if loaded.Info.Level != original.Info.Level {
-		t.Errorf("Level mismatch: got %d, want %d", loaded.Info.Level, original.Info.Level)
-	}
-	if loaded.AbilityScores.Charisma.Base != original.AbilityScores.Charisma.Base {
-		t.Errorf("Charisma mismatch: got %d, want %d",
-			loaded.AbilityScores.Charisma.Base, original.AbilityScores.Charisma.Base)
-	}
-	if loaded.CombatStats.HitPoints.Maximum != original.CombatStats.HitPoints.Maximum {
-		t.Errorf("Max HP mismatch: got %d, want %d",
-			loaded.CombatStats.HitPoints.Maximum, original.CombatStats.HitPoints.Maximum)
-	}
+	assert.Equal(t, original.ID, loaded.ID, "ID mismatch")
+	assert.Equal(t, original.Info.Level, loaded.Info.Level, "Level mismatch")
+	assert.Equal(t, original.AbilityScores.Charisma.Base, loaded.AbilityScores.Charisma.Base, "Charisma mismatch")
+	assert.Equal(t, original.CombatStats.HitPoints.Maximum, loaded.CombatStats.HitPoints.Maximum, "Max HP mismatch")
 }

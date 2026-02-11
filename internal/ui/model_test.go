@@ -5,15 +5,16 @@ import (
 
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/ui/views"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func TestMainSheetQuitKey(t *testing.T) {
 	// Create a model in the main sheet view state
 	m, err := NewModel()
-	if err != nil {
-		t.Fatalf("Failed to create model: %v", err)
-	}
+	require.NoError(t, err, "Failed to create model")
 
 	// Set up as if a character was loaded
 	char := &models.Character{
@@ -29,22 +30,17 @@ func TestMainSheetQuitKey(t *testing.T) {
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
 
 	// Should return tea.Quit command
-	if cmd == nil {
-		t.Error("Expected quit command, got nil")
-	}
+	require.NotNil(t, cmd, "Expected quit command, got nil")
 
 	// Verify it's actually a quit command by checking the message it produces
 	msg := cmd()
-	if _, ok := msg.(tea.QuitMsg); !ok {
-		t.Errorf("Expected tea.QuitMsg, got %T", msg)
-	}
+	_, ok := msg.(tea.QuitMsg)
+	assert.True(t, ok, "Expected tea.QuitMsg, got %T", msg)
 }
 
 func TestMainSheetCtrlCQuit(t *testing.T) {
 	m, err := NewModel()
-	if err != nil {
-		t.Fatalf("Failed to create model: %v", err)
-	}
+	require.NoError(t, err, "Failed to create model")
 
 	char := &models.Character{
 		Info: models.CharacterInfo{
@@ -58,21 +54,16 @@ func TestMainSheetCtrlCQuit(t *testing.T) {
 	// Send Ctrl+C
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
 
-	if cmd == nil {
-		t.Error("Expected quit command, got nil")
-	}
+	require.NotNil(t, cmd, "Expected quit command, got nil")
 
 	msg := cmd()
-	if _, ok := msg.(tea.QuitMsg); !ok {
-		t.Errorf("Expected tea.QuitMsg, got %T", msg)
-	}
+	_, ok := msg.(tea.QuitMsg)
+	assert.True(t, ok, "Expected tea.QuitMsg, got %T", msg)
 }
 
 func TestCancelCharacterCreation(t *testing.T) {
 	m, err := NewModel()
-	if err != nil {
-		t.Fatalf("Failed to create model: %v", err)
-	}
+	require.NoError(t, err, "Failed to create model")
 
 	// Start character creation
 	m.currentView = ViewCharacterCreation
@@ -83,12 +74,8 @@ func TestCancelCharacterCreation(t *testing.T) {
 	m = updatedModel.(Model)
 
 	// Should return to character selection
-	if m.currentView != ViewCharacterSelection {
-		t.Errorf("Expected ViewCharacterSelection after cancel, got %v", m.currentView)
-	}
+	assert.Equal(t, ViewCharacterSelection, m.currentView, "Expected ViewCharacterSelection after cancel")
 
 	// Creation model should be cleared
-	if m.characterCreationModel != nil {
-		t.Error("Expected characterCreationModel to be nil after cancel")
-	}
+	assert.Nil(t, m.characterCreationModel, "Expected characterCreationModel to be nil after cancel")
 }

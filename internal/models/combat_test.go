@@ -1,6 +1,10 @@
 package models
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestHitPointsTakeDamage(t *testing.T) {
 	tests := []struct {
@@ -65,15 +69,9 @@ func TestHitPointsTakeDamage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hp := tt.initial
 			actual := hp.TakeDamage(tt.damage)
-			if hp.Current != tt.expectedHP {
-				t.Errorf("Current HP = %d, want %d", hp.Current, tt.expectedHP)
-			}
-			if hp.Temporary != tt.expectedTemp {
-				t.Errorf("Temporary HP = %d, want %d", hp.Temporary, tt.expectedTemp)
-			}
-			if actual != tt.expectedActual {
-				t.Errorf("Actual damage = %d, want %d", actual, tt.expectedActual)
-			}
+			assert.Equal(t, tt.expectedHP, hp.Current, "Current HP")
+			assert.Equal(t, tt.expectedTemp, hp.Temporary, "Temporary HP")
+			assert.Equal(t, tt.expectedActual, actual, "Actual damage")
 		})
 	}
 }
@@ -121,9 +119,7 @@ func TestHitPointsHeal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hp := tt.initial
 			hp.Heal(tt.heal)
-			if hp.Current != tt.expectedHP {
-				t.Errorf("Current HP = %d, want %d", hp.Current, tt.expectedHP)
-			}
+			assert.Equal(t, tt.expectedHP, hp.Current, "Current HP")
 		})
 	}
 }
@@ -133,45 +129,30 @@ func TestHitPointsAddTemporaryHP(t *testing.T) {
 
 	// Lower temp HP should not replace
 	hp.AddTemporaryHP(3)
-	if hp.Temporary != 5 {
-		t.Errorf("Temporary HP = %d, want 5 (should not decrease)", hp.Temporary)
-	}
+	assert.Equal(t, 5, hp.Temporary, "should not decrease")
 
 	// Higher temp HP should replace
 	hp.AddTemporaryHP(10)
-	if hp.Temporary != 10 {
-		t.Errorf("Temporary HP = %d, want 10", hp.Temporary)
-	}
+	assert.Equal(t, 10, hp.Temporary)
 }
 
 func TestHitPointsIsUnconscious(t *testing.T) {
 	hp := HitPoints{Maximum: 20, Current: 5}
-	if hp.IsUnconscious() {
-		t.Error("Should not be unconscious at 5 HP")
-	}
+	assert.False(t, hp.IsUnconscious(), "Should not be unconscious at 5 HP")
 
 	hp.Current = 0
-	if !hp.IsUnconscious() {
-		t.Error("Should be unconscious at 0 HP")
-	}
+	assert.True(t, hp.IsUnconscious(), "Should be unconscious at 0 HP")
 }
 
 func TestHitDiceUse(t *testing.T) {
 	hd := NewHitDice(5, 8)
 
 	for i := 0; i < 5; i++ {
-		if !hd.Use() {
-			t.Errorf("Use() should succeed when %d remaining", hd.Remaining+1)
-		}
+		assert.True(t, hd.Use(), "Use() should succeed when %d remaining", hd.Remaining+1)
 	}
 
-	if hd.Remaining != 0 {
-		t.Errorf("Remaining = %d, want 0", hd.Remaining)
-	}
-
-	if hd.Use() {
-		t.Error("Use() should fail when 0 remaining")
-	}
+	assert.Equal(t, 0, hd.Remaining)
+	assert.False(t, hd.Use(), "Use() should fail when 0 remaining")
 }
 
 func TestHitDiceRecoverOnLongRest(t *testing.T) {
@@ -193,12 +174,8 @@ func TestHitDiceRecoverOnLongRest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hd := HitDice{Total: tt.total, Remaining: tt.remaining, DieType: 8}
 			recovered := hd.RecoverOnLongRest()
-			if recovered != tt.expectedRecovered {
-				t.Errorf("Recovered = %d, want %d", recovered, tt.expectedRecovered)
-			}
-			if hd.Remaining != tt.expectedRemaining {
-				t.Errorf("Remaining = %d, want %d", hd.Remaining, tt.expectedRemaining)
-			}
+			assert.Equal(t, tt.expectedRecovered, recovered, "Recovered")
+			assert.Equal(t, tt.expectedRemaining, hd.Remaining, "Remaining")
 		})
 	}
 }
@@ -209,43 +186,32 @@ func TestDeathSaves(t *testing.T) {
 	// Test successes
 	ds.AddSuccess()
 	ds.AddSuccess()
-	if ds.IsStabilized() {
-		t.Error("Should not be stabilized with 2 successes")
-	}
+	assert.False(t, ds.IsStabilized(), "Should not be stabilized with 2 successes")
 
 	stabilized := ds.AddSuccess()
-	if !stabilized || !ds.IsStabilized() {
-		t.Error("Should be stabilized with 3 successes")
-	}
+	assert.True(t, stabilized, "Should be stabilized with 3 successes")
+	assert.True(t, ds.IsStabilized(), "Should be stabilized with 3 successes")
 
 	// Reset and test failures
 	ds.Reset()
-	if ds.Successes != 0 || ds.Failures != 0 {
-		t.Error("Reset should clear successes and failures")
-	}
+	assert.Equal(t, 0, ds.Successes, "Reset should clear successes")
+	assert.Equal(t, 0, ds.Failures, "Reset should clear failures")
 
 	ds.AddFailure()
 	ds.AddFailure()
-	if ds.IsDead() {
-		t.Error("Should not be dead with 2 failures")
-	}
+	assert.False(t, ds.IsDead(), "Should not be dead with 2 failures")
 
 	dead := ds.AddFailure()
-	if !dead || !ds.IsDead() {
-		t.Error("Should be dead with 3 failures")
-	}
+	assert.True(t, dead, "Should be dead with 3 failures")
+	assert.True(t, ds.IsDead(), "Should be dead with 3 failures")
 }
 
 func TestDeathSavesCriticalFailure(t *testing.T) {
 	ds := NewDeathSaves()
 	ds.AddFailure()
 	dead := ds.AddCriticalFailure()
-	if !dead {
-		t.Error("Critical failure after 1 failure should result in death")
-	}
-	if ds.Failures != 3 {
-		t.Errorf("Failures = %d, want 3", ds.Failures)
-	}
+	assert.True(t, dead, "Critical failure after 1 failure should result in death")
+	assert.Equal(t, 3, ds.Failures)
 }
 
 func TestCombatStatsConditions(t *testing.T) {
@@ -253,43 +219,29 @@ func TestCombatStatsConditions(t *testing.T) {
 
 	// Add condition
 	cs.AddCondition(ConditionPoisoned)
-	if !cs.HasCondition(ConditionPoisoned) {
-		t.Error("Should have poisoned condition")
-	}
+	assert.True(t, cs.HasCondition(ConditionPoisoned), "Should have poisoned condition")
 
 	// Adding same condition shouldn't duplicate
 	cs.AddCondition(ConditionPoisoned)
-	if len(cs.Conditions) != 1 {
-		t.Errorf("Conditions length = %d, want 1", len(cs.Conditions))
-	}
+	assert.Len(t, cs.Conditions, 1)
 
 	// Add another condition
 	cs.AddCondition(ConditionFrightened)
-	if len(cs.Conditions) != 2 {
-		t.Errorf("Conditions length = %d, want 2", len(cs.Conditions))
-	}
+	assert.Len(t, cs.Conditions, 2)
 
 	// Remove condition
 	cs.RemoveCondition(ConditionPoisoned)
-	if cs.HasCondition(ConditionPoisoned) {
-		t.Error("Should not have poisoned condition after removal")
-	}
-	if !cs.HasCondition(ConditionFrightened) {
-		t.Error("Should still have frightened condition")
-	}
+	assert.False(t, cs.HasCondition(ConditionPoisoned), "Should not have poisoned condition after removal")
+	assert.True(t, cs.HasCondition(ConditionFrightened), "Should still have frightened condition")
 
 	// Clear all
 	cs.ClearConditions()
-	if len(cs.Conditions) != 0 {
-		t.Error("Should have no conditions after clear")
-	}
+	assert.Empty(t, cs.Conditions, "Should have no conditions after clear")
 }
 
 func TestAllConditionsCount(t *testing.T) {
 	conditions := AllConditions()
-	if len(conditions) != 15 {
-		t.Errorf("AllConditions() returned %d conditions, want 15", len(conditions))
-	}
+	assert.Len(t, conditions, 15)
 }
 
 func TestCalculateAC(t *testing.T) {
@@ -398,9 +350,7 @@ func TestCalculateAC(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := CalculateAC(tt.baseAC, tt.armorAC, tt.shieldBonus, tt.dexModifier, tt.additionalModifiers, tt.maxDexBonus)
-			if got != tt.expected {
-				t.Errorf("CalculateAC() = %d, want %d", got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -510,9 +460,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := CalculateAttackBonus(tt.strMod, tt.dexMod, tt.proficient, tt.proficiencyBonus, tt.magicBonus, tt.weaponProps, tt.useStrength)
-			if got != tt.expected {
-				t.Errorf("CalculateAttackBonus() = %d, want %d", got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }

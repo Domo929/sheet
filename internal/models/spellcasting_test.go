@@ -1,24 +1,23 @@
 package models
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 func TestSlotTrackerUse(t *testing.T) {
 	st := NewSlotTracker(3)
 
 	for i := 0; i < 3; i++ {
-		if !st.Use() {
-			t.Errorf("Use() should succeed with %d remaining", st.Remaining+1)
-		}
+		assert.True(t, st.Use(), "Use() should succeed with %d remaining", st.Remaining+1)
 	}
 
-	if st.Use() {
-		t.Error("Use() should fail with 0 remaining")
-	}
+	assert.False(t, st.Use(), "Use() should fail with 0 remaining")
 
 	st.Restore()
-	if st.Remaining != 3 {
-		t.Errorf("Remaining after Restore = %d, want 3", st.Remaining)
-	}
+	assert.Equal(t, 3, st.Remaining)
 }
 
 func TestSpellSlotsGetAndSet(t *testing.T) {
@@ -44,25 +43,16 @@ func TestSpellSlotsGetAndSet(t *testing.T) {
 
 	for _, tt := range tests {
 		slot := ss.GetSlot(tt.level)
-		if slot == nil {
-			t.Errorf("GetSlot(%d) returned nil", tt.level)
-			continue
-		}
-		if slot.Total != tt.expected {
-			t.Errorf("Level %d Total = %d, want %d", tt.level, slot.Total, tt.expected)
-		}
+		require.NotNil(t, slot, "GetSlot(%d) returned nil", tt.level)
+		assert.Equal(t, tt.expected, slot.Total, "Level %d Total", tt.level)
 	}
 }
 
 func TestSpellSlotsGetInvalid(t *testing.T) {
 	ss := NewSpellSlots()
 
-	if ss.GetSlot(0) != nil {
-		t.Error("GetSlot(0) should return nil")
-	}
-	if ss.GetSlot(10) != nil {
-		t.Error("GetSlot(10) should return nil")
-	}
+	assert.Nil(t, ss.GetSlot(0), "GetSlot(0) should return nil")
+	assert.Nil(t, ss.GetSlot(10), "GetSlot(10) should return nil")
 }
 
 func TestSpellSlotsUseSlot(t *testing.T) {
@@ -70,20 +60,12 @@ func TestSpellSlotsUseSlot(t *testing.T) {
 	ss.SetSlots(1, 2)
 
 	// Use both slots
-	if !ss.UseSlot(1) {
-		t.Error("UseSlot(1) should succeed")
-	}
-	if !ss.UseSlot(1) {
-		t.Error("UseSlot(1) should succeed second time")
-	}
-	if ss.UseSlot(1) {
-		t.Error("UseSlot(1) should fail when empty")
-	}
+	assert.True(t, ss.UseSlot(1), "UseSlot(1) should succeed")
+	assert.True(t, ss.UseSlot(1), "UseSlot(1) should succeed second time")
+	assert.False(t, ss.UseSlot(1), "UseSlot(1) should fail when empty")
 
 	// Invalid level
-	if ss.UseSlot(0) {
-		t.Error("UseSlot(0) should fail")
-	}
+	assert.False(t, ss.UseSlot(0), "UseSlot(0) should fail")
 }
 
 func TestSpellSlotsRestoreAll(t *testing.T) {
@@ -100,37 +82,23 @@ func TestSpellSlotsRestoreAll(t *testing.T) {
 	// Restore all
 	ss.RestoreAll()
 
-	if ss.Level1.Remaining != 4 {
-		t.Errorf("Level1 remaining = %d, want 4", ss.Level1.Remaining)
-	}
-	if ss.Level2.Remaining != 3 {
-		t.Errorf("Level2 remaining = %d, want 3", ss.Level2.Remaining)
-	}
+	assert.Equal(t, 4, ss.Level1.Remaining)
+	assert.Equal(t, 3, ss.Level2.Remaining)
 }
 
 func TestPactMagic(t *testing.T) {
 	pm := NewPactMagic(5, 2) // 2 5th-level slots
 
-	if pm.SlotLevel != 5 {
-		t.Errorf("SlotLevel = %d, want 5", pm.SlotLevel)
-	}
+	assert.Equal(t, 5, pm.SlotLevel)
 
 	// Use slots
-	if !pm.Use() {
-		t.Error("Use() should succeed")
-	}
-	if !pm.Use() {
-		t.Error("Use() should succeed second time")
-	}
-	if pm.Use() {
-		t.Error("Use() should fail when empty")
-	}
+	assert.True(t, pm.Use(), "Use() should succeed")
+	assert.True(t, pm.Use(), "Use() should succeed second time")
+	assert.False(t, pm.Use(), "Use() should fail when empty")
 
 	// Restore
 	pm.Restore()
-	if pm.Remaining != 2 {
-		t.Errorf("Remaining after Restore = %d, want 2", pm.Remaining)
-	}
+	assert.Equal(t, 2, pm.Remaining)
 }
 
 func TestSpellcastingSpells(t *testing.T) {
@@ -140,18 +108,14 @@ func TestSpellcastingSpells(t *testing.T) {
 	sc.AddCantrip("Light")
 	sc.AddCantrip("Sacred Flame")
 
-	if len(sc.CantripsKnown) != 2 {
-		t.Errorf("CantripsKnown count = %d, want 2", len(sc.CantripsKnown))
-	}
+	assert.Len(t, sc.CantripsKnown, 2)
 
 	// Add spells
 	sc.AddSpell("Cure Wounds", 1)
 	sc.AddSpell("Bless", 1)
 	sc.AddSpell("Spiritual Weapon", 2)
 
-	if len(sc.KnownSpells) != 3 {
-		t.Errorf("KnownSpells count = %d, want 3", len(sc.KnownSpells))
-	}
+	assert.Len(t, sc.KnownSpells, 3)
 }
 
 func TestSpellcastingPrepare(t *testing.T) {
@@ -167,25 +131,17 @@ func TestSpellcastingPrepare(t *testing.T) {
 	sc.PrepareSpell("Cure Wounds", true)
 	sc.PrepareSpell("Bless", true)
 
-	if sc.CountPreparedSpells() != 2 {
-		t.Errorf("CountPreparedSpells() = %d, want 2", sc.CountPreparedSpells())
-	}
+	assert.Equal(t, 2, sc.CountPreparedSpells())
 
 	prepared := sc.GetPreparedSpells()
-	if len(prepared) != 2 {
-		t.Errorf("GetPreparedSpells() count = %d, want 2", len(prepared))
-	}
+	assert.Len(t, prepared, 2)
 
 	// Unprepare
 	sc.PrepareSpell("Bless", false)
-	if sc.CountPreparedSpells() != 1 {
-		t.Errorf("CountPreparedSpells() after unprepare = %d, want 1", sc.CountPreparedSpells())
-	}
+	assert.Equal(t, 1, sc.CountPreparedSpells())
 
 	// Prepare non-existent spell
-	if sc.PrepareSpell("Nonexistent", true) {
-		t.Error("PrepareSpell should return false for unknown spell")
-	}
+	assert.False(t, sc.PrepareSpell("Nonexistent", true), "PrepareSpell should return false for unknown spell")
 }
 
 func TestCalculateSpellSaveDC(t *testing.T) {
@@ -203,10 +159,7 @@ func TestCalculateSpellSaveDC(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dc := CalculateSpellSaveDC(tt.abilityMod, tt.profBonus)
-			if dc != tt.expected {
-				t.Errorf("CalculateSpellSaveDC(%d, %d) = %d, want %d",
-					tt.abilityMod, tt.profBonus, dc, tt.expected)
-			}
+			assert.Equal(t, tt.expected, dc)
 		})
 	}
 }
@@ -226,10 +179,7 @@ func TestCalculateSpellAttackBonus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bonus := CalculateSpellAttackBonus(tt.abilityMod, tt.profBonus)
-			if bonus != tt.expected {
-				t.Errorf("CalculateSpellAttackBonus(%d, %d) = %d, want %d",
-					tt.abilityMod, tt.profBonus, bonus, tt.expected)
-			}
+			assert.Equal(t, tt.expected, bonus)
 		})
 	}
 }

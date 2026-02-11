@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/Domo929/sheet/internal/models"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // createTestStorage creates a temporary storage for testing.
@@ -15,9 +17,7 @@ func createTestStorage(t *testing.T) (*CharacterStorage, string) {
 
 	tmpDir := t.TempDir()
 	storage, err := NewCharacterStorage(tmpDir)
-	if err != nil {
-		t.Fatalf("Failed to create test storage: %v", err)
-	}
+	require.NoError(t, err, "Failed to create test storage")
 
 	return storage, tmpDir
 }
@@ -32,37 +32,25 @@ func TestNewCharacterStorage(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	storage, err := NewCharacterStorage(tmpDir)
-	if err != nil {
-		t.Fatalf("NewCharacterStorage() error = %v", err)
-	}
+	require.NoError(t, err, "NewCharacterStorage() error")
+	require.NotNil(t, storage, "NewCharacterStorage() returned nil storage")
 
-	if storage == nil {
-		t.Fatal("NewCharacterStorage() returned nil storage")
-	}
-
-	if storage.GetBaseDir() != tmpDir {
-		t.Errorf("GetBaseDir() = %s, want %s", storage.GetBaseDir(), tmpDir)
-	}
+	assert.Equal(t, tmpDir, storage.GetBaseDir())
 
 	// Check that directory was created
-	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
-		t.Error("Character directory was not created")
-	}
+	_, err = os.Stat(tmpDir)
+	assert.False(t, os.IsNotExist(err), "Character directory was not created")
 }
 
 func TestNewCharacterStorageDefault(t *testing.T) {
 	storage, err := NewCharacterStorage("")
-	if err != nil {
-		t.Fatalf("NewCharacterStorage(\"\") error = %v", err)
-	}
+	require.NoError(t, err, "NewCharacterStorage(\"\") error")
 
 	// Should use default directory
 	homeDir, _ := os.UserHomeDir()
 	expectedDir := filepath.Join(homeDir, ".dnd_sheet", "characters")
 
-	if storage.GetBaseDir() != expectedDir {
-		t.Errorf("GetBaseDir() = %s, want %s", storage.GetBaseDir(), expectedDir)
-	}
+	assert.Equal(t, expectedDir, storage.GetBaseDir())
 }
 
 func TestSaveAndLoad(t *testing.T) {
@@ -76,45 +64,26 @@ func TestSaveAndLoad(t *testing.T) {
 
 	// Save character
 	path, err := storage.Save(char)
-	if err != nil {
-		t.Fatalf("Save() error = %v", err)
-	}
-
-	if path == "" {
-		t.Error("Save() returned empty path")
-	}
+	require.NoError(t, err, "Save() error")
+	assert.NotEmpty(t, path, "Save() returned empty path")
 
 	// Load character
 	loaded, err := storage.Load("TestHero")
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
+	require.NoError(t, err, "Load() error")
 
 	// Verify loaded character
-	if loaded.Info.Name != "TestHero" {
-		t.Errorf("Loaded character name = %s, want TestHero", loaded.Info.Name)
-	}
-	if loaded.Info.Race != "Human" {
-		t.Errorf("Loaded character race = %s, want Human", loaded.Info.Race)
-	}
-	if loaded.Info.Class != "Fighter" {
-		t.Errorf("Loaded character class = %s, want Fighter", loaded.Info.Class)
-	}
-	if loaded.Info.Level != 5 {
-		t.Errorf("Loaded character level = %d, want 5", loaded.Info.Level)
-	}
-	if loaded.AbilityScores.Strength.Base != 16 {
-		t.Errorf("Loaded character STR = %d, want 16", loaded.AbilityScores.Strength.Base)
-	}
+	assert.Equal(t, "TestHero", loaded.Info.Name)
+	assert.Equal(t, "Human", loaded.Info.Race)
+	assert.Equal(t, "Fighter", loaded.Info.Class)
+	assert.Equal(t, 5, loaded.Info.Level)
+	assert.Equal(t, 16, loaded.AbilityScores.Strength.Base)
 }
 
 func TestSaveNilCharacter(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
 	_, err := storage.Save(nil)
-	if err == nil {
-		t.Error("Save(nil) should return error")
-	}
+	assert.Error(t, err, "Save(nil) should return error")
 }
 
 func TestSaveEmptyName(t *testing.T) {
@@ -123,27 +92,21 @@ func TestSaveEmptyName(t *testing.T) {
 	char := createTestCharacter("", "Human", "Fighter")
 
 	_, err := storage.Save(char)
-	if err != ErrInvalidCharacterName {
-		t.Errorf("Save() error = %v, want ErrInvalidCharacterName", err)
-	}
+	assert.Equal(t, ErrInvalidCharacterName, err)
 }
 
 func TestLoadNonexistent(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
 	_, err := storage.Load("Nonexistent")
-	if err != ErrCharacterNotFound {
-		t.Errorf("Load() error = %v, want ErrCharacterNotFound", err)
-	}
+	assert.Equal(t, ErrCharacterNotFound, err)
 }
 
 func TestLoadEmptyName(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
 	_, err := storage.Load("")
-	if err != ErrInvalidCharacterName {
-		t.Errorf("Load() error = %v, want ErrInvalidCharacterName", err)
-	}
+	assert.Equal(t, ErrInvalidCharacterName, err)
 }
 
 func TestDelete(t *testing.T) {
@@ -152,72 +115,52 @@ func TestDelete(t *testing.T) {
 	// Create and save character
 	char := createTestCharacter("ToDelete", "Elf", "Wizard")
 	_, err := storage.Save(char)
-	if err != nil {
-		t.Fatalf("Save() error = %v", err)
-	}
+	require.NoError(t, err, "Save() error")
 
 	// Verify it exists
-	if !storage.Exists("ToDelete") {
-		t.Error("Character should exist before delete")
-	}
+	assert.True(t, storage.Exists("ToDelete"), "Character should exist before delete")
 
 	// Delete character
 	err = storage.Delete("ToDelete")
-	if err != nil {
-		t.Fatalf("Delete() error = %v", err)
-	}
+	require.NoError(t, err, "Delete() error")
 
 	// Verify it's gone
-	if storage.Exists("ToDelete") {
-		t.Error("Character should not exist after delete")
-	}
+	assert.False(t, storage.Exists("ToDelete"), "Character should not exist after delete")
 }
 
 func TestDeleteNonexistent(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
 	err := storage.Delete("Nonexistent")
-	if err != ErrCharacterNotFound {
-		t.Errorf("Delete() error = %v, want ErrCharacterNotFound", err)
-	}
+	assert.Equal(t, ErrCharacterNotFound, err)
 }
 
 func TestDeleteEmptyName(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
 	err := storage.Delete("")
-	if err != ErrInvalidCharacterName {
-		t.Errorf("Delete() error = %v, want ErrInvalidCharacterName", err)
-	}
+	assert.Equal(t, ErrInvalidCharacterName, err)
 }
 
 func TestExists(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
 	// Should not exist initially
-	if storage.Exists("TestChar") {
-		t.Error("Exists() = true, want false for nonexistent character")
-	}
+	assert.False(t, storage.Exists("TestChar"), "Exists() = true, want false for nonexistent character")
 
 	// Create and save character
 	char := createTestCharacter("TestChar", "Dwarf", "Cleric")
 	_, err := storage.Save(char)
-	if err != nil {
-		t.Fatalf("Save() error = %v", err)
-	}
+	require.NoError(t, err, "Save() error")
 
 	// Should exist now
-	if !storage.Exists("TestChar") {
-		t.Error("Exists() = false, want true for saved character")
-	}
+	assert.True(t, storage.Exists("TestChar"), "Exists() = false, want true for saved character")
 }
 
 func TestExistsEmptyName(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
-	if storage.Exists("") {
-		t.Error("Exists(\"\") should return false")
-	}
+	assert.False(t, storage.Exists(""), "Exists(\"\") should return false")
 }
 
 func TestList(t *testing.T) {
@@ -231,20 +174,15 @@ func TestList(t *testing.T) {
 	}
 
 	for _, char := range chars {
-		if _, err := storage.Save(char); err != nil {
-			t.Fatalf("Save() error = %v", err)
-		}
+		_, err := storage.Save(char)
+		require.NoError(t, err, "Save() error")
 	}
 
 	// List characters
 	list, err := storage.List()
-	if err != nil {
-		t.Fatalf("List() error = %v", err)
-	}
+	require.NoError(t, err, "List() error")
 
-	if len(list) != 3 {
-		t.Errorf("List() returned %d characters, want 3", len(list))
-	}
+	assert.Len(t, list, 3)
 
 	// Verify all characters are in the list
 	names := make(map[string]bool)
@@ -253,9 +191,7 @@ func TestList(t *testing.T) {
 	}
 
 	for _, char := range chars {
-		if !names[char.Info.Name] {
-			t.Errorf("Character %s not found in list", char.Info.Name)
-		}
+		assert.True(t, names[char.Info.Name], "Character %s not found in list", char.Info.Name)
 	}
 }
 
@@ -263,13 +199,9 @@ func TestListEmpty(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
 	list, err := storage.List()
-	if err != nil {
-		t.Fatalf("List() error = %v", err)
-	}
+	require.NoError(t, err, "List() error")
 
-	if len(list) != 0 {
-		t.Errorf("List() returned %d characters, want 0", len(list))
-	}
+	assert.Empty(t, list)
 }
 
 func TestRename(t *testing.T) {
@@ -278,45 +210,31 @@ func TestRename(t *testing.T) {
 	// Create and save character
 	char := createTestCharacter("OldName", "Halfling", "Rogue")
 	_, err := storage.Save(char)
-	if err != nil {
-		t.Fatalf("Save() error = %v", err)
-	}
+	require.NoError(t, err, "Save() error")
 
 	// Rename
 	err = storage.Rename("OldName", "NewName")
-	if err != nil {
-		t.Fatalf("Rename() error = %v", err)
-	}
+	require.NoError(t, err, "Rename() error")
 
 	// Old name should not exist
-	if storage.Exists("OldName") {
-		t.Error("Old character name should not exist after rename")
-	}
+	assert.False(t, storage.Exists("OldName"), "Old character name should not exist after rename")
 
 	// New name should exist
-	if !storage.Exists("NewName") {
-		t.Error("New character name should exist after rename")
-	}
+	assert.True(t, storage.Exists("NewName"), "New character name should exist after rename")
 
 	// Should be able to load with new name
 	loaded, err := storage.Load("NewName")
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
+	require.NoError(t, err, "Load() error")
 
 	// Data should be preserved (though name in file still says OldName)
-	if loaded.Info.Class != "Rogue" {
-		t.Errorf("Loaded character class = %s, want Rogue", loaded.Info.Class)
-	}
+	assert.Equal(t, "Rogue", loaded.Info.Class)
 }
 
 func TestRenameNonexistent(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
 	err := storage.Rename("Nonexistent", "NewName")
-	if err != ErrCharacterNotFound {
-		t.Errorf("Rename() error = %v, want ErrCharacterNotFound", err)
-	}
+	assert.Equal(t, ErrCharacterNotFound, err)
 }
 
 func TestRenameToExisting(t *testing.T) {
@@ -331,9 +249,7 @@ func TestRenameToExisting(t *testing.T) {
 
 	// Try to rename Char1 to Char2 (should fail)
 	err := storage.Rename("Char1", "Char2")
-	if err != ErrCharacterExists {
-		t.Errorf("Rename() error = %v, want ErrCharacterExists", err)
-	}
+	assert.Equal(t, ErrCharacterExists, err)
 }
 
 func TestRenameEmptyNames(t *testing.T) {
@@ -352,9 +268,7 @@ func TestRenameEmptyNames(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := storage.Rename(tt.oldName, tt.newName)
-			if err != ErrInvalidCharacterName {
-				t.Errorf("Rename() error = %v, want ErrInvalidCharacterName", err)
-			}
+			assert.Equal(t, ErrInvalidCharacterName, err)
 		})
 	}
 }
@@ -375,9 +289,7 @@ func TestSanitizeFilename(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
 			result := sanitizeFilename(tt.input)
-			if result != tt.expected {
-				t.Errorf("sanitizeFilename(%q) = %q, want %q", tt.input, result, tt.expected)
-			}
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
@@ -395,18 +307,12 @@ func TestAutoSave(t *testing.T) {
 
 	// AutoSave should update the timestamp
 	err := storage.AutoSave(char)
-	if err != nil {
-		t.Fatalf("AutoSave() error = %v", err)
-	}
+	require.NoError(t, err, "AutoSave() error")
 
-	if !char.UpdatedAt.After(oldUpdatedAt) {
-		t.Error("AutoSave() should update the UpdatedAt timestamp")
-	}
+	assert.True(t, char.UpdatedAt.After(oldUpdatedAt), "AutoSave() should update the UpdatedAt timestamp")
 
 	// Verify character was saved
-	if !storage.Exists("AutoSaved") {
-		t.Error("Character should exist after AutoSave()")
-	}
+	assert.True(t, storage.Exists("AutoSaved"), "Character should exist after AutoSave()")
 }
 
 func TestLoadByPath(t *testing.T) {
@@ -415,25 +321,17 @@ func TestLoadByPath(t *testing.T) {
 	// Create and save character
 	char := createTestCharacter("PathTest", "Dragonborn", "Paladin")
 	path, err := storage.Save(char)
-	if err != nil {
-		t.Fatalf("Save() error = %v", err)
-	}
+	require.NoError(t, err, "Save() error")
 
 	// Load by path
 	loaded, err := storage.LoadByPath(path)
-	if err != nil {
-		t.Fatalf("LoadByPath() error = %v", err)
-	}
+	require.NoError(t, err, "LoadByPath() error")
 
-	if loaded.Info.Name != "PathTest" {
-		t.Errorf("Loaded character name = %s, want PathTest", loaded.Info.Name)
-	}
+	assert.Equal(t, "PathTest", loaded.Info.Name)
 
 	// Try loading non-existent path
 	_, err = storage.LoadByPath(filepath.Join(tmpDir, "nonexistent.json"))
-	if err != ErrCharacterNotFound {
-		t.Errorf("LoadByPath() error = %v, want ErrCharacterNotFound", err)
-	}
+	assert.Equal(t, ErrCharacterNotFound, err)
 }
 
 func TestCharacterInfoList(t *testing.T) {
@@ -446,28 +344,13 @@ func TestCharacterInfoList(t *testing.T) {
 
 	// Get list
 	list, err := storage.List()
-	if err != nil {
-		t.Fatalf("List() error = %v", err)
-	}
-
-	if len(list) != 1 {
-		t.Fatalf("List() returned %d characters, want 1", len(list))
-	}
+	require.NoError(t, err, "List() error")
+	require.Len(t, list, 1)
 
 	info := list[0]
-	if info.Name != "InfoTest" {
-		t.Errorf("CharacterInfo.Name = %s, want InfoTest", info.Name)
-	}
-	if info.Race != "Gnome" {
-		t.Errorf("CharacterInfo.Race = %s, want Gnome", info.Race)
-	}
-	if info.Class != "Bard" {
-		t.Errorf("CharacterInfo.Class = %s, want Bard", info.Class)
-	}
-	if info.Level != 7 {
-		t.Errorf("CharacterInfo.Level = %d, want 7", info.Level)
-	}
-	if info.Path == "" {
-		t.Error("CharacterInfo.Path should not be empty")
-	}
+	assert.Equal(t, "InfoTest", info.Name)
+	assert.Equal(t, "Gnome", info.Race)
+	assert.Equal(t, "Bard", info.Class)
+	assert.Equal(t, 7, info.Level)
+	assert.NotEmpty(t, info.Path, "CharacterInfo.Path should not be empty")
 }
