@@ -400,8 +400,10 @@ func (m *SpellbookModel) renderHeader() string {
 	}
 	title := lipgloss.NewStyle().Bold(true).Render(modeTitle)
 
+	// Capitalize the ability name for display
+	abilityDisplay := strings.Title(strings.ToLower(string(sc.Ability)))
 	stats := fmt.Sprintf("Ability: %s | Save DC: %d | Attack: +%d",
-		sc.Ability, saveDC, attackBonus)
+		abilityDisplay, saveDC, attackBonus)
 
 	// Show prepared spell count if applicable
 	prepInfo := ""
@@ -1039,8 +1041,8 @@ func (m *SpellbookModel) getDisplaySpells() []models.KnownSpell {
 	sc := m.character.Spellcasting
 	var display []models.KnownSpell
 
-	// In spell list mode, include cantrips as selectable spells
-	if m.mode == ModeSpellList {
+	// Include cantrips in both spell list mode and preparation mode
+	if m.mode == ModeSpellList || m.mode == ModePreparation {
 		// Add cantrips as level 0 spells
 		if m.filterLevel == -1 || m.filterLevel == 0 {
 			for _, cantripName := range sc.CantripsKnown {
