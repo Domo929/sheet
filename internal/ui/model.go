@@ -183,31 +183,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		// Upgrade character data with class ritual caster flags
-		if char.Spellcasting != nil {
-			classData, err := m.loader.FindClassByName(char.Info.Class)
-			if err == nil {
-				models.UpgradeCharacterSpellcasting(char, classData.RitualCaster, classData.RitualCasterUnprepared)
-			}
-
-			// Upgrade spell ritual flags from spell database
-			spellDB, err := m.loader.GetSpells()
-			if err == nil {
-				models.UpgradeSpellRitualFlags(char, func(name string) (bool, bool) {
-					// Search through spell database
-					for _, spell := range spellDB.Spells {
-						if spell.Name == name {
-							return spell.Ritual, true
-						}
-					}
-					return false, false
-				})
-			}
-
-			// Save upgraded character
-			m.storage.Save(char)
-		}
-
 		m.character = char
 		m.mainSheetModel = views.NewMainSheetModel(char, m.storage)
 		// Pass current window size to the new model
