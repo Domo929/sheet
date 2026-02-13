@@ -127,6 +127,7 @@ type SpellData struct {
 	DamageType  string            `json:"damageType,omitempty"`
 	SavingThrow string            `json:"savingThrow,omitempty"`
 	Scaling     map[string]string `json:"scaling,omitempty"`
+	Upcast      string            `json:"upcast,omitempty"`
 }
 
 // Background represents a character background.
