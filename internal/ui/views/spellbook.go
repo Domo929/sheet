@@ -1344,3 +1344,144 @@ func (m *SpellbookModel) renderCastLevelOverlay() string {
 		Padding(1, 2).
 		Render(content)
 }
+
+// renderCastConfirmationModal renders the spell casting confirmation modal.
+func (m *SpellbookModel) renderCastConfirmationModal() string {
+	if m.castingSpell == nil || m.selectedSpellData == nil {
+		return ""
+	}
+
+	spell := m.selectedSpellData
+	var lines []string
+
+	// Title
+	lines = append(lines, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Cast %s", spell.Name)))
+	lines = append(lines, "")
+
+	// Level and school
+	levelSchool := fmt.Sprintf("Level %d %s", spell.Level, spell.School)
+	if spell.Level == 0 {
+		levelSchool = fmt.Sprintf("%s cantrip", spell.School)
+	}
+	if spell.Ritual {
+		levelSchool += " (ritual)"
+	}
+	lines = append(lines, levelSchool)
+	lines = append(lines, "")
+
+	// Basic spell info
+	lines = append(lines, fmt.Sprintf("Casting Time: %s", spell.CastingTime))
+	lines = append(lines, fmt.Sprintf("Range: %s", spell.Range))
+	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(spell.Components, ", ")))
+	lines = append(lines, fmt.Sprintf("Duration: %s", spell.Duration))
+
+	// Damage if present
+	if spell.Damage != "" {
+		damageInfo := spell.Damage
+		if spell.DamageType != "" {
+			damageInfo = fmt.Sprintf("%s %s", damageInfo, spell.DamageType)
+		}
+		lines = append(lines, fmt.Sprintf("Damage: %s", damageInfo))
+	}
+
+	// Saving throw if present
+	if spell.SavingThrow != "" {
+		saveDC := m.getSpellSaveDC()
+		lines = append(lines, fmt.Sprintf("Saving Throw: %s DC %d", spell.SavingThrow, saveDC))
+	}
+
+	lines = append(lines, "")
+
+	// Description (word-wrapped)
+	descLines := m.wordWrap(spell.Description, 60)
+	lines = append(lines, descLines...)
+
+	// Upcast information if available
+	if spell.Upcast != "" && spell.Level > 0 && spell.Level < 9 {
+		lines = append(lines, "")
+		lines = append(lines, lipgloss.NewStyle().Bold(true).Render("At Higher Levels:"))
+		upcastLines := m.wordWrap(spell.Upcast, 60)
+		lines = append(lines, upcastLines...)
+	}
+
+	// Separator before slot selection
+	if m.castingSpell.Level > 0 && len(m.availableCastLevels) > 0 {
+		lines = append(lines, "")
+		lines = append(lines, strings.Repeat("─", 60))
+		lines = append(lines, "")
+	}
+
+	// Slot selection (if not a cantrip)
+	if m.castingSpell.Level > 0 {
+		if len(m.availableCastLevels) == 0 {
+			lines = append(lines, "No spell slots available")
+		} else if len(m.availableCastLevels) == 1 {
+			// Single slot option
+			level := m.availableCastLevels[0]
+			upcastInfo := m.calculateUpcastEffect(level)
+			sc := m.character.Spellcasting
+
+			isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
+			if isPactMagic {
+				lines = append(lines, fmt.Sprintf("Using: Pact Magic - Level %d%s", level, upcastInfo))
+			} else {
+				lines = append(lines, fmt.Sprintf("Using: Level %d Slot%s", level, upcastInfo))
+			}
+		} else {
+			// Multiple slot options
+			lines = append(lines, "Select Spell Slot Level:")
+			lines = append(lines, "")
+
+			sc := m.character.Spellcasting
+			for i, level := range m.availableCastLevels {
+				cursor := "  "
+				if i == m.castLevelCursor {
+					cursor = "> "
+				}
+
+				isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
+				upcastInfo := m.calculateUpcastEffect(level)
+
+				var line string
+				if isPactMagic {
+					remaining := sc.PactMagic.Remaining
+					total := sc.PactMagic.Total
+					line = fmt.Sprintf("%sPact Magic - Level %d%s [%d/%d remaining]", cursor, level, upcastInfo, remaining, total)
+				} else {
+					slot := sc.SpellSlots.GetSlot(level)
+					if slot != nil {
+						line = fmt.Sprintf("%sLevel %d Slot%s [%d/%d remaining]", cursor, level, upcastInfo, slot.Remaining, slot.Total)
+					}
+				}
+
+				if i == m.castLevelCursor {
+					line = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(line)
+				}
+
+				lines = append(lines, line)
+			}
+		}
+	}
+
+	// Help text
+	lines = append(lines, "")
+	if m.castingSpell.Level == 0 {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast | Esc: cancel"))
+	} else if len(m.availableCastLevels) <= 1 {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast | Esc: cancel"))
+	} else {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("↑↓: select slot | Enter: cast | Esc: cancel"))
+	}
+
+	content := strings.Join(lines, "\n")
+
+	width := 70
+	height := len(lines) + 2
+
+	return lipgloss.NewStyle().
+		Width(width).
+		Height(height).
+		Border(lipgloss.RoundedBorder()).
+		Padding(1, 2).
+		Render(content)
+}
