@@ -732,30 +732,28 @@ func (m *SpellbookModel) handleCastSpell() *SpellbookModel {
 		return m
 	}
 
-	// Cantrips don't use slots
-	if spell.Level == 0 {
-		m.statusMessage = fmt.Sprintf("Cast %s (no slot required)", spell.Name)
-		return m
-	}
-
-	// Find available spell slot levels (spell level and higher)
-	availableLevels := m.getAvailableCastLevels(spell.Level)
-
-	if len(availableLevels) == 0 {
-		m.statusMessage = fmt.Sprintf("No spell slots available for %s", spell.Name)
-		return m
-	}
-
-	// If only one level is available, cast directly
-	if len(availableLevels) == 1 {
-		return m.castSpellAtLevel(&spell, availableLevels[0])
-	}
-
-	// Multiple levels available, show selection UI
+	// Store casting spell and get available levels
 	m.castingSpell = &spell
-	m.availableCastLevels = availableLevels
+
+	// For cantrips, no slots needed
+	if spell.Level == 0 {
+		m.availableCastLevels = []int{}
+	} else {
+		// Find available spell slot levels
+		m.availableCastLevels = m.getAvailableCastLevels(spell.Level)
+
+		if len(m.availableCastLevels) == 0 {
+			m.statusMessage = fmt.Sprintf("No spell slots available for %s", spell.Name)
+			m.castingSpell = nil
+			return m
+		}
+	}
+
+	// Initialize cursor
 	m.castLevelCursor = 0
-	m.mode = ModeSelectCastLevel
+
+	// Always enter confirmation modal mode
+	m.mode = ModeConfirmCast
 	return m
 }
 
