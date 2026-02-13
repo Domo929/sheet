@@ -13,13 +13,14 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// SpellbookFocus represents which panel is focused in the spellbook view.
-type SpellbookFocus int
+// SpellbookMode represents the current mode of the spellbook.
+type SpellbookMode int
 
 const (
-	FocusSpellList SpellbookFocus = iota
-	FocusSpellSlots
-	numSpellbookFocusAreas
+	ModeSpellList SpellbookMode = iota // Viewing/casting spells
+	ModePreparation                     // Preparing/unpreparing spells
+	ModeAddSpell                        // Adding a new spell
+	ModeSelectCastLevel                 // Selecting spell slot level for casting
 )
 
 // SpellbookModel is the model for the spellbook view.
@@ -29,7 +30,7 @@ type SpellbookModel struct {
 	loader        *data.Loader
 	width         int
 	height        int
-	focus         SpellbookFocus
+	mode          SpellbookMode
 	keys          spellbookKeyMap
 	statusMessage string
 
@@ -46,14 +47,18 @@ type SpellbookModel struct {
 	filterLevel int // -1 = all, 0 = cantrips, 1-9 = spell levels
 
 	// Add spell mode
-	addingSpell    bool
 	spellSearchTerm string
-	searchResults  []data.SpellData
-	searchCursor   int
+	searchResults   []data.SpellData
+	searchCursor    int
 
 	// Delete confirmation
 	confirmingRemove bool
 	removeSpellName  string
+
+	// Spell casting level selection
+	castingSpell      *models.KnownSpell // Spell being cast
+	castLevelCursor   int                // Cursor for slot level selection
+	availableCastLevels []int            // Available slot levels for upcasting
 
 	// Spell data cache
 	spellDatabase *data.SpellDatabase
@@ -62,8 +67,6 @@ type SpellbookModel struct {
 type spellbookKeyMap struct {
 	Quit      key.Binding
 	ForceQuit key.Binding
-	Tab       key.Binding
-	ShiftTab  key.Binding
 	Up        key.Binding
 	Down      key.Binding
 	Enter     key.Binding
@@ -79,13 +82,11 @@ func defaultSpellbookKeyMap() spellbookKeyMap {
 	return spellbookKeyMap{
 		Quit:      key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "quit")),
 		ForceQuit: key.NewBinding(key.WithKeys("ctrl+c"), key.WithHelp("ctrl+c", "force quit")),
-		Tab:       key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next panel")),
-		ShiftTab:  key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "prev panel")),
 		Up:        key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
 		Down:      key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
-		Enter:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "cast spell")),
+		Enter:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "cast/select")),
 		Back:      key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "back")),
-		Prepare:   key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "prepare/unprepare")),
+		Prepare:   key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "prepare spells")),
 		Cast:      key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "cast spell")),
 		Add:       key.NewBinding(key.WithKeys("a", "+"), key.WithHelp("a/+", "add spell")),
 		Remove:    key.NewBinding(key.WithKeys("x", "delete"), key.WithHelp("x", "remove spell")),
@@ -102,6 +103,7 @@ func NewSpellbookModel(char *models.Character, storage *storage.CharacterStorage
 		keys:          defaultSpellbookKeyMap(),
 		spellsPerPage: 15,
 		filterLevel:   -1, // Show all by default
+		mode:          ModeSpellList,
 	}
 }
 
@@ -168,8 +170,13 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 		}
 
 		// Handle add spell mode
-		if m.addingSpell {
+		if m.mode == ModeAddSpell {
 			return m.handleAddSpellInput(msg)
+		}
+
+		// Handle spell cast level selection
+		if m.mode == ModeSelectCastLevel {
+			return m.handleCastLevelInput(msg)
 		}
 
 		// Ctrl+C always quits immediately
@@ -185,33 +192,60 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 			m.statusMessage = "Quit? (y/n)"
 			return m, nil
 		case key.Matches(msg, m.keys.Back):
-			return m, func() tea.Msg { return BackToSheetMsg{} }
-		case key.Matches(msg, m.keys.Tab):
-			m.focus = (m.focus + 1) % numSpellbookFocusAreas
-			return m, nil
-		case key.Matches(msg, m.keys.ShiftTab):
-			if m.focus == 0 {
-				m.focus = numSpellbookFocusAreas - 1
-			} else {
-				m.focus--
+			if m.mode == ModeSelectCastLevel {
+				// Cancel spell casting
+				m.mode = ModeSpellList
+				m.castingSpell = nil
+				m.availableCastLevels = nil
+				m.statusMessage = "Casting cancelled"
+				return m, nil
 			}
-			return m, nil
+			if m.mode == ModePreparation {
+				// Return to spell list mode
+				m.mode = ModeSpellList
+				m.spellCursor = 0
+				m.spellScroll = 0
+				m.updateSelectedSpellData()
+				return m, nil
+			}
+			return m, func() tea.Msg { return BackToSheetMsg{} }
 		case key.Matches(msg, m.keys.Up):
 			return m.handleUp(), nil
 		case key.Matches(msg, m.keys.Down):
 			return m.handleDown(), nil
 		case key.Matches(msg, m.keys.Prepare):
-			return m.handlePrepareToggle(), m.saveCharacter()
+			if m.mode == ModeSpellList {
+				// Enter preparation mode
+				m.mode = ModePreparation
+				m.spellCursor = 0
+				m.spellScroll = 0
+				m.updateSelectedSpellData()
+				m.statusMessage = "Preparation Mode - Press 'p' to toggle, 'esc' to exit"
+				return m, nil
+			} else if m.mode == ModePreparation {
+				// Toggle preparation of current spell
+				return m.handlePrepareToggle(), m.saveCharacter()
+			}
+			return m, nil
 		case key.Matches(msg, m.keys.Cast), key.Matches(msg, m.keys.Enter):
-			return m.handleCastSpell(), m.saveCharacter()
+			if m.mode == ModeSpellList {
+				return m.handleCastSpell(), m.saveCharacter()
+			} else if m.mode == ModePreparation {
+				// In preparation mode, Enter also toggles preparation
+				return m.handlePrepareToggle(), m.saveCharacter()
+			}
+			return m, nil
 		case key.Matches(msg, m.keys.Add):
-			m.addingSpell = true
+			m.mode = ModeAddSpell
 			m.spellSearchTerm = ""
 			m.searchResults = []data.SpellData{}
 			m.searchCursor = 0
 			return m, nil
 		case key.Matches(msg, m.keys.Remove):
-			return m.handleRemoveSpell(), nil
+			if m.mode == ModePreparation {
+				return m.handleRemoveSpell(), nil
+			}
+			return m, nil
 		case key.Matches(msg, m.keys.Filter):
 			return m.handleFilterToggle(), nil
 		}
@@ -249,7 +283,7 @@ func (m *SpellbookModel) View() string {
 		Width(listWidth).
 		Height(m.height - lipgloss.Height(header) - 2).
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(m.borderColor(FocusSpellList)).
+		BorderForeground(lipgloss.Color("12")).
 		Render(spellList)
 
 	spellDetailsStyled := lipgloss.NewStyle().
@@ -262,7 +296,6 @@ func (m *SpellbookModel) View() string {
 		Width(slotsWidth).
 		Height(m.height - lipgloss.Height(header) - 2).
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(m.borderColor(FocusSpellSlots)).
 		Render(spellSlots)
 
 	panels := lipgloss.JoinHorizontal(lipgloss.Top, spellListStyled, spellDetailsStyled, spellSlotsStyled)
@@ -271,8 +304,14 @@ func (m *SpellbookModel) View() string {
 	footer := m.renderFooter()
 
 	// Handle add spell overlay
-	if m.addingSpell {
+	if m.mode == ModeAddSpell {
 		overlay := m.renderAddSpellOverlay()
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, overlay)
+	}
+
+	// Handle cast level selection overlay
+	if m.mode == ModeSelectCastLevel {
+		overlay := m.renderCastLevelOverlay()
 		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, overlay)
 	}
 
@@ -293,7 +332,11 @@ func (m *SpellbookModel) renderHeader() string {
 	saveDC := models.CalculateSpellSaveDC(abilityMod, profBonus)
 	attackBonus := models.CalculateSpellAttackBonus(abilityMod, profBonus)
 
-	title := lipgloss.NewStyle().Bold(true).Render("Spellbook")
+	modeTitle := "Spellbook"
+	if m.mode == ModePreparation {
+		modeTitle = "Spellbook - Preparation Mode"
+	}
+	title := lipgloss.NewStyle().Bold(true).Render(modeTitle)
 
 	stats := fmt.Sprintf("Ability: %s | Save DC: %d | Attack: +%d",
 		sc.Ability, saveDC, attackBonus)
@@ -319,38 +362,51 @@ func (m *SpellbookModel) renderSpellList() string {
 	sc := m.character.Spellcasting
 	var lines []string
 
+	if m.mode == ModePreparation {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render("=== Preparation Mode ==="))
+		lines = append(lines, "Press 'p' or Enter to toggle")
+		lines = append(lines, "Press 'x' to remove spell")
+		lines = append(lines, "")
+	}
+
+	// Get the display list (prepared only in spell list mode, all in preparation mode)
+	displaySpells := m.getDisplaySpells()
+
+	if len(displaySpells) == 0 && m.mode == ModeSpellList {
+		lines = append(lines, "No spells prepared")
+		lines = append(lines, "Press 'p' to prepare spells")
+		return strings.Join(lines, "\n")
+	}
+
 	// Group spells by level
 	spellsByLevel := make(map[int][]models.KnownSpell)
-	for _, spell := range sc.KnownSpells {
-		if m.filterLevel == -1 || spell.Level == m.filterLevel {
-			spellsByLevel[spell.Level] = append(spellsByLevel[spell.Level], spell)
-		}
+	for _, spell := range displaySpells {
+		spellsByLevel[spell.Level] = append(spellsByLevel[spell.Level], spell)
 	}
 
-	// Add cantrips
-	if m.filterLevel == -1 || m.filterLevel == 0 {
-		if len(sc.CantripsKnown) > 0 {
-			lines = append(lines, lipgloss.NewStyle().Bold(true).Render("Cantrips"))
-			for _, cantrip := range sc.CantripsKnown {
-				lines = append(lines, fmt.Sprintf("  %s", cantrip))
-			}
-			lines = append(lines, "")
-		}
-	}
-
-	// Add leveled spells
+	// Sort levels
 	levels := make([]int, 0, len(spellsByLevel))
 	for level := range spellsByLevel {
 		levels = append(levels, level)
 	}
 	sort.Ints(levels)
 
-	flatSpells := m.getFlatSpellList()
 	currentIndex := 0
 
 	for _, level := range levels {
 		spells := spellsByLevel[level]
-		lines = append(lines, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Level %d", level)))
+
+		// Sort spells alphabetically within level
+		sort.Slice(spells, func(i, j int) bool {
+			return spells[i].Name < spells[j].Name
+		})
+
+		// Header for level
+		levelHeader := fmt.Sprintf("Level %d", level)
+		if level == 0 {
+			levelHeader = "Cantrips"
+		}
+		lines = append(lines, lipgloss.NewStyle().Bold(true).Render(levelHeader))
 
 		for _, spell := range spells {
 			cursor := "  "
@@ -359,10 +415,12 @@ func (m *SpellbookModel) renderSpellList() string {
 			}
 
 			prepMarker := " "
-			if spell.Prepared {
-				prepMarker = "✓"
-			} else if sc.PreparesSpells {
-				prepMarker = " "
+			if m.mode == ModePreparation {
+				if spell.Prepared {
+					prepMarker = "✓"
+				} else {
+					prepMarker = " "
+				}
 			}
 
 			ritualMarker := ""
@@ -370,7 +428,12 @@ func (m *SpellbookModel) renderSpellList() string {
 				ritualMarker = " (R)"
 			}
 
-			line := fmt.Sprintf("%s[%s] %s%s", cursor, prepMarker, spell.Name, ritualMarker)
+			var line string
+			if m.mode == ModePreparation {
+				line = fmt.Sprintf("%s[%s] %s%s", cursor, prepMarker, spell.Name, ritualMarker)
+			} else {
+				line = fmt.Sprintf("%s%s%s", cursor, spell.Name, ritualMarker)
+			}
 
 			if currentIndex == m.spellCursor {
 				line = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(line)
@@ -382,23 +445,25 @@ func (m *SpellbookModel) renderSpellList() string {
 		lines = append(lines, "")
 	}
 
-	if len(flatSpells) == 0 && len(sc.CantripsKnown) == 0 {
+	if len(displaySpells) == 0 && len(sc.CantripsKnown) == 0 {
 		lines = append(lines, "No spells known")
 		lines = append(lines, "Press 'a' to add a spell")
 	}
 
-	// Apply scrolling
-	maxHeight := m.height - 10
-	if len(lines) > maxHeight {
-		start := m.spellScroll
-		end := start + maxHeight
-		if end > len(lines) {
-			end = len(lines)
-		}
-		lines = lines[start:end]
+	return strings.Join(lines, "\n")
+}
+
+// getSpellSaveDC calculates the spell save DC for the character.
+func (m *SpellbookModel) getSpellSaveDC() int {
+	if m.character == nil || m.character.Spellcasting == nil {
+		return 10
 	}
 
-	return strings.Join(lines, "\n")
+	sc := m.character.Spellcasting
+	abilityMod := m.character.AbilityScores.GetModifier(sc.Ability)
+	profBonus := m.character.Info.ProficiencyBonus()
+
+	return models.CalculateSpellSaveDC(abilityMod, profBonus)
 }
 
 // renderSpellDetails renders the selected spell's details.
@@ -426,6 +491,22 @@ func (m *SpellbookModel) renderSpellDetails() string {
 	lines = append(lines, fmt.Sprintf("Range: %s", spell.Range))
 	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(spell.Components, ", ")))
 	lines = append(lines, fmt.Sprintf("Duration: %s", spell.Duration))
+
+	// Add damage if present
+	if spell.Damage != "" {
+		damageInfo := spell.Damage
+		if spell.DamageType != "" {
+			damageInfo = fmt.Sprintf("%s %s", damageInfo, spell.DamageType)
+		}
+		lines = append(lines, fmt.Sprintf("Damage: %s", damageInfo))
+	}
+
+	// Add saving throw if present
+	if spell.SavingThrow != "" {
+		saveDC := m.getSpellSaveDC()
+		lines = append(lines, fmt.Sprintf("Saving Throw: %s DC %d", spell.SavingThrow, saveDC))
+	}
+
 	lines = append(lines, "")
 
 	// Word wrap description
@@ -502,13 +583,17 @@ func (m *SpellbookModel) renderFooter() string {
 	helps = append(helps, "esc: back")
 	helps = append(helps, "↑↓: navigate")
 
-	if m.character.Spellcasting != nil && m.character.Spellcasting.PreparesSpells {
-		helps = append(helps, "p: prepare")
+	if m.mode == ModeSpellList {
+		if m.character.Spellcasting != nil && m.character.Spellcasting.PreparesSpells {
+			helps = append(helps, "p: prepare spells")
+		}
+		helps = append(helps, "c/enter: cast")
+	} else if m.mode == ModePreparation {
+		helps = append(helps, "p/enter: toggle")
+		helps = append(helps, "x: remove")
 	}
 
-	helps = append(helps, "c: cast")
 	helps = append(helps, "a: add spell")
-	helps = append(helps, "x: remove")
 	helps = append(helps, "f: filter")
 	helps = append(helps, "q: quit")
 
@@ -566,41 +651,19 @@ func (m *SpellbookModel) renderAddSpellOverlay() string {
 
 // Helper functions
 
-func (m *SpellbookModel) borderColor(focus SpellbookFocus) lipgloss.Color {
-	if m.focus == focus {
-		return lipgloss.Color("12")
-	}
-	return lipgloss.Color("240")
-}
-
 func (m *SpellbookModel) handleUp() *SpellbookModel {
-	if m.focus == FocusSpellList {
-		if m.spellCursor > 0 {
-			m.spellCursor--
-			m.updateSelectedSpellData()
-
-			// Adjust scroll if needed
-			if m.spellCursor < m.spellScroll {
-				m.spellScroll = m.spellCursor
-			}
-		}
+	if m.spellCursor > 0 {
+		m.spellCursor--
+		m.updateSelectedSpellData()
 	}
 	return m
 }
 
 func (m *SpellbookModel) handleDown() *SpellbookModel {
-	if m.focus == FocusSpellList {
-		flatSpells := m.getFlatSpellList()
-		if m.spellCursor < len(flatSpells)-1 {
-			m.spellCursor++
-			m.updateSelectedSpellData()
-
-			// Adjust scroll if needed
-			maxHeight := m.height - 10
-			if m.spellCursor >= m.spellScroll+maxHeight {
-				m.spellScroll = m.spellCursor - maxHeight + 1
-			}
-		}
+	displaySpells := m.getDisplaySpells()
+	if m.spellCursor < len(displaySpells)-1 {
+		m.spellCursor++
+		m.updateSelectedSpellData()
 	}
 	return m
 }
@@ -618,12 +681,12 @@ func (m *SpellbookModel) handlePrepareToggle() *SpellbookModel {
 		return m
 	}
 
-	flatSpells := m.getFlatSpellList()
-	if m.spellCursor >= len(flatSpells) {
+	displaySpells := m.getDisplaySpells()
+	if m.spellCursor >= len(displaySpells) {
 		return m
 	}
 
-	spell := flatSpells[m.spellCursor]
+	spell := displaySpells[m.spellCursor]
 
 	// Check if we can prepare more spells
 	if !spell.Prepared && sc.MaxPrepared > 0 {
@@ -655,18 +718,12 @@ func (m *SpellbookModel) handleCastSpell() *SpellbookModel {
 	sc := m.character.Spellcasting
 
 	// Check if a spell is selected
-	flatSpells := m.getFlatSpellList()
-	if m.spellCursor >= len(flatSpells) {
-		// Check if a cantrip is selected
-		if m.spellCursor-len(flatSpells) < len(sc.CantripsKnown) {
-			cantripIdx := m.spellCursor - len(flatSpells)
-			m.statusMessage = fmt.Sprintf("Cast %s (no slot required)", sc.CantripsKnown[cantripIdx])
-			return m
-		}
+	displaySpells := m.getDisplaySpells()
+	if m.spellCursor >= len(displaySpells) {
 		return m
 	}
 
-	spell := flatSpells[m.spellCursor]
+	spell := displaySpells[m.spellCursor]
 
 	// Check if spell is prepared (if applicable)
 	if sc.PreparesSpells && !spell.Prepared && !spell.Ritual {
@@ -680,31 +737,34 @@ func (m *SpellbookModel) handleCastSpell() *SpellbookModel {
 		return m
 	}
 
-	// Try to use a spell slot
-	if sc.SpellSlots.UseSlot(spell.Level) {
-		m.statusMessage = fmt.Sprintf("Cast %s (used level %d slot)", spell.Name, spell.Level)
+	// Find available spell slot levels (spell level and higher)
+	availableLevels := m.getAvailableCastLevels(spell.Level)
+
+	if len(availableLevels) == 0 {
+		m.statusMessage = fmt.Sprintf("No spell slots available for %s", spell.Name)
 		return m
 	}
 
-	// Try pact magic if applicable
-	if sc.PactMagic != nil && sc.PactMagic.SlotLevel >= spell.Level {
-		if sc.PactMagic.Use() {
-			m.statusMessage = fmt.Sprintf("Cast %s (used pact magic slot)", spell.Name)
-			return m
-		}
+	// If only one level is available, cast directly
+	if len(availableLevels) == 1 {
+		return m.castSpellAtLevel(&spell, availableLevels[0])
 	}
 
-	m.statusMessage = fmt.Sprintf("No spell slots available for %s", spell.Name)
+	// Multiple levels available, show selection UI
+	m.castingSpell = &spell
+	m.availableCastLevels = availableLevels
+	m.castLevelCursor = 0
+	m.mode = ModeSelectCastLevel
 	return m
 }
 
 func (m *SpellbookModel) handleRemoveSpell() *SpellbookModel {
-	flatSpells := m.getFlatSpellList()
-	if m.spellCursor >= len(flatSpells) {
+	displaySpells := m.getDisplaySpells()
+	if m.spellCursor >= len(displaySpells) {
 		return m
 	}
 
-	spell := flatSpells[m.spellCursor]
+	spell := displaySpells[m.spellCursor]
 	m.confirmingRemove = true
 	m.removeSpellName = spell.Name
 	m.statusMessage = fmt.Sprintf("Remove %s? (y/n)", spell.Name)
@@ -725,8 +785,8 @@ func (m *SpellbookModel) performRemoveSpell() {
 			m.statusMessage = fmt.Sprintf("Removed %s", m.removeSpellName)
 
 			// Adjust cursor if needed
-			flatSpells := m.getFlatSpellList()
-			if m.spellCursor >= len(flatSpells) && m.spellCursor > 0 {
+			displaySpells := m.getDisplaySpells()
+			if m.spellCursor >= len(displaySpells) && m.spellCursor > 0 {
 				m.spellCursor--
 			}
 
@@ -766,7 +826,7 @@ func (m *SpellbookModel) handleFilterToggle() *SpellbookModel {
 func (m *SpellbookModel) handleAddSpellInput(msg tea.KeyMsg) (*SpellbookModel, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
-		m.addingSpell = false
+		m.mode = m.getPreviousMode()
 		m.spellSearchTerm = ""
 		m.searchResults = []data.SpellData{}
 		m.statusMessage = "Add spell cancelled"
@@ -776,7 +836,7 @@ func (m *SpellbookModel) handleAddSpellInput(msg tea.KeyMsg) (*SpellbookModel, t
 		if len(m.searchResults) > 0 && m.searchCursor < len(m.searchResults) {
 			spell := m.searchResults[m.searchCursor]
 			m.addSpellToCharacter(spell)
-			m.addingSpell = false
+			m.mode = m.getPreviousMode()
 			m.spellSearchTerm = ""
 			m.searchResults = []data.SpellData{}
 			return m, m.saveCharacter()
@@ -810,6 +870,17 @@ func (m *SpellbookModel) handleAddSpellInput(msg tea.KeyMsg) (*SpellbookModel, t
 		}
 		return m, nil
 	}
+}
+
+func (m *SpellbookModel) getPreviousMode() SpellbookMode {
+	// When exiting add spell mode, return to preparation mode if we were there
+	// Otherwise return to spell list mode
+	if m.mode == ModeAddSpell {
+		// Check if we should return to preparation mode or spell list mode
+		// For now, always return to preparation mode since that's where adding makes most sense
+		return ModePreparation
+	}
+	return ModeSpellList
 }
 
 func (m *SpellbookModel) updateSearchResults() {
@@ -891,41 +962,68 @@ func (m *SpellbookModel) addSpellToCharacter(spell data.SpellData) {
 	m.updateSelectedSpellData()
 }
 
-func (m *SpellbookModel) getFlatSpellList() []models.KnownSpell {
+// getDisplaySpells returns the spells to display based on mode and filter.
+// In spell list mode, includes cantrips as level 0 "spells" for casting.
+func (m *SpellbookModel) getDisplaySpells() []models.KnownSpell {
 	if m.character == nil || m.character.Spellcasting == nil {
 		return []models.KnownSpell{}
 	}
 
 	sc := m.character.Spellcasting
-	var flat []models.KnownSpell
+	var display []models.KnownSpell
 
-	// Apply filter
+	// In spell list mode, include cantrips as selectable spells
+	if m.mode == ModeSpellList {
+		// Add cantrips as level 0 spells
+		if m.filterLevel == -1 || m.filterLevel == 0 {
+			for _, cantripName := range sc.CantripsKnown {
+				display = append(display, models.KnownSpell{
+					Name:     cantripName,
+					Level:    0,
+					Prepared: true, // Cantrips are always prepared
+					Ritual:   false,
+				})
+			}
+		}
+	}
+
 	for _, spell := range sc.KnownSpells {
-		if m.filterLevel == -1 || spell.Level == m.filterLevel {
-			flat = append(flat, spell)
+		// Apply filter
+		if m.filterLevel != -1 && spell.Level != m.filterLevel {
+			continue
+		}
+
+		// In spell list mode, only show prepared spells
+		// In preparation mode, show all spells
+		if m.mode == ModeSpellList {
+			if spell.Prepared || spell.Ritual {
+				display = append(display, spell)
+			}
+		} else {
+			display = append(display, spell)
 		}
 	}
 
 	// Sort by level, then by name
-	sort.Slice(flat, func(i, j int) bool {
-		if flat[i].Level != flat[j].Level {
-			return flat[i].Level < flat[j].Level
+	sort.Slice(display, func(i, j int) bool {
+		if display[i].Level != display[j].Level {
+			return display[i].Level < display[j].Level
 		}
-		return flat[i].Name < flat[j].Name
+		return display[i].Name < display[j].Name
 	})
 
-	return flat
+	return display
 }
 
 func (m *SpellbookModel) updateSelectedSpellData() {
-	flatSpells := m.getFlatSpellList()
+	displaySpells := m.getDisplaySpells()
 
-	if m.spellCursor >= len(flatSpells) || m.spellDatabase == nil {
+	if m.spellCursor >= len(displaySpells) || m.spellDatabase == nil {
 		m.selectedSpellData = nil
 		return
 	}
 
-	spell := flatSpells[m.spellCursor]
+	spell := displaySpells[m.spellCursor]
 
 	// Find full spell data
 	for i := range m.spellDatabase.Spells {
@@ -972,4 +1070,276 @@ func (m *SpellbookModel) wordWrap(text string, width int) []string {
 
 	lines = append(lines, currentLine)
 	return lines
+}
+
+// calculateUpcastEffect calculates and formats the upcast effect for a given slot level.
+func (m *SpellbookModel) calculateUpcastEffect(slotLevel int) string {
+	if m.selectedSpellData == nil || m.castingSpell == nil {
+		return ""
+	}
+
+	spell := m.selectedSpellData
+	levelsAbove := slotLevel - m.castingSpell.Level
+
+	upcastLower := strings.ToLower(spell.Upcast)
+
+	// Handle dart/projectile increases (like Magic Missile)
+	if strings.Contains(upcastLower, "dart") {
+		// Magic Missile: 3 darts base, +1 per level
+		baseDarts := 3
+		totalDarts := baseDarts + levelsAbove
+		if spell.Damage != "" {
+			return fmt.Sprintf(" (%d darts, %s each)", totalDarts, spell.Damage)
+		}
+		return fmt.Sprintf(" (%d darts)", totalDarts)
+	}
+
+	// Handle target increases (like Scorching Ray)
+	if strings.Contains(upcastLower, "ray") || strings.Contains(upcastLower, "beam") {
+		// Extract number from upcast (e.g., "+1 ray" -> 1)
+		var bonusPerLevel int
+		fmt.Sscanf(spell.Upcast, "+%d", &bonusPerLevel)
+		if bonusPerLevel == 0 {
+			bonusPerLevel = 1
+		}
+
+		// Scorching Ray: 3 rays base, +1 per level
+		baseRays := 3
+		totalRays := baseRays + (bonusPerLevel * levelsAbove)
+		if spell.Damage != "" {
+			return fmt.Sprintf(" (%d rays, %s each)", totalRays, spell.Damage)
+		}
+		return fmt.Sprintf(" (%d rays)", totalRays)
+	}
+
+	// Handle dice damage increases (like Burning Hands, Fireball)
+	var diceStr string
+	for _, part := range strings.Fields(spell.Upcast) {
+		if strings.Contains(part, "d") && len(part) > 2 {
+			// Found something like "+1d6" or "1d8"
+			diceStr = strings.TrimPrefix(strings.TrimPrefix(part, "+"), " ")
+			break
+		}
+	}
+
+	if diceStr != "" {
+		// Parse dice notation
+		parts := strings.Split(diceStr, "d")
+		if len(parts) == 2 {
+			var dicePerLevel int
+			fmt.Sscanf(parts[0], "%d", &dicePerLevel)
+			if dicePerLevel == 0 {
+				dicePerLevel = 1
+			}
+
+			diceType := strings.TrimRight(parts[1], ".,;:")
+
+			// Calculate total damage
+			if spell.Damage != "" {
+				// Parse base damage (e.g., "3d6" -> 3 dice)
+				baseParts := strings.Split(spell.Damage, "d")
+				if len(baseParts) == 2 {
+					var baseDice int
+					fmt.Sscanf(baseParts[0], "%d", &baseDice)
+					totalDice := baseDice + (dicePerLevel * levelsAbove)
+					return fmt.Sprintf(" (%dd%s damage)", totalDice, diceType)
+				}
+				// If we can't parse base damage, show it separately with bonus
+				if levelsAbove > 0 {
+					bonusDice := dicePerLevel * levelsAbove
+					return fmt.Sprintf(" (%s + %dd%s damage)", spell.Damage, bonusDice, diceType)
+				}
+				// At base level, just show base damage
+				return fmt.Sprintf(" (%s damage)", spell.Damage)
+			}
+			// No base damage, just show bonus (only if upcasting)
+			if levelsAbove > 0 {
+				bonusDice := dicePerLevel * levelsAbove
+				return fmt.Sprintf(" (+%dd%s damage)", bonusDice, diceType)
+			}
+		}
+	}
+
+	// Handle healing increases
+	if strings.Contains(upcastLower, "heal") {
+		if spell.Damage != "" {
+			// Damage field is used for healing in healing spells
+			return fmt.Sprintf(" (%s healing)", spell.Damage)
+		}
+	}
+
+	// Fallback: show base damage if available
+	if spell.Damage != "" {
+		return fmt.Sprintf(" (%s damage)", spell.Damage)
+	}
+
+	// If upcasting and we have no other info, show generic upcast indicator
+	if levelsAbove > 0 {
+		return fmt.Sprintf(" (upcast +%d)", levelsAbove)
+	}
+
+	return ""
+}
+
+// getAvailableCastLevels returns the spell slot levels available for casting a spell.
+// Returns slots at the spell's level and higher that have remaining uses.
+func (m *SpellbookModel) getAvailableCastLevels(spellLevel int) []int {
+	if m.character == nil || m.character.Spellcasting == nil {
+		return []int{}
+	}
+
+	sc := m.character.Spellcasting
+	var available []int
+
+	// Check pact magic first
+	if sc.PactMagic != nil && sc.PactMagic.Total > 0 && sc.PactMagic.Remaining > 0 {
+		if sc.PactMagic.SlotLevel >= spellLevel {
+			// Add pact magic as a "pseudo-level" (we'll handle it specially)
+			// For display, we'll show it as "Pact (Level X)"
+			available = append(available, sc.PactMagic.SlotLevel)
+		}
+	}
+
+	// Check regular spell slots from spell level to 9
+	for level := spellLevel; level <= 9; level++ {
+		slot := sc.SpellSlots.GetSlot(level)
+		if slot != nil && slot.Remaining > 0 {
+			available = append(available, level)
+		}
+	}
+
+	return available
+}
+
+// castSpellAtLevel casts the spell using the specified slot level.
+func (m *SpellbookModel) castSpellAtLevel(spell *models.KnownSpell, slotLevel int) *SpellbookModel {
+	if m.character == nil || m.character.Spellcasting == nil {
+		return m
+	}
+
+	sc := m.character.Spellcasting
+
+	// Try pact magic first if it matches the slot level
+	if sc.PactMagic != nil && sc.PactMagic.SlotLevel == slotLevel && sc.PactMagic.Remaining > 0 {
+		if sc.PactMagic.Use() {
+			upcastMsg := ""
+			if slotLevel > spell.Level {
+				upcastMsg = fmt.Sprintf(" (upcast to level %d)", slotLevel)
+			}
+			m.statusMessage = fmt.Sprintf("Cast %s%s using pact magic", spell.Name, upcastMsg)
+			m.mode = ModeSpellList
+			m.castingSpell = nil
+			m.availableCastLevels = nil
+			return m
+		}
+	}
+
+	// Try regular spell slot
+	if sc.SpellSlots.UseSlot(slotLevel) {
+		upcastMsg := ""
+		if slotLevel > spell.Level {
+			upcastMsg = fmt.Sprintf(" (upcast to level %d)", slotLevel)
+		}
+		m.statusMessage = fmt.Sprintf("Cast %s%s using level %d slot", spell.Name, upcastMsg, slotLevel)
+		m.mode = ModeSpellList
+		m.castingSpell = nil
+		m.availableCastLevels = nil
+		return m
+	}
+
+	m.statusMessage = fmt.Sprintf("Failed to use spell slot")
+	return m
+}
+
+// handleCastLevelInput handles keyboard input in cast level selection mode.
+func (m *SpellbookModel) handleCastLevelInput(msg tea.KeyMsg) (*SpellbookModel, tea.Cmd) {
+	switch msg.String() {
+	case "esc":
+		m.mode = ModeSpellList
+		m.castingSpell = nil
+		m.availableCastLevels = nil
+		m.statusMessage = "Casting cancelled"
+		return m, nil
+
+	case "enter":
+		if m.castingSpell != nil && len(m.availableCastLevels) > 0 && m.castLevelCursor < len(m.availableCastLevels) {
+			selectedLevel := m.availableCastLevels[m.castLevelCursor]
+			return m.castSpellAtLevel(m.castingSpell, selectedLevel), m.saveCharacter()
+		}
+		return m, nil
+
+	case "up", "k":
+		if m.castLevelCursor > 0 {
+			m.castLevelCursor--
+		}
+		return m, nil
+
+	case "down", "j":
+		if m.castLevelCursor < len(m.availableCastLevels)-1 {
+			m.castLevelCursor++
+		}
+		return m, nil
+	}
+
+	return m, nil
+}
+
+// renderCastLevelOverlay renders the spell slot level selection modal.
+func (m *SpellbookModel) renderCastLevelOverlay() string {
+	if m.castingSpell == nil || m.character == nil || m.character.Spellcasting == nil {
+		return ""
+	}
+
+	sc := m.character.Spellcasting
+	var lines []string
+
+	lines = append(lines, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Cast %s", m.castingSpell.Name)))
+	lines = append(lines, "")
+	lines = append(lines, "Select spell slot level:")
+	lines = append(lines, "")
+
+	for i, level := range m.availableCastLevels {
+		cursor := "  "
+		if i == m.castLevelCursor {
+			cursor = "> "
+		}
+
+		// Check if this is pact magic
+		isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
+
+		var line string
+		if isPactMagic {
+			remaining := sc.PactMagic.Remaining
+			total := sc.PactMagic.Total
+			upcastInfo := m.calculateUpcastEffect(level)
+			line = fmt.Sprintf("%sPact Magic - Level %d%s [%d/%d remaining]", cursor, level, upcastInfo, remaining, total)
+		} else {
+			slot := sc.SpellSlots.GetSlot(level)
+			if slot != nil {
+				upcastInfo := m.calculateUpcastEffect(level)
+				line = fmt.Sprintf("%sLevel %d Slot%s [%d/%d remaining]", cursor, level, upcastInfo, slot.Remaining, slot.Total)
+			}
+		}
+
+		if i == m.castLevelCursor {
+			line = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(line)
+		}
+
+		lines = append(lines, line)
+	}
+
+	lines = append(lines, "")
+	lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("↑↓: select | Enter: confirm | Esc: cancel"))
+
+	content := strings.Join(lines, "\n")
+
+	width := 60
+	height := len(lines) + 2
+
+	return lipgloss.NewStyle().
+		Width(width).
+		Height(height).
+		Border(lipgloss.RoundedBorder()).
+		Padding(1, 2).
+		Render(content)
 }
