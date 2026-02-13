@@ -99,10 +99,11 @@ func (ss *SpellSlots) RestoreAll() {
 
 // KnownSpell represents a spell the character knows or has prepared.
 type KnownSpell struct {
-	Name     string `json:"name"`
-	Level    int    `json:"level"` // 0 for cantrip
-	Prepared bool   `json:"prepared,omitempty"`
-	Ritual   bool   `json:"ritual,omitempty"`
+	Name           string `json:"name"`
+	Level          int    `json:"level"` // 0 for cantrip
+	Prepared       bool   `json:"prepared,omitempty"`
+	Ritual         bool   `json:"ritual,omitempty"`
+	AlwaysPrepared bool   `json:"alwaysPrepared,omitempty"` // Always prepared, doesn't count against prep limit (from class features)
 }
 
 // PactMagic represents Warlock-style pact magic slots.
@@ -137,14 +138,15 @@ func (pm *PactMagic) Restore() {
 
 // Spellcasting contains all spellcasting information for a character.
 type Spellcasting struct {
-	Ability        Ability      `json:"ability"`
-	SpellSlots     SpellSlots   `json:"spellSlots"`
-	KnownSpells    []KnownSpell `json:"knownSpells,omitempty"`
-	CantripsKnown  []string     `json:"cantripsKnown,omitempty"`
-	PreparesSpells bool         `json:"preparesSpells"` // Whether class prepares spells
-	MaxPrepared    int          `json:"maxPrepared,omitempty"`
-	PactMagic      *PactMagic   `json:"pactMagic,omitempty"` // For Warlocks
-	RitualCaster   bool         `json:"ritualCaster,omitempty"`
+	Ability               Ability      `json:"ability"`
+	SpellSlots            SpellSlots   `json:"spellSlots"`
+	KnownSpells           []KnownSpell `json:"knownSpells,omitempty"`
+	CantripsKnown         []string     `json:"cantripsKnown,omitempty"`
+	PreparesSpells        bool         `json:"preparesSpells"` // Whether class prepares spells
+	MaxPrepared           int          `json:"maxPrepared,omitempty"`
+	PactMagic             *PactMagic   `json:"pactMagic,omitempty"` // For Warlocks
+	RitualCaster          bool         `json:"ritualCaster,omitempty"` // Can cast ritual spells
+	RitualCasterUnprepared bool        `json:"ritualCasterUnprepared,omitempty"` // Can cast rituals without preparing (Wizard)
 }
 
 // NewSpellcasting creates a new spellcasting tracker.

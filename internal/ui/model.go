@@ -39,6 +39,7 @@ type Model struct {
 	characterCreationModel  *views.CharacterCreationModel
 	mainSheetModel          *views.MainSheetModel
 	inventoryModel          *views.InventoryModel
+	spellbookModel          *views.SpellbookModel
 	// etc.
 }
 
@@ -125,6 +126,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Return from inventory/spellbook to main sheet
 		m.currentView = ViewMainSheet
 		m.inventoryModel = nil
+		m.spellbookModel = nil
 		return m, nil
 
 	case views.OpenInventoryMsg:
@@ -138,6 +140,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.currentView = ViewInventory
 		return m, m.inventoryModel.Init()
+
+	case views.OpenSpellbookMsg:
+		// Navigate to spellbook view
+		m.spellbookModel = views.NewSpellbookModel(m.character, m.storage, m.loader)
+		if m.width > 0 && m.height > 0 {
+			m.spellbookModel, _ = m.spellbookModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
+		m.currentView = ViewSpellbook
+		return m, m.spellbookModel.Init()
 
 	case views.CharacterLoadedMsg:
 		// Load the character from storage
@@ -168,6 +182,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = err
 			return m, nil
 		}
+
 		m.character = char
 		m.mainSheetModel = views.NewMainSheetModel(char, m.storage)
 		// Pass current window size to the new model
@@ -224,6 +239,12 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.inventoryModel != nil {
 			updatedModel, c := m.inventoryModel.Update(msg)
 			m.inventoryModel = updatedModel
+			cmd = c
+		}
+	case ViewSpellbook:
+		if m.spellbookModel != nil {
+			updatedModel, c := m.spellbookModel.Update(msg)
+			m.spellbookModel = updatedModel
 			cmd = c
 		}
 	default:
@@ -302,7 +323,10 @@ func (m Model) renderInventory() string {
 }
 
 func (m Model) renderSpellbook() string {
-	return "Spellbook View (TODO)\n\nPress q to quit."
+	if m.spellbookModel != nil {
+		return m.spellbookModel.View()
+	}
+	return "Spellbook View (loading...)"
 }
 
 func (m Model) renderCharacterInfo() string {

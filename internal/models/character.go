@@ -200,6 +200,33 @@ func ReadFrom(r io.Reader) (*Character, error) {
 	return &c, nil
 }
 
+// UpgradeCharacterSpellcasting upgrades character spellcasting data based on class info.
+// This handles migration when ritual caster flags were added to the schema.
+func UpgradeCharacterSpellcasting(char *Character, ritualCaster, ritualCasterUnprepared bool) {
+	if char == nil || char.Spellcasting == nil {
+		return
+	}
+
+	// Update Spellcasting with class ritual caster flags
+	char.Spellcasting.RitualCaster = ritualCaster
+	char.Spellcasting.RitualCasterUnprepared = ritualCasterUnprepared
+}
+
+// UpgradeSpellRitualFlags updates KnownSpell.Ritual flags based on spell database.
+// This is needed for characters created before the Ritual flag was added to KnownSpell.
+func UpgradeSpellRitualFlags(char *Character, findSpellFunc func(name string) (ritual bool, found bool)) {
+	if char == nil || char.Spellcasting == nil || findSpellFunc == nil {
+		return
+	}
+
+	for i := range char.Spellcasting.KnownSpells {
+		spell := &char.Spellcasting.KnownSpells[i]
+		if ritual, found := findSpellFunc(spell.Name); found {
+			spell.Ritual = ritual
+		}
+	}
+}
+
 // Validate checks if the character data is valid.
 func (c *Character) Validate() []string {
 	errors := []string{}

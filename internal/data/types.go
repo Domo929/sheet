@@ -45,6 +45,8 @@ type Class struct {
 	Spellcaster              bool              `json:"spellcaster"`
 	SpellcastingAbility      string            `json:"spellcastingAbility,omitempty"`
 	SpellSlots               []SpellSlot       `json:"spellSlots,omitempty"`
+	RitualCaster             bool              `json:"ritualCaster,omitempty"`             // Can cast ritual spells
+	RitualCasterUnprepared   bool              `json:"ritualCasterUnprepared,omitempty"`   // Can cast rituals without preparing (Wizard)
 	Features                 []Feature         `json:"features"`
 	Subclasses               []Subclass        `json:"subclasses,omitempty"`
 }
@@ -127,6 +129,7 @@ type SpellData struct {
 	DamageType  string            `json:"damageType,omitempty"`
 	SavingThrow string            `json:"savingThrow,omitempty"`
 	Scaling     map[string]string `json:"scaling,omitempty"`
+	Upcast      string            `json:"upcast,omitempty"`
 }
 
 // Background represents a character background.

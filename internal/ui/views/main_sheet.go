@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/charmbracelet/bubbles/key"
@@ -16,6 +17,7 @@ import (
 type MainSheetModel struct {
 	character     *models.Character
 	storage       *storage.CharacterStorage
+	spellDatabase *data.SpellDatabase
 	width         int
 	height        int
 	focusArea     FocusArea
@@ -36,6 +38,12 @@ type MainSheetModel struct {
 
 	// Action type selection (for Actions panel)
 	selectedActionType ActionType
+	actionCursor       int // Cursor for selecting actions within the current type
+
+	// Spell casting modal
+	castingSpell        *data.SpellData // Spell being cast
+	castLevelCursor     int             // Cursor for slot level selection
+	availableCastLevels []int           // Available slot levels for upcasting
 
 	// Rest mode
 	restMode       RestMode
@@ -88,6 +96,28 @@ const (
 )
 
 const numActionTypes = 4
+
+// ActionItemType represents different types of action items
+type ActionItemType int
+
+const (
+	ActionItemWeapon ActionItemType = iota
+	ActionItemSpell
+	ActionItemStandard
+)
+
+// ActionItem represents a selectable action in the Actions panel
+type ActionItem struct {
+	Type        ActionItemType
+	Name        string
+	Description string
+	// For weapons
+	Weapon *models.Item
+	// For spells
+	Spell *data.SpellData
+	// For standard actions
+	StandardAction *StandardAction
+}
 
 // StandardAction represents a standard D&D 2024 action.
 type StandardAction struct {
@@ -248,11 +278,16 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 
 // NewMainSheetModel creates a new main sheet model.
 func NewMainSheetModel(character *models.Character, storage *storage.CharacterStorage) *MainSheetModel {
+	// Load spell database
+	loader := data.NewLoader("./data")
+	spellDB, _ := loader.GetSpells() // Ignore error for now, spells optional
+
 	return &MainSheetModel{
-		character: character,
-		storage:   storage,
-		focusArea: FocusAbilitiesAndSaves,
-		keys:      defaultMainSheetKeyMap(),
+		character:     character,
+		storage:       storage,
+		spellDatabase: spellDB,
+		focusArea:     FocusAbilitiesAndSaves,
+		keys:          defaultMainSheetKeyMap(),
 	}
 }
 
@@ -297,14 +332,38 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			return m.handleConditionInput(msg)
 		}
 
+		// Handle spell casting modal
+		if m.castingSpell != nil {
+			return m.handleCastingInput(msg)
+		}
+
 		// Handle rest mode
 		if m.restMode != RestModeNone {
 			return m.handleRestInput(msg)
 		}
 
+		// Handle action navigation when Actions are focused
+		if m.focusArea == FocusActions {
+			switch msg.Type {
+			case tea.KeyUp:
+				if m.actionCursor > 0 {
+					m.actionCursor--
+				}
+				return m, nil
+			case tea.KeyDown:
+				actionItems := m.getActionItems()
+				if m.actionCursor < len(actionItems)-1 {
+					m.actionCursor++
+				}
+				return m, nil
+			case tea.KeyEnter:
+				return m.handleActionSelection()
+			}
+		}
+
 		// Clear status message on any key press
 		m.statusMessage = ""
-		
+
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			m.confirmingQuit = true
@@ -325,8 +384,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Inventory):
 			return m, func() tea.Msg { return OpenInventoryMsg{} }
 		case key.Matches(msg, m.keys.Spellbook):
-			m.statusMessage = "Spellbook view coming soon..."
-			return m, nil
+			return m, func() tea.Msg { return OpenSpellbookMsg{} }
 		case key.Matches(msg, m.keys.Info):
 			m.statusMessage = "Character info view coming soon..."
 			return m, nil
@@ -404,6 +462,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.NextActionType):
 			if m.focusArea == FocusActions {
 				m.selectedActionType = (m.selectedActionType + 1) % numActionTypes
+				m.actionCursor = 0 // Reset cursor when changing tabs
 				return m, nil
 			}
 		case key.Matches(msg, m.keys.PrevActionType):
@@ -413,6 +472,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 				} else {
 					m.selectedActionType--
 				}
+				m.actionCursor = 0 // Reset cursor when changing tabs
 				return m, nil
 			}
 		}
@@ -426,6 +486,94 @@ func (m *MainSheetModel) saveCharacter() {
 	if m.storage != nil {
 		_, _ = m.storage.Save(m.character)
 	}
+}
+
+// handleActionSelection handles when user presses Enter on an action
+func (m *MainSheetModel) handleActionSelection() (*MainSheetModel, tea.Cmd) {
+	actionItems := m.getActionItems()
+	if m.actionCursor < 0 || m.actionCursor >= len(actionItems) {
+		return m, nil
+	}
+
+	selectedItem := actionItems[m.actionCursor]
+
+	switch selectedItem.Type {
+	case ActionItemSpell:
+		// Initiate spell casting modal
+		if selectedItem.Spell != nil {
+			spell := selectedItem.Spell
+
+			// Check if character can cast spells
+			if m.character.Spellcasting == nil {
+				m.statusMessage = "This character cannot cast spells"
+				return m, nil
+			}
+
+			// For cantrips, open modal immediately
+			if spell.Level == 0 {
+				m.castingSpell = spell
+				m.availableCastLevels = nil
+				m.castLevelCursor = 0
+				return m, nil
+			}
+
+			// For leveled spells, check available slots
+			availableLevels := m.getAvailableCastLevels(spell.Level)
+			if len(availableLevels) == 0 {
+				// Check if can cast as ritual
+				if spell.Ritual {
+					// Find the known spell to check ritual flag
+					for _, ks := range m.character.Spellcasting.KnownSpells {
+						if ks.Name == spell.Name && ks.Ritual {
+							m.castingSpell = spell
+							m.availableCastLevels = nil
+							m.castLevelCursor = 0
+							return m, nil
+						}
+					}
+				}
+				m.statusMessage = fmt.Sprintf("No spell slots available for %s", spell.Name)
+				return m, nil
+			}
+
+			// Open casting modal with available slot levels
+			m.castingSpell = spell
+			m.availableCastLevels = availableLevels
+			m.castLevelCursor = 0
+			return m, nil
+		}
+		return m, nil
+
+	case ActionItemWeapon:
+		// For weapons, show detailed attack info
+		if selectedItem.Weapon != nil {
+			w := selectedItem.Weapon
+			attackBonus := m.getWeaponAttackBonus(*w)
+			damageMod := m.getWeaponDamageMod(*w)
+
+			damageStr := w.Damage
+			if damageMod != 0 {
+				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
+			}
+			damageStr += " " + w.DamageType
+
+			m.statusMessage = fmt.Sprintf("⚔ %s: Hit %s, Dmg %s", w.Name, formatModifier(attackBonus), damageStr)
+		} else {
+			// Unarmed strike
+			m.statusMessage = fmt.Sprintf("⚔ Unarmed Strike: Hit %s, Dmg 1 bludgeoning",
+				formatModifier(m.character.AbilityScores.Strength.Modifier()))
+		}
+		return m, nil
+
+	case ActionItemStandard:
+		// For standard actions, show the description
+		if selectedItem.StandardAction != nil {
+			m.statusMessage = fmt.Sprintf("📋 %s: %s", selectedItem.Name, selectedItem.StandardAction.Description)
+		}
+		return m, nil
+	}
+
+	return m, nil
 }
 
 // handleHPInput handles keyboard input when in HP modification mode.
@@ -532,6 +680,57 @@ func (m *MainSheetModel) handleConditionInput(msg tea.KeyMsg) (*MainSheetModel, 
 	case tea.KeyDown:
 		if m.conditionCursor < listLen-1 {
 			m.conditionCursor++
+		}
+		return m, nil
+	}
+
+	return m, nil
+}
+
+// handleCastingInput handles keyboard input when in spell casting modal mode.
+func (m *MainSheetModel) handleCastingInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEscape:
+		m.castingSpell = nil
+		m.availableCastLevels = nil
+		m.statusMessage = "Casting cancelled"
+		return m, nil
+
+	case tea.KeyEnter:
+		// Cast cantrip (no slot needed)
+		if m.castingSpell.Level == 0 {
+			m.statusMessage = fmt.Sprintf("Cast %s (cantrip)", m.castingSpell.Name)
+			m.castingSpell = nil
+			m.availableCastLevels = nil
+			return m, nil
+		}
+
+		// Cast as ritual (no slot needed)
+		if m.castingSpell.Ritual && len(m.availableCastLevels) == 0 {
+			m.statusMessage = fmt.Sprintf("Cast %s as ritual (10 minutes, no slot)", m.castingSpell.Name)
+			m.castingSpell = nil
+			m.availableCastLevels = nil
+			return m, nil
+		}
+
+		// Cast with spell slot
+		if len(m.availableCastLevels) > 0 && m.castLevelCursor < len(m.availableCastLevels) {
+			selectedLevel := m.availableCastLevels[m.castLevelCursor]
+			m.castSpellAtLevel(m.castingSpell, selectedLevel)
+			return m, nil
+		}
+
+		return m, nil
+
+	case tea.KeyUp:
+		if len(m.availableCastLevels) > 1 && m.castLevelCursor > 0 {
+			m.castLevelCursor--
+		}
+		return m, nil
+
+	case tea.KeyDown:
+		if len(m.availableCastLevels) > 1 && m.castLevelCursor < len(m.availableCastLevels)-1 {
+			m.castLevelCursor++
 		}
 		return m, nil
 	}
@@ -739,12 +938,12 @@ func (m *MainSheetModel) View() string {
 	// Left column: Abilities/Saves on top, Skills below
 	abilitiesAndSaves := m.renderAbilitiesAndSaves(leftWidth)
 	skills := m.renderSkills(leftWidth)
-	leftColumn := lipgloss.JoinVertical(lipgloss.Left, abilitiesAndSaves, "", skills)
+	leftColumn := lipgloss.JoinVertical(lipgloss.Left, abilitiesAndSaves, skills)
 
 	// Right column: Combat on top, Actions below
 	combat := m.renderCombatStats(rightWidth)
 	actions := m.renderActions(rightWidth)
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, combat, "", actions)
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, combat, actions)
 
 	// Join columns horizontally
 	mainContent := lipgloss.JoinHorizontal(
@@ -757,38 +956,49 @@ func (m *MainSheetModel) View() string {
 	// Footer with navigation help
 	footer := m.renderFooter(width)
 
+	// Spell casting modal overlay
+	if m.castingSpell != nil {
+		castingModal := m.renderCastConfirmationModal()
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			header,
+			castingModal,
+			footer,
+		)
+	}
+
 	// Rest overlay if in rest mode
 	if m.restMode != RestModeNone {
 		restOverlay := m.renderRestOverlay(width)
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
 			header,
-			"",
 			restOverlay,
-			"",
 			footer,
 		)
 	}
 
 	// Join all sections vertically
-	return lipgloss.JoinVertical(
+	// TODO: Make view more dynamic based on terminal height to avoid overflow
+	fullView := lipgloss.JoinVertical(
 		lipgloss.Left,
 		header,
-		"",
 		mainContent,
-		"",
 		footer,
 	)
+
+	return fullView
 }
 
 func (m *MainSheetModel) renderHeader(width int) string {
 	char := m.character
 
-	// Title style
+	// Title style - make character name very prominent
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("99")).
-		MarginBottom(1)
+		Foreground(lipgloss.Color("15")).  // Bright white for maximum visibility
+		MarginBottom(0).
+		Underline(true)  // Add underline for emphasis
 
 	// Info style
 	infoStyle := lipgloss.NewStyle().
@@ -1046,7 +1256,7 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("240")).
 		Padding(0, 1).
-		Width(width)
+		Width(width - 2) // Account for border
 
 	if m.focusArea == FocusCombat {
 		panelStyle = panelStyle.BorderForeground(lipgloss.Color("99"))
@@ -1210,6 +1420,41 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 			labelStyle.Render("Spell Attack:"),
 			valueStyle.Render(formatModifier(char.GetSpellAttackBonus())),
 		))
+
+		// Show spell slots or pact magic
+		sc := char.Spellcasting
+		if sc.PactMagic != nil {
+			// Warlock pact magic
+			pm := sc.PactMagic
+			slotStyle := valueStyle
+			if pm.Remaining == 0 {
+				slotStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+			}
+			lines = append(lines, fmt.Sprintf("%s %s",
+				labelStyle.Render(fmt.Sprintf("Pact Slots (L%d):", pm.SlotLevel)),
+				slotStyle.Render(fmt.Sprintf("%d/%d", pm.Remaining, pm.Total)),
+			))
+		} else {
+			// Regular spell slots - show only levels with slots
+			hasSlots := false
+			for level := 1; level <= 9; level++ {
+				slot := sc.SpellSlots.GetSlot(level)
+				if slot != nil && slot.Total > 0 {
+					hasSlots = true
+					slotStyle := valueStyle
+					if slot.Remaining == 0 {
+						slotStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+					}
+					lines = append(lines, fmt.Sprintf("%s %s",
+						labelStyle.Render(fmt.Sprintf("Level %d:", level)),
+						slotStyle.Render(fmt.Sprintf("%d/%d", slot.Remaining, slot.Total)),
+					))
+				}
+			}
+			if !hasSlots {
+				lines = append(lines, labelStyle.Render("No spell slots"))
+			}
+		}
 	}
 
 	// Active conditions (always show section with hint when focused)
@@ -1267,110 +1512,321 @@ func (m *MainSheetModel) renderActions(width int) string {
 	lines = append(lines, strings.Join(tabs, " "))
 	if isFocused {
 		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
-		lines = append(lines, hintStyle.Render("←/→: switch type"))
+		lines = append(lines, hintStyle.Render("←/→: switch type  ↑↓: select  Enter: use"))
 	}
-	lines = append(lines, "")
+
+	// Get all action items for current type
+	actionItems := m.getActionItems()
+
+	// Ensure cursor is valid
+	if m.actionCursor >= len(actionItems) {
+		m.actionCursor = len(actionItems) - 1
+	}
+	if m.actionCursor < 0 {
+		m.actionCursor = 0
+	}
+
+	// Render action items with cursor, grouped by category
+	if len(actionItems) == 0 {
+		if m.selectedActionType == ActionTypeOther {
+			// Other tab - non-interactive items
+			lines = append(lines, titleStyle.Render("Other"))
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Object Interaction")))
+			lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Interact with one object for free")))
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Movement")))
+			lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(fmt.Sprintf("Move up to %d ft (can split)", char.CombatStats.Speed))))
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Drop Prone")))
+			lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Fall prone (no cost)")))
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Stand Up")))
+			lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Costs half your Speed")))
+		} else {
+			lines = append(lines, labelStyle.Render("  No actions available"))
+		}
+	} else {
+		// Group items by type: Weapons, Spells, Standard Actions
+		var weaponItems, spellItems, standardItems []ActionItem
+		for _, item := range actionItems {
+			switch item.Type {
+			case ActionItemWeapon:
+				weaponItems = append(weaponItems, item)
+			case ActionItemSpell:
+				spellItems = append(spellItems, item)
+			case ActionItemStandard:
+				standardItems = append(standardItems, item)
+			}
+		}
+
+		currentIndex := 0
+
+		// Render weapons section
+		if len(weaponItems) > 0 {
+			lines = append(lines, titleStyle.Render("Weapon Attacks"))
+			for _, item := range weaponItems {
+				cursor := "  "
+				if isFocused && currentIndex == m.actionCursor {
+					cursor = "> "
+				}
+
+				itemLine := fmt.Sprintf("%s%s - %s", cursor, valueStyle.Render(item.Name), labelStyle.Render(item.Description))
+
+				if isFocused && currentIndex == m.actionCursor {
+					itemLine = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(itemLine)
+				}
+
+				lines = append(lines, itemLine)
+				currentIndex++
+			}
+		}
+
+		// Render spells section
+		if len(spellItems) > 0 {
+			if len(weaponItems) > 0 {
+				lines = append(lines, "")
+			}
+			lines = append(lines, titleStyle.Render("Spells"))
+			for _, item := range spellItems {
+				cursor := "  "
+				if isFocused && currentIndex == m.actionCursor {
+					cursor = "> "
+				}
+
+				itemLine := fmt.Sprintf("%s%s - %s", cursor, valueStyle.Render(item.Name), labelStyle.Render(item.Description))
+
+				if isFocused && currentIndex == m.actionCursor {
+					itemLine = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(itemLine)
+				}
+
+				lines = append(lines, itemLine)
+				currentIndex++
+			}
+		}
+
+		// Render standard actions section
+		if len(standardItems) > 0 {
+			if len(weaponItems) > 0 || len(spellItems) > 0 {
+				lines = append(lines, "")
+			}
+			lines = append(lines, titleStyle.Render("Standard Actions"))
+			for _, item := range standardItems {
+				cursor := "  "
+				if isFocused && currentIndex == m.actionCursor {
+					cursor = "> "
+				}
+
+				itemLine := fmt.Sprintf("%s%s - %s", cursor, valueStyle.Render(item.Name), labelStyle.Render(item.Description))
+
+				if isFocused && currentIndex == m.actionCursor {
+					itemLine = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(itemLine)
+				}
+
+				lines = append(lines, itemLine)
+				currentIndex++
+			}
+		}
+	}
+
+	return panelStyle.Render(strings.Join(lines, "\n"))
+}
+
+// getSpellsByCastingTime returns spells that match the given casting time.
+// castingTime can be: "A" (Action), "BA" (Bonus Action), "R" (Reaction), etc.
+func (m *MainSheetModel) getSpellsByCastingTime(castingTime string) []data.SpellData {
+	if m.character == nil || m.character.Spellcasting == nil || m.spellDatabase == nil {
+		return nil
+	}
+
+	var spells []data.SpellData
+	sc := m.character.Spellcasting
+
+	// Helper to check if spell is available
+	isAvailable := func(spellName string, level int, spell data.SpellData) bool {
+		// Cantrips are always available
+		if level == 0 {
+			for _, c := range sc.CantripsKnown {
+				if c == spellName {
+					return true
+				}
+			}
+			return false
+		}
+
+		// For leveled spells, check if prepared (or always available for non-preparing classes)
+		for _, ks := range sc.KnownSpells {
+			if ks.Name == spellName {
+				// Non-preparing classes: all known spells are available
+				if !sc.PreparesSpells {
+					return true
+				}
+
+				// Always prepared spells
+				if ks.AlwaysPrepared {
+					return true
+				}
+
+				// Prepared spells
+				if ks.Prepared {
+					return true
+				}
+
+				// Wizards can cast ritual spells from spellbook without preparing
+				if spell.Ritual && sc.RitualCasterUnprepared {
+					return true
+				}
+
+				return false
+			}
+		}
+		return false
+	}
+
+	// Search through all spells in database
+	for _, spell := range m.spellDatabase.Spells {
+		if spell.CastingTime == castingTime && isAvailable(spell.Name, spell.Level, spell) {
+			spells = append(spells, spell)
+		}
+	}
+
+	return spells
+}
+
+// getActionItems returns all available actions for the current action type
+func (m *MainSheetModel) getActionItems() []ActionItem {
+	if m.character == nil {
+		return nil
+	}
+
+	var items []ActionItem
 
 	switch m.selectedActionType {
 	case ActionTypeAction:
-		// Weapon attacks (including unarmed strike)
-		lines = append(lines, titleStyle.Render("Weapon Attacks"))
-		
-		// Unarmed Strike first (base rules: no proficiency, no ability mod to damage)
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Unarmed Strike")))
-		lines = append(lines, fmt.Sprintf("    %s %s, %s %s bludgeoning",
-			labelStyle.Render("Hit:"),
-			valueStyle.Render(formatModifier(char.AbilityScores.Strength.Modifier())),
-			labelStyle.Render("Dmg:"),
-			valueStyle.Render("1"),
-		))
-		
+		// Unarmed Strike (always available)
+		items = append(items, ActionItem{
+			Type:        ActionItemWeapon,
+			Name:        "Unarmed Strike",
+			Description: fmt.Sprintf("Hit: %s, Dmg: 1 bludgeoning",
+				formatModifier(m.character.AbilityScores.Strength.Modifier())),
+		})
+
 		// Equipped weapons
 		weapons := m.getWeapons()
-		for _, w := range weapons {
-			attackBonus := m.getWeaponAttackBonus(w)
-			damageMod := m.getWeaponDamageMod(w)
-			
-			hitStr := formatModifier(attackBonus)
+		for i := range weapons {
+			w := &weapons[i]
+			attackBonus := m.getWeaponAttackBonus(*w)
+			damageMod := m.getWeaponDamageMod(*w)
+
 			damageStr := w.Damage
 			if damageMod != 0 {
 				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
 			}
 			damageStr += " " + w.DamageType
-			
+
 			if w.RangeNormal > 0 {
 				damageStr = fmt.Sprintf("%s (%d/%d ft)", damageStr, w.RangeNormal, w.RangeLong)
 			}
-			
-			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(w.Name)))
-			lines = append(lines, fmt.Sprintf("    %s %s, %s %s",
-				labelStyle.Render("Hit:"),
-				valueStyle.Render(hitStr),
-				labelStyle.Render("Dmg:"),
-				valueStyle.Render(damageStr),
-			))
-			
-			if len(w.WeaponProps) > 0 {
-				propStrs := make([]string, 0, len(w.WeaponProps))
-				for _, prop := range w.WeaponProps {
-					propStr := strings.Title(prop)
-					if prop == "versatile" && w.VersatileDamage != "" {
-						propStr = fmt.Sprintf("Versatile (%s)", w.VersatileDamage)
-					}
-					propStrs = append(propStrs, propStr)
-				}
-				propsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
-				lines = append(lines, fmt.Sprintf("    %s", propsStyle.Render(strings.Join(propStrs, ", "))))
-			}
+
+			items = append(items, ActionItem{
+				Type:        ActionItemWeapon,
+				Name:        w.Name,
+				Description: fmt.Sprintf("Hit: %s, Dmg: %s", formatModifier(attackBonus), damageStr),
+				Weapon:      w,
+			})
 		}
-		
-		// Standard Actions
-		lines = append(lines, "")
-		lines = append(lines, titleStyle.Render("Standard Actions"))
-		for _, action := range standardActions {
+
+		// Action spells (before standard actions in display order)
+		actionSpells := m.getSpellsByCastingTime("A")
+		for i := range actionSpells {
+			spell := &actionSpells[i]
+			spellInfo := fmt.Sprintf("Level %d", spell.Level)
+			if spell.Level == 0 {
+				spellInfo = "Cantrip"
+			}
+			items = append(items, ActionItem{
+				Type:        ActionItemSpell,
+				Name:        spell.Name,
+				Description: spellInfo,
+				Spell:       spell,
+			})
+		}
+
+		// Standard actions (after spells in display order)
+		for i := range standardActions {
+			action := &standardActions[i]
 			if action.ActionType == ActionTypeAction && action.Name != "Attack" {
-				lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(action.Name)))
-				lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(action.Description)))
+				items = append(items, ActionItem{
+					Type:           ActionItemStandard,
+					Name:           action.Name,
+					Description:    action.Description,
+					StandardAction: action,
+				})
 			}
 		}
 
 	case ActionTypeBonus:
-		lines = append(lines, titleStyle.Render("Bonus Actions"))
-		for _, action := range standardActions {
+		// Bonus action spells (before standard actions in display order)
+		bonusSpells := m.getSpellsByCastingTime("BA")
+		for i := range bonusSpells {
+			spell := &bonusSpells[i]
+			spellInfo := fmt.Sprintf("Level %d", spell.Level)
+			if spell.Level == 0 {
+				spellInfo = "Cantrip"
+			}
+			items = append(items, ActionItem{
+				Type:        ActionItemSpell,
+				Name:        spell.Name,
+				Description: spellInfo,
+				Spell:       spell,
+			})
+		}
+
+		// Standard bonus actions (after spells in display order)
+		for i := range standardActions {
+			action := &standardActions[i]
 			if action.ActionType == ActionTypeBonus {
-				lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(action.Name)))
-				lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(action.Description)))
+				items = append(items, ActionItem{
+					Type:           ActionItemStandard,
+					Name:           action.Name,
+					Description:    action.Description,
+					StandardAction: action,
+				})
 			}
 		}
-		// Placeholder for class/feature bonus actions
-		lines = append(lines, "")
-		lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
 
 	case ActionTypeReaction:
-		lines = append(lines, titleStyle.Render("Reactions"))
-		for _, action := range standardActions {
+		// Reaction spells (before standard actions in display order)
+		reactionSpells := m.getSpellsByCastingTime("R")
+		for i := range reactionSpells {
+			spell := &reactionSpells[i]
+			spellInfo := fmt.Sprintf("Level %d", spell.Level)
+			if spell.Level == 0 {
+				spellInfo = "Cantrip"
+			}
+			items = append(items, ActionItem{
+				Type:        ActionItemSpell,
+				Name:        spell.Name,
+				Description: spellInfo,
+				Spell:       spell,
+			})
+		}
+
+		// Standard reactions (after spells in display order)
+		for i := range standardActions {
+			action := &standardActions[i]
 			if action.ActionType == ActionTypeReaction {
-				lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(action.Name)))
-				lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(action.Description)))
+				items = append(items, ActionItem{
+					Type:           ActionItemStandard,
+					Name:           action.Name,
+					Description:    action.Description,
+					StandardAction: action,
+				})
 			}
 		}
-		// Placeholder for class/feature reactions
-		lines = append(lines, "")
-		lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
 
 	case ActionTypeOther:
-		lines = append(lines, titleStyle.Render("Other"))
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Object Interaction")))
-		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Interact with one object for free")))
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Movement")))
-		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(fmt.Sprintf("Move up to %d ft (can split)", char.CombatStats.Speed))))
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Drop Prone")))
-		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Fall prone (no cost)")))
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Stand Up")))
-		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Costs half your Speed")))
+		// Movement and other non-standard actions (not interactive for now)
+		// Could add these later if needed
 	}
 
-	return panelStyle.Render(strings.Join(lines, "\n"))
+	return items
 }
 
 func (m *MainSheetModel) renderRestOverlay(width int) string {
@@ -1544,6 +2000,191 @@ func (m *MainSheetModel) renderRestOverlay(width int) string {
 	}
 
 	return panelStyle.Render(strings.Join(lines, "\n"))
+}
+
+// renderCastConfirmationModal renders the spell casting confirmation modal.
+func (m *MainSheetModel) renderCastConfirmationModal() string {
+	if m.castingSpell == nil {
+		return ""
+	}
+
+	spell := m.castingSpell
+	var lines []string
+
+	// Title
+	lines = append(lines, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Cast %s", spell.Name)))
+	lines = append(lines, "")
+
+	// Level and school
+	levelSchool := fmt.Sprintf("Level %d %s", spell.Level, spell.School)
+	if spell.Level == 0 {
+		levelSchool = fmt.Sprintf("%s cantrip", spell.School)
+	}
+	if spell.Ritual {
+		levelSchool += " (ritual)"
+	}
+	lines = append(lines, levelSchool)
+	lines = append(lines, "")
+
+	// Basic spell info
+	castingTime := spell.CastingTime
+	// Check if being cast as ritual (no slots available but spell has ritual tag)
+	if spell.Ritual && len(m.availableCastLevels) == 0 {
+		castingTime = "10 minutes (ritual)"
+	}
+	lines = append(lines, fmt.Sprintf("Casting Time: %s", castingTime))
+	lines = append(lines, fmt.Sprintf("Range: %s", spell.Range))
+	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(spell.Components, ", ")))
+	lines = append(lines, fmt.Sprintf("Duration: %s", spell.Duration))
+
+	// Damage if present
+	if spell.Damage != "" {
+		damageInfo := spell.Damage
+		if spell.DamageType != "" {
+			damageInfo = fmt.Sprintf("%s %s", damageInfo, spell.DamageType)
+		}
+		lines = append(lines, fmt.Sprintf("Damage: %s", damageInfo))
+	}
+
+	// Saving throw if present
+	if spell.SavingThrow != "" {
+		saveDC := m.getSpellSaveDC()
+		lines = append(lines, fmt.Sprintf("Saving Throw: %s DC %d", spell.SavingThrow, saveDC))
+	}
+
+	lines = append(lines, "")
+
+	// Description (word-wrapped)
+	descLines := m.wordWrap(spell.Description, 60)
+	lines = append(lines, descLines...)
+
+	// Upcast information if available
+	if spell.Upcast != "" && spell.Level > 0 && spell.Level < 9 {
+		lines = append(lines, "")
+		lines = append(lines, lipgloss.NewStyle().Bold(true).Render("At Higher Levels:"))
+		upcastLines := m.wordWrap(spell.Upcast, 60)
+		lines = append(lines, upcastLines...)
+	}
+
+	// Separator before slot selection
+	if spell.Level > 0 && len(m.availableCastLevels) > 0 {
+		lines = append(lines, "")
+		lines = append(lines, strings.Repeat("─", 60))
+		lines = append(lines, "")
+	}
+
+	// Slot selection (if not a cantrip and not being cast as ritual)
+	if spell.Level > 0 && len(m.availableCastLevels) > 0 {
+		if len(m.availableCastLevels) == 1 {
+			// Single slot option
+			level := m.availableCastLevels[0]
+			upcastInfo := m.calculateUpcastEffect(level, spell)
+			sc := m.character.Spellcasting
+
+			isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
+			if isPactMagic {
+				lines = append(lines, fmt.Sprintf("Using: Pact Magic - Level %d%s", level, upcastInfo))
+			} else {
+				lines = append(lines, fmt.Sprintf("Using: Level %d Slot%s", level, upcastInfo))
+			}
+		} else {
+			// Multiple slot options
+			lines = append(lines, "Select Spell Slot Level:")
+			lines = append(lines, "")
+
+			sc := m.character.Spellcasting
+			for i, level := range m.availableCastLevels {
+				cursor := "  "
+				if i == m.castLevelCursor {
+					cursor = "> "
+				}
+
+				isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
+				upcastInfo := m.calculateUpcastEffect(level, spell)
+
+				var line string
+				if isPactMagic {
+					remaining := sc.PactMagic.Remaining
+					total := sc.PactMagic.Total
+					line = fmt.Sprintf("%sPact Magic - Level %d%s [%d/%d remaining]", cursor, level, upcastInfo, remaining, total)
+				} else {
+					slot := sc.SpellSlots.GetSlot(level)
+					if slot != nil {
+						line = fmt.Sprintf("%sLevel %d Slot%s [%d/%d remaining]", cursor, level, upcastInfo, slot.Remaining, slot.Total)
+					}
+				}
+
+				if i == m.castLevelCursor {
+					line = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(line)
+				}
+
+				lines = append(lines, line)
+			}
+		}
+	}
+
+	// Help text
+	lines = append(lines, "")
+	if spell.Level == 0 {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast cantrip | Esc: cancel"))
+	} else if spell.Ritual && len(m.availableCastLevels) == 0 {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast as ritual (no slot) | Esc: cancel"))
+	} else if len(m.availableCastLevels) <= 1 {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast | Esc: cancel"))
+	} else {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("↑↓: select slot | Enter: cast | Esc: cancel"))
+	}
+
+	content := strings.Join(lines, "\n")
+
+	width := 70
+	height := len(lines) + 2
+
+	return lipgloss.NewStyle().
+		Width(width).
+		Height(height).
+		Border(lipgloss.RoundedBorder()).
+		Padding(1, 2).
+		Render(content)
+}
+
+// castSpellAtLevel casts a spell at the given slot level, consuming the appropriate resource.
+func (m *MainSheetModel) castSpellAtLevel(spell *data.SpellData, slotLevel int) {
+	if m.character == nil || m.character.Spellcasting == nil {
+		return
+	}
+
+	sc := m.character.Spellcasting
+
+	// Try pact magic first if it matches the slot level
+	if sc.PactMagic != nil && sc.PactMagic.SlotLevel == slotLevel && sc.PactMagic.Remaining > 0 {
+		if sc.PactMagic.Use() {
+			upcastMsg := ""
+			if slotLevel > spell.Level {
+				upcastMsg = fmt.Sprintf(" (upcast to level %d)", slotLevel)
+			}
+			m.statusMessage = fmt.Sprintf("Cast %s%s using pact magic", spell.Name, upcastMsg)
+			m.castingSpell = nil
+			m.availableCastLevels = nil
+			m.saveCharacter()
+			return
+		}
+	}
+
+	// Try regular spell slot
+	if sc.SpellSlots.UseSlot(slotLevel) {
+		upcastMsg := ""
+		if slotLevel > spell.Level {
+			upcastMsg = fmt.Sprintf(" (upcast to level %d)", slotLevel)
+		}
+		m.statusMessage = fmt.Sprintf("Cast %s%s using level %d slot", spell.Name, upcastMsg, slotLevel)
+		m.castingSpell = nil
+		m.availableCastLevels = nil
+		m.saveCharacter()
+		return
+	}
+
+	m.statusMessage = "Failed to use spell slot"
 }
 
 func (m *MainSheetModel) renderFooter(width int) string {
@@ -1731,6 +2372,179 @@ func (m *MainSheetModel) isProficientWithWeapon(weapon models.Item) bool {
 	}
 
 	return false
+}
+
+// getSpellSaveDC calculates the spell save DC for the character.
+func (m *MainSheetModel) getSpellSaveDC() int {
+	if m.character == nil || m.character.Spellcasting == nil {
+		return 10
+	}
+
+	sc := m.character.Spellcasting
+	abilityMod := m.character.AbilityScores.GetModifier(sc.Ability)
+	profBonus := m.character.Info.ProficiencyBonus()
+
+	return models.CalculateSpellSaveDC(abilityMod, profBonus)
+}
+
+// wordWrap wraps text to the specified width.
+func (m *MainSheetModel) wordWrap(text string, width int) []string {
+	if width <= 0 {
+		width = 40
+	}
+
+	var lines []string
+	words := strings.Fields(text)
+
+	if len(words) == 0 {
+		return lines
+	}
+
+	currentLine := words[0]
+
+	for _, word := range words[1:] {
+		if len(currentLine)+1+len(word) <= width {
+			currentLine += " " + word
+		} else {
+			lines = append(lines, currentLine)
+			currentLine = word
+		}
+	}
+
+	lines = append(lines, currentLine)
+	return lines
+}
+
+// calculateUpcastEffect calculates and formats the upcast effect for a given slot level.
+func (m *MainSheetModel) calculateUpcastEffect(slotLevel int, spell *data.SpellData) string {
+	if spell == nil {
+		return ""
+	}
+
+	levelsAbove := slotLevel - spell.Level
+
+	upcastLower := strings.ToLower(spell.Upcast)
+
+	// Handle dart/projectile increases (like Magic Missile)
+	if strings.Contains(upcastLower, "dart") {
+		baseDarts := 3
+		totalDarts := baseDarts + levelsAbove
+		if spell.Damage != "" {
+			return fmt.Sprintf(" (%d darts, %s each)", totalDarts, spell.Damage)
+		}
+		return fmt.Sprintf(" (%d darts)", totalDarts)
+	}
+
+	// Handle target increases (like Scorching Ray)
+	if strings.Contains(upcastLower, "ray") || strings.Contains(upcastLower, "beam") {
+		var bonusPerLevel int
+		fmt.Sscanf(spell.Upcast, "+%d", &bonusPerLevel)
+		if bonusPerLevel == 0 {
+			bonusPerLevel = 1
+		}
+
+		baseRays := 3
+		totalRays := baseRays + (bonusPerLevel * levelsAbove)
+		if spell.Damage != "" {
+			return fmt.Sprintf(" (%d rays, %s each)", totalRays, spell.Damage)
+		}
+		return fmt.Sprintf(" (%d rays)", totalRays)
+	}
+
+	// Handle dice damage increases (like Burning Hands, Fireball)
+	var diceStr string
+	for _, part := range strings.Fields(spell.Upcast) {
+		if strings.Contains(part, "d") && len(part) >= 3 {
+			cleaned := strings.TrimPrefix(strings.TrimPrefix(part, "+"), " ")
+			dIndex := strings.Index(cleaned, "d")
+			if dIndex > 0 && dIndex < len(cleaned)-1 {
+				beforeD := cleaned[dIndex-1]
+				afterD := cleaned[dIndex+1]
+				if beforeD >= '0' && beforeD <= '9' && afterD >= '0' && afterD <= '9' {
+					diceStr = cleaned
+					break
+				}
+			}
+		}
+	}
+
+	if diceStr != "" {
+		parts := strings.Split(diceStr, "d")
+		if len(parts) == 2 {
+			var dicePerLevel int
+			fmt.Sscanf(parts[0], "%d", &dicePerLevel)
+			if dicePerLevel == 0 {
+				dicePerLevel = 1
+			}
+
+			diceType := strings.TrimRight(parts[1], ".,;:")
+
+			if spell.Damage != "" {
+				baseParts := strings.Split(spell.Damage, "d")
+				if len(baseParts) == 2 {
+					var baseDice int
+					fmt.Sscanf(baseParts[0], "%d", &baseDice)
+					totalDice := baseDice + (dicePerLevel * levelsAbove)
+					return fmt.Sprintf(" (%dd%s damage)", totalDice, diceType)
+				}
+				if levelsAbove > 0 {
+					bonusDice := dicePerLevel * levelsAbove
+					return fmt.Sprintf(" (%s + %dd%s damage)", spell.Damage, bonusDice, diceType)
+				}
+				return fmt.Sprintf(" (%s damage)", spell.Damage)
+			}
+			if levelsAbove > 0 {
+				bonusDice := dicePerLevel * levelsAbove
+				return fmt.Sprintf(" (+%dd%s damage)", bonusDice, diceType)
+			}
+		}
+	}
+
+	// Handle healing increases
+	if strings.Contains(upcastLower, "heal") {
+		if spell.Damage != "" {
+			return fmt.Sprintf(" (%s healing)", spell.Damage)
+		}
+	}
+
+	// Fallback: show base damage if available
+	if spell.Damage != "" {
+		return fmt.Sprintf(" (%s damage)", spell.Damage)
+	}
+
+	// If upcasting and we have no other info, show generic upcast indicator
+	if levelsAbove > 0 {
+		return fmt.Sprintf(" (upcast +%d)", levelsAbove)
+	}
+
+	return ""
+}
+
+// getAvailableCastLevels returns the spell slot levels available for casting a spell.
+func (m *MainSheetModel) getAvailableCastLevels(spellLevel int) []int {
+	if m.character == nil || m.character.Spellcasting == nil {
+		return []int{}
+	}
+
+	sc := m.character.Spellcasting
+	var available []int
+
+	// Check pact magic first
+	if sc.PactMagic != nil && sc.PactMagic.Total > 0 && sc.PactMagic.Remaining > 0 {
+		if sc.PactMagic.SlotLevel >= spellLevel {
+			available = append(available, sc.PactMagic.SlotLevel)
+		}
+	}
+
+	// Check regular spell slots from spell level to 9
+	for level := spellLevel; level <= 9; level++ {
+		slot := sc.SpellSlots.GetSlot(level)
+		if slot != nil && slot.Remaining > 0 {
+			available = append(available, level)
+		}
+	}
+
+	return available
 }
 
 // formatModifier formats an integer as a modifier string (e.g., +2 or -1).

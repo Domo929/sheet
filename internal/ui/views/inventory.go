@@ -1351,3 +1351,6 @@ type BackToSheetMsg struct{}
 
 // OpenInventoryMsg signals to open the inventory view.
 type OpenInventoryMsg struct{}
+
+// OpenSpellbookMsg signals to open the spellbook view.
+type OpenSpellbookMsg struct{}
