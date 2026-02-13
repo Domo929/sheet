@@ -213,6 +213,12 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 					m.mode = ModeSpellList
 					m.castingSpell = nil
 					return m, m.saveCharacter()
+				} else if m.castingSpell.Ritual && len(m.availableCastLevels) == 0 {
+					// Ritual spell cast as ritual - no slot needed, takes 10 extra minutes
+					m.statusMessage = fmt.Sprintf("Cast %s as ritual (no slot required, takes 10 extra minutes)", m.castingSpell.Name)
+					m.mode = ModeSpellList
+					m.castingSpell = nil
+					return m, m.saveCharacter()
 				} else if len(m.availableCastLevels) > 0 {
 					// Cast with selected slot level
 					selectedLevel := m.availableCastLevels[m.castLevelCursor]
@@ -797,8 +803,8 @@ func (m *SpellbookModel) handleCastSpell() *SpellbookModel {
 	// Store casting spell and get available levels
 	m.castingSpell = &spell
 
-	// For cantrips, no slots needed
-	if spell.Level == 0 {
+	// Ritual spells and cantrips don't use slots
+	if spell.Level == 0 || spell.Ritual {
 		m.availableCastLevels = []int{}
 	} else {
 		// Find available spell slot levels
