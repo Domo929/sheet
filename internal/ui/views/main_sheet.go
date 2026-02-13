@@ -1639,7 +1639,7 @@ func (m *MainSheetModel) getSpellsByCastingTime(castingTime string) []data.Spell
 	sc := m.character.Spellcasting
 
 	// Helper to check if spell is available
-	isAvailable := func(spellName string, level int) bool {
+	isAvailable := func(spellName string, level int, spell data.SpellData) bool {
 		// Cantrips are always available
 		if level == 0 {
 			for _, c := range sc.CantripsKnown {
@@ -1653,7 +1653,27 @@ func (m *MainSheetModel) getSpellsByCastingTime(castingTime string) []data.Spell
 		// For leveled spells, check if prepared (or always available for non-preparing classes)
 		for _, ks := range sc.KnownSpells {
 			if ks.Name == spellName {
-				return !sc.PreparesSpells || ks.Prepared || ks.Ritual
+				// Non-preparing classes: all known spells are available
+				if !sc.PreparesSpells {
+					return true
+				}
+
+				// Always prepared spells
+				if ks.AlwaysPrepared {
+					return true
+				}
+
+				// Prepared spells
+				if ks.Prepared {
+					return true
+				}
+
+				// Wizards can cast ritual spells from spellbook without preparing
+				if spell.Ritual && sc.RitualCasterUnprepared {
+					return true
+				}
+
+				return false
 			}
 		}
 		return false
@@ -1661,7 +1681,7 @@ func (m *MainSheetModel) getSpellsByCastingTime(castingTime string) []data.Spell
 
 	// Search through all spells in database
 	for _, spell := range m.spellDatabase.Spells {
-		if spell.CastingTime == castingTime && isAvailable(spell.Name, spell.Level) {
+		if spell.CastingTime == castingTime && isAvailable(spell.Name, spell.Level, spell) {
 			spells = append(spells, spell)
 		}
 	}

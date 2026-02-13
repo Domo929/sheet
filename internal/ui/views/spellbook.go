@@ -276,7 +276,7 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 				m.spellCursor = 0
 				m.spellScroll = 0
 				m.updateSelectedSpellData()
-				m.statusMessage = "Preparation Mode - Press 'p' to toggle, 'esc' to exit"
+				m.statusMessage = "Preparation Mode - [✓]=prepared [●]=always prepared  p:toggle esc:exit"
 				return m, nil
 			} else if m.mode == ModePreparation {
 				// Toggle preparation of current spell
@@ -497,8 +497,14 @@ func (m *SpellbookModel) renderSpellList() string {
 				// all known spells are always "prepared" (available)
 				if !sc.PreparesSpells {
 					prepMarker = "✓"
+				} else if spell.AlwaysPrepared {
+					// Always prepared from class features (can't be unprepared)
+					prepMarker = "●"
 				} else if spell.Prepared {
 					prepMarker = "✓"
+				} else if spell.Ritual && sc.RitualCasterUnprepared {
+					// Wizards can cast ritual spells without preparing them
+					prepMarker = "●"
 				} else {
 					prepMarker = " "
 				}
@@ -773,6 +779,18 @@ func (m *SpellbookModel) handlePrepareToggle() *SpellbookModel {
 
 	spell := displaySpells[m.spellCursor]
 
+	// Can't toggle always-prepared spells
+	if spell.AlwaysPrepared {
+		m.statusMessage = fmt.Sprintf("%s is always prepared (from class feature)", spell.Name)
+		return m
+	}
+
+	// Can't toggle ritual spells for Wizards (they can cast without preparing)
+	if spell.Ritual && sc.RitualCasterUnprepared {
+		m.statusMessage = fmt.Sprintf("%s is a ritual spell (can cast from spellbook)", spell.Name)
+		return m
+	}
+
 	// Check if we can prepare more spells
 	if !spell.Prepared && sc.MaxPrepared > 0 {
 		if sc.CountPreparedSpells() >= sc.MaxPrepared {
@@ -810,10 +828,19 @@ func (m *SpellbookModel) handleCastSpell() *SpellbookModel {
 
 	spell := displaySpells[m.spellCursor]
 
-	// Check if spell is prepared (if applicable)
-	if sc.PreparesSpells && !spell.Prepared && !spell.Ritual {
-		m.statusMessage = fmt.Sprintf("%s is not prepared", spell.Name)
-		return m
+	// Check if spell is prepared or can be cast (if applicable)
+	if sc.PreparesSpells {
+		canCast := spell.Prepared || spell.AlwaysPrepared
+
+		// Wizards can cast ritual spells from spellbook without preparing
+		if spell.Ritual && sc.RitualCasterUnprepared {
+			canCast = true
+		}
+
+		if !canCast {
+			m.statusMessage = fmt.Sprintf("%s is not prepared", spell.Name)
+			return m
+		}
 	}
 
 	// Check if spell data is available in database (only warn, don't block)
@@ -1091,8 +1118,11 @@ func (m *SpellbookModel) getDisplaySpells() []models.KnownSpell {
 			if !sc.PreparesSpells {
 				// Non-preparing classes: all known spells are available
 				display = append(display, spell)
-			} else if spell.Prepared || spell.Ritual {
-				// Preparing classes: only show prepared or ritual spells
+			} else if spell.Prepared || spell.AlwaysPrepared {
+				// Preparing classes: show prepared spells and always-prepared spells
+				display = append(display, spell)
+			} else if spell.Ritual && sc.RitualCasterUnprepared {
+				// Wizards can cast ritual spells from their spellbook without preparing
 				display = append(display, spell)
 			}
 		} else {
