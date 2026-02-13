@@ -348,7 +348,7 @@ func (m *SpellbookModel) renderHeader() string {
 		prepInfo = fmt.Sprintf(" | Prepared: %d/%d", prepCount, sc.MaxPrepared)
 	}
 
-	statsStyled := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(stats + prepInfo)
+	statsStyled := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("255")).Render(stats + prepInfo)
 
 	return lipgloss.JoinVertical(lipgloss.Left, title, statsStyled) + "\n"
 }
