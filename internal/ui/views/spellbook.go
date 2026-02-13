@@ -180,6 +180,55 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 			return m.handleCastLevelInput(msg)
 		}
 
+		// Handle confirm cast mode
+		if m.mode == ModeConfirmCast {
+			switch {
+			case key.Matches(msg, m.keys.Back): // Esc
+				// Cancel casting
+				m.mode = ModeSpellList
+				m.castingSpell = nil
+				m.availableCastLevels = nil
+				m.statusMessage = "Casting cancelled"
+				return m, nil
+
+			case key.Matches(msg, m.keys.Up):
+				// Navigate up in slot selection
+				if len(m.availableCastLevels) > 1 && m.castLevelCursor > 0 {
+					m.castLevelCursor--
+				}
+				return m, nil
+
+			case key.Matches(msg, m.keys.Down):
+				// Navigate down in slot selection
+				if len(m.availableCastLevels) > 1 && m.castLevelCursor < len(m.availableCastLevels)-1 {
+					m.castLevelCursor++
+				}
+				return m, nil
+
+			case key.Matches(msg, m.keys.Enter):
+				// Confirm cast
+				if m.castingSpell.Level == 0 {
+					// Cantrip - no slot needed
+					m.statusMessage = fmt.Sprintf("Cast %s (no slot required)", m.castingSpell.Name)
+					m.mode = ModeSpellList
+					m.castingSpell = nil
+					return m, m.saveCharacter()
+				} else if len(m.availableCastLevels) > 0 {
+					// Cast with selected slot level
+					selectedLevel := m.availableCastLevels[m.castLevelCursor]
+					m.mode = ModeSpellList
+					return m.castSpellAtLevel(m.castingSpell, selectedLevel), m.saveCharacter()
+				} else {
+					// No slots available (shouldn't reach here)
+					m.statusMessage = "No spell slots available"
+					m.mode = ModeSpellList
+					m.castingSpell = nil
+					return m, nil
+				}
+			}
+			return m, nil
+		}
+
 		// Ctrl+C always quits immediately
 		if key.Matches(msg, m.keys.ForceQuit) {
 			return m, tea.Quit
@@ -313,6 +362,12 @@ func (m *SpellbookModel) View() string {
 	// Handle cast level selection overlay
 	if m.mode == ModeSelectCastLevel {
 		overlay := m.renderCastLevelOverlay()
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, overlay)
+	}
+
+	// Handle confirm cast overlay
+	if m.mode == ModeConfirmCast {
+		overlay := m.renderCastConfirmationModal()
 		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, overlay)
 	}
 
