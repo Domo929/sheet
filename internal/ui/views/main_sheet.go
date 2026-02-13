@@ -332,9 +332,28 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			return m.handleRestInput(msg)
 		}
 
+		// Handle action navigation when Actions are focused
+		if m.focusArea == FocusActions {
+			switch msg.Type {
+			case tea.KeyUp:
+				if m.actionCursor > 0 {
+					m.actionCursor--
+				}
+				return m, nil
+			case tea.KeyDown:
+				actionItems := m.getActionItems()
+				if m.actionCursor < len(actionItems)-1 {
+					m.actionCursor++
+				}
+				return m, nil
+			case tea.KeyEnter:
+				return m.handleActionSelection()
+			}
+		}
+
 		// Clear status message on any key press
 		m.statusMessage = ""
-		
+
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			m.confirmingQuit = true
@@ -433,6 +452,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.NextActionType):
 			if m.focusArea == FocusActions {
 				m.selectedActionType = (m.selectedActionType + 1) % numActionTypes
+				m.actionCursor = 0 // Reset cursor when changing tabs
 				return m, nil
 			}
 		case key.Matches(msg, m.keys.PrevActionType):
@@ -442,6 +462,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 				} else {
 					m.selectedActionType--
 				}
+				m.actionCursor = 0 // Reset cursor when changing tabs
 				return m, nil
 			}
 		}
@@ -455,6 +476,55 @@ func (m *MainSheetModel) saveCharacter() {
 	if m.storage != nil {
 		_, _ = m.storage.Save(m.character)
 	}
+}
+
+// handleActionSelection handles when user presses Enter on an action
+func (m *MainSheetModel) handleActionSelection() (*MainSheetModel, tea.Cmd) {
+	actionItems := m.getActionItems()
+	if m.actionCursor < 0 || m.actionCursor >= len(actionItems) {
+		return m, nil
+	}
+
+	selectedItem := actionItems[m.actionCursor]
+
+	switch selectedItem.Type {
+	case ActionItemSpell:
+		// For spells, we would need to open spell casting modal
+		// For now, just show a status message
+		// TODO: Integrate with spellbook modal for casting
+		m.statusMessage = fmt.Sprintf("Casting %s (spell casting coming soon)", selectedItem.Name)
+		return m, nil
+
+	case ActionItemWeapon:
+		// For weapons, show detailed attack info
+		if selectedItem.Weapon != nil {
+			w := selectedItem.Weapon
+			attackBonus := m.getWeaponAttackBonus(*w)
+			damageMod := m.getWeaponDamageMod(*w)
+
+			damageStr := w.Damage
+			if damageMod != 0 {
+				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
+			}
+			damageStr += " " + w.DamageType
+
+			m.statusMessage = fmt.Sprintf("⚔ %s: Hit %s, Dmg %s", w.Name, formatModifier(attackBonus), damageStr)
+		} else {
+			// Unarmed strike
+			m.statusMessage = fmt.Sprintf("⚔ Unarmed Strike: Hit %s, Dmg 1 bludgeoning",
+				formatModifier(m.character.AbilityScores.Strength.Modifier()))
+		}
+		return m, nil
+
+	case ActionItemStandard:
+		// For standard actions, show the description
+		if selectedItem.StandardAction != nil {
+			m.statusMessage = fmt.Sprintf("📋 %s: %s", selectedItem.Name, selectedItem.StandardAction.Description)
+		}
+		return m, nil
+	}
+
+	return m, nil
 }
 
 // handleHPInput handles keyboard input when in HP modification mode.
@@ -1331,152 +1401,51 @@ func (m *MainSheetModel) renderActions(width int) string {
 	lines = append(lines, strings.Join(tabs, " "))
 	if isFocused {
 		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
-		lines = append(lines, hintStyle.Render("←/→: switch type"))
+		lines = append(lines, hintStyle.Render("←/→: switch type  ↑↓: select  Enter: use"))
 	}
 
-	switch m.selectedActionType {
-	case ActionTypeAction:
-		// Weapon attacks (including unarmed strike)
-		lines = append(lines, titleStyle.Render("Weapon Attacks"))
-		
-		// Unarmed Strike first (base rules: no proficiency, no ability mod to damage)
-		lines = append(lines, fmt.Sprintf("  %s - Hit: %s, Dmg: %s bludgeoning",
-			valueStyle.Render("Unarmed Strike"),
-			valueStyle.Render(formatModifier(char.AbilityScores.Strength.Modifier())),
-			valueStyle.Render("1"),
-		))
-		
-		// Equipped weapons
-		weapons := m.getWeapons()
-		for _, w := range weapons {
-			attackBonus := m.getWeaponAttackBonus(w)
-			damageMod := m.getWeaponDamageMod(w)
-			
-			hitStr := formatModifier(attackBonus)
-			damageStr := w.Damage
-			if damageMod != 0 {
-				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
-			}
-			damageStr += " " + w.DamageType
-			
-			if w.RangeNormal > 0 {
-				damageStr = fmt.Sprintf("%s (%d/%d ft)", damageStr, w.RangeNormal, w.RangeLong)
-			}
+	// Get all action items for current type
+	actionItems := m.getActionItems()
 
-			// Compact single-line format with properties inline
-			weaponLine := fmt.Sprintf("  %s - Hit: %s, Dmg: %s",
-				valueStyle.Render(w.Name),
-				valueStyle.Render(hitStr),
-				valueStyle.Render(damageStr),
-			)
+	// Ensure cursor is valid
+	if m.actionCursor >= len(actionItems) {
+		m.actionCursor = len(actionItems) - 1
+	}
+	if m.actionCursor < 0 {
+		m.actionCursor = 0
+	}
 
-			if len(w.WeaponProps) > 0 {
-				propStrs := make([]string, 0, len(w.WeaponProps))
-				for _, prop := range w.WeaponProps {
-					propStr := strings.Title(prop)
-					if prop == "versatile" && w.VersatileDamage != "" {
-						propStr = fmt.Sprintf("Versatile (%s)", w.VersatileDamage)
-					}
-					propStrs = append(propStrs, propStr)
-				}
-				propsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
-				weaponLine += " " + propsStyle.Render("("+strings.Join(propStrs, ", ")+")")
-			}
-
-			lines = append(lines, weaponLine)
-		}
-
-		// Standard Actions (compact format)
-		lines = append(lines, titleStyle.Render("Standard Actions"))
-		for _, action := range standardActions {
-			if action.ActionType == ActionTypeAction && action.Name != "Attack" {
-				lines = append(lines, fmt.Sprintf("  %s - %s",
-					valueStyle.Render(action.Name),
-					labelStyle.Render(action.Description)))
-			}
-		}
-
-		// Spells (Action casting time)
-		actionSpells := m.getSpellsByCastingTime("A")
-		if len(actionSpells) > 0 {
-			lines = append(lines, titleStyle.Render("Spells (Action)"))
-			for _, spell := range actionSpells {
-				spellInfo := fmt.Sprintf("Level %d", spell.Level)
-				if spell.Level == 0 {
-					spellInfo = "Cantrip"
-				}
-				lines = append(lines, fmt.Sprintf("  %s - %s",
-					valueStyle.Render(spell.Name),
-					labelStyle.Render(spellInfo)))
-			}
-		}
-
-	case ActionTypeBonus:
-		lines = append(lines, titleStyle.Render("Bonus Actions"))
-		for _, action := range standardActions {
-			if action.ActionType == ActionTypeBonus {
-				lines = append(lines, fmt.Sprintf("  %s - %s",
-					valueStyle.Render(action.Name),
-					labelStyle.Render(action.Description)))
-			}
-		}
-
-		// Spells (Bonus Action casting time)
-		bonusSpells := m.getSpellsByCastingTime("BA")
-		if len(bonusSpells) > 0 {
-			lines = append(lines, titleStyle.Render("Spells (Bonus Action)"))
-			for _, spell := range bonusSpells {
-				spellInfo := fmt.Sprintf("Level %d", spell.Level)
-				if spell.Level == 0 {
-					spellInfo = "Cantrip"
-				}
-				lines = append(lines, fmt.Sprintf("  %s - %s",
-					valueStyle.Render(spell.Name),
-					labelStyle.Render(spellInfo)))
-			}
+	// Render action items with cursor
+	if len(actionItems) == 0 {
+		if m.selectedActionType == ActionTypeOther {
+			// Other tab - non-interactive items
+			lines = append(lines, titleStyle.Render("Other"))
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Object Interaction")))
+			lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Interact with one object for free")))
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Movement")))
+			lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(fmt.Sprintf("Move up to %d ft (can split)", char.CombatStats.Speed))))
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Drop Prone")))
+			lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Fall prone (no cost)")))
+			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Stand Up")))
+			lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Costs half your Speed")))
 		} else {
-			// Placeholder for class/feature bonus actions
-			lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
+			lines = append(lines, labelStyle.Render("  No actions available"))
 		}
-
-	case ActionTypeReaction:
-		lines = append(lines, titleStyle.Render("Reactions"))
-		for _, action := range standardActions {
-			if action.ActionType == ActionTypeReaction {
-				lines = append(lines, fmt.Sprintf("  %s - %s",
-					valueStyle.Render(action.Name),
-					labelStyle.Render(action.Description)))
+	} else {
+		for i, item := range actionItems {
+			cursor := "  "
+			if isFocused && i == m.actionCursor {
+				cursor = "> "
 			}
-		}
 
-		// Spells (Reaction casting time)
-		reactionSpells := m.getSpellsByCastingTime("R")
-		if len(reactionSpells) > 0 {
-			lines = append(lines, titleStyle.Render("Spells (Reaction)"))
-			for _, spell := range reactionSpells {
-				spellInfo := fmt.Sprintf("Level %d", spell.Level)
-				if spell.Level == 0 {
-					spellInfo = "Cantrip"
-				}
-				lines = append(lines, fmt.Sprintf("  %s - %s",
-					valueStyle.Render(spell.Name),
-					labelStyle.Render(spellInfo)))
+			itemLine := fmt.Sprintf("%s%s - %s", cursor, valueStyle.Render(item.Name), labelStyle.Render(item.Description))
+
+			if isFocused && i == m.actionCursor {
+				itemLine = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(itemLine)
 			}
-		} else {
-			// Placeholder for class/feature reactions
-			lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
-		}
 
-	case ActionTypeOther:
-		lines = append(lines, titleStyle.Render("Other"))
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Object Interaction")))
-		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Interact with one object for free")))
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Movement")))
-		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(fmt.Sprintf("Move up to %d ft (can split)", char.CombatStats.Speed))))
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Drop Prone")))
-		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Fall prone (no cost)")))
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Stand Up")))
-		lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render("Costs half your Speed")))
+			lines = append(lines, itemLine)
+		}
 	}
 
 	return panelStyle.Render(strings.Join(lines, "\n"))
@@ -1521,6 +1490,146 @@ func (m *MainSheetModel) getSpellsByCastingTime(castingTime string) []data.Spell
 	}
 
 	return spells
+}
+
+// getActionItems returns all available actions for the current action type
+func (m *MainSheetModel) getActionItems() []ActionItem {
+	if m.character == nil {
+		return nil
+	}
+
+	var items []ActionItem
+
+	switch m.selectedActionType {
+	case ActionTypeAction:
+		// Unarmed Strike (always available)
+		items = append(items, ActionItem{
+			Type:        ActionItemWeapon,
+			Name:        "Unarmed Strike",
+			Description: fmt.Sprintf("Hit: %s, Dmg: 1 bludgeoning",
+				formatModifier(m.character.AbilityScores.Strength.Modifier())),
+		})
+
+		// Equipped weapons
+		weapons := m.getWeapons()
+		for i := range weapons {
+			w := &weapons[i]
+			attackBonus := m.getWeaponAttackBonus(*w)
+			damageMod := m.getWeaponDamageMod(*w)
+
+			damageStr := w.Damage
+			if damageMod != 0 {
+				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
+			}
+			damageStr += " " + w.DamageType
+
+			if w.RangeNormal > 0 {
+				damageStr = fmt.Sprintf("%s (%d/%d ft)", damageStr, w.RangeNormal, w.RangeLong)
+			}
+
+			items = append(items, ActionItem{
+				Type:        ActionItemWeapon,
+				Name:        w.Name,
+				Description: fmt.Sprintf("Hit: %s, Dmg: %s", formatModifier(attackBonus), damageStr),
+				Weapon:      w,
+			})
+		}
+
+		// Standard actions
+		for i := range standardActions {
+			action := &standardActions[i]
+			if action.ActionType == ActionTypeAction && action.Name != "Attack" {
+				items = append(items, ActionItem{
+					Type:           ActionItemStandard,
+					Name:           action.Name,
+					Description:    action.Description,
+					StandardAction: action,
+				})
+			}
+		}
+
+		// Action spells
+		actionSpells := m.getSpellsByCastingTime("A")
+		for i := range actionSpells {
+			spell := &actionSpells[i]
+			spellInfo := fmt.Sprintf("Level %d", spell.Level)
+			if spell.Level == 0 {
+				spellInfo = "Cantrip"
+			}
+			items = append(items, ActionItem{
+				Type:        ActionItemSpell,
+				Name:        spell.Name,
+				Description: spellInfo,
+				Spell:       spell,
+			})
+		}
+
+	case ActionTypeBonus:
+		// Standard bonus actions
+		for i := range standardActions {
+			action := &standardActions[i]
+			if action.ActionType == ActionTypeBonus {
+				items = append(items, ActionItem{
+					Type:           ActionItemStandard,
+					Name:           action.Name,
+					Description:    action.Description,
+					StandardAction: action,
+				})
+			}
+		}
+
+		// Bonus action spells
+		bonusSpells := m.getSpellsByCastingTime("BA")
+		for i := range bonusSpells {
+			spell := &bonusSpells[i]
+			spellInfo := fmt.Sprintf("Level %d", spell.Level)
+			if spell.Level == 0 {
+				spellInfo = "Cantrip"
+			}
+			items = append(items, ActionItem{
+				Type:        ActionItemSpell,
+				Name:        spell.Name,
+				Description: spellInfo,
+				Spell:       spell,
+			})
+		}
+
+	case ActionTypeReaction:
+		// Standard reactions
+		for i := range standardActions {
+			action := &standardActions[i]
+			if action.ActionType == ActionTypeReaction {
+				items = append(items, ActionItem{
+					Type:           ActionItemStandard,
+					Name:           action.Name,
+					Description:    action.Description,
+					StandardAction: action,
+				})
+			}
+		}
+
+		// Reaction spells
+		reactionSpells := m.getSpellsByCastingTime("R")
+		for i := range reactionSpells {
+			spell := &reactionSpells[i]
+			spellInfo := fmt.Sprintf("Level %d", spell.Level)
+			if spell.Level == 0 {
+				spellInfo = "Cantrip"
+			}
+			items = append(items, ActionItem{
+				Type:        ActionItemSpell,
+				Name:        spell.Name,
+				Description: spellInfo,
+				Spell:       spell,
+			})
+		}
+
+	case ActionTypeOther:
+		// Movement and other non-standard actions (not interactive for now)
+		// Could add these later if needed
+	}
+
+	return items
 }
 
 func (m *MainSheetModel) renderRestOverlay(width int) string {
