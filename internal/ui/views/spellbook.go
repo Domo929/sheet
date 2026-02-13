@@ -396,7 +396,11 @@ func (m *SpellbookModel) renderHeader() string {
 
 	modeTitle := "Spellbook"
 	if m.mode == ModePreparation {
-		modeTitle = "Spellbook - Preparation Mode"
+		if sc.PreparesSpells {
+			modeTitle = "Spellbook - Preparation Mode"
+		} else {
+			modeTitle = "Spellbook - Manage Spells"
+		}
 	}
 	title := lipgloss.NewStyle().Bold(true).Render(modeTitle)
 
@@ -405,11 +409,14 @@ func (m *SpellbookModel) renderHeader() string {
 	stats := fmt.Sprintf("Ability: %s | Save DC: %d | Attack: +%d",
 		abilityDisplay, saveDC, attackBonus)
 
-	// Show prepared spell count and cantrips if applicable
+	// Show prepared spell count for preparing classes, known spell count for others
 	prepInfo := ""
 	if sc.PreparesSpells && sc.MaxPrepared > 0 {
 		prepCount := sc.CountPreparedSpells()
 		prepInfo = fmt.Sprintf(" | Prepared Spells: %d/%d", prepCount, sc.MaxPrepared)
+	} else if len(sc.KnownSpells) > 0 {
+		// Non-preparing classes (Warlock, Bard, Sorcerer): show known spells count
+		prepInfo = fmt.Sprintf(" | Known Spells: %d", len(sc.KnownSpells))
 	}
 
 	// Show cantrip count
@@ -654,8 +661,12 @@ func (m *SpellbookModel) renderFooter() string {
 	helps = append(helps, "↑↓: navigate")
 
 	if m.mode == ModeSpellList {
-		if m.character.Spellcasting != nil && m.character.Spellcasting.PreparesSpells {
-			helps = append(helps, "p: prepare spells")
+		if m.character.Spellcasting != nil {
+			if m.character.Spellcasting.PreparesSpells {
+				helps = append(helps, "p: prepare spells")
+			} else {
+				helps = append(helps, "p: manage spells")
+			}
 		}
 		helps = append(helps, "c/enter: cast")
 	} else if m.mode == ModePreparation {
@@ -1068,10 +1079,16 @@ func (m *SpellbookModel) getDisplaySpells() []models.KnownSpell {
 			continue
 		}
 
-		// In spell list mode, only show prepared spells
-		// In preparation mode, show all spells
+		// In spell list mode:
+		// - For preparing classes (Wizard, Cleric): only show prepared spells
+		// - For non-preparing classes (Warlock, Bard, Sorcerer): show all known spells
+		// In preparation mode, show all spells for both
 		if m.mode == ModeSpellList {
-			if spell.Prepared || spell.Ritual {
+			if !sc.PreparesSpells {
+				// Non-preparing classes: all known spells are available
+				display = append(display, spell)
+			} else if spell.Prepared || spell.Ritual {
+				// Preparing classes: only show prepared or ritual spells
 				display = append(display, spell)
 			}
 		} else {
