@@ -212,6 +212,21 @@ func UpgradeCharacterSpellcasting(char *Character, ritualCaster, ritualCasterUnp
 	char.Spellcasting.RitualCasterUnprepared = ritualCasterUnprepared
 }
 
+// UpgradeSpellRitualFlags updates KnownSpell.Ritual flags based on spell database.
+// This is needed for characters created before the Ritual flag was added to KnownSpell.
+func UpgradeSpellRitualFlags(char *Character, findSpellFunc func(name string) (ritual bool, found bool)) {
+	if char == nil || char.Spellcasting == nil || findSpellFunc == nil {
+		return
+	}
+
+	for i := range char.Spellcasting.KnownSpells {
+		spell := &char.Spellcasting.KnownSpells[i]
+		if ritual, found := findSpellFunc(spell.Name); found {
+			spell.Ritual = ritual
+		}
+	}
+}
+
 // Validate checks if the character data is valid.
 func (c *Character) Validate() []string {
 	errors := []string{}
