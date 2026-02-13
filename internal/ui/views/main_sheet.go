@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/charmbracelet/bubbles/key"
@@ -16,6 +17,7 @@ import (
 type MainSheetModel struct {
 	character     *models.Character
 	storage       *storage.CharacterStorage
+	spellDatabase *data.SpellDatabase
 	width         int
 	height        int
 	focusArea     FocusArea
@@ -248,11 +250,16 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 
 // NewMainSheetModel creates a new main sheet model.
 func NewMainSheetModel(character *models.Character, storage *storage.CharacterStorage) *MainSheetModel {
+	// Load spell database
+	loader := data.NewLoader("./data")
+	spellDB, _ := loader.GetSpells() // Ignore error for now, spells optional
+
 	return &MainSheetModel{
-		character: character,
-		storage:   storage,
-		focusArea: FocusAbilitiesAndSaves,
-		keys:      defaultMainSheetKeyMap(),
+		character:     character,
+		storage:       storage,
+		spellDatabase: spellDB,
+		focusArea:     FocusAbilitiesAndSaves,
+		keys:          defaultMainSheetKeyMap(),
 	}
 }
 
@@ -1045,7 +1052,7 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("240")).
 		Padding(0, 1).
-		Width(width)
+		Width(width - 2) // Account for border
 
 	if m.focusArea == FocusCombat {
 		panelStyle = panelStyle.BorderForeground(lipgloss.Color("99"))
@@ -1331,6 +1338,21 @@ func (m *MainSheetModel) renderActions(width int) string {
 			}
 		}
 
+		// Spells (Action casting time)
+		actionSpells := m.getSpellsByCastingTime("A")
+		if len(actionSpells) > 0 {
+			lines = append(lines, titleStyle.Render("Spells (Action)"))
+			for _, spell := range actionSpells {
+				spellInfo := fmt.Sprintf("Level %d", spell.Level)
+				if spell.Level == 0 {
+					spellInfo = "Cantrip"
+				}
+				lines = append(lines, fmt.Sprintf("  %s - %s",
+					valueStyle.Render(spell.Name),
+					labelStyle.Render(spellInfo)))
+			}
+		}
+
 	case ActionTypeBonus:
 		lines = append(lines, titleStyle.Render("Bonus Actions"))
 		for _, action := range standardActions {
@@ -1340,8 +1362,24 @@ func (m *MainSheetModel) renderActions(width int) string {
 					labelStyle.Render(action.Description)))
 			}
 		}
-		// Placeholder for class/feature bonus actions
-		lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
+
+		// Spells (Bonus Action casting time)
+		bonusSpells := m.getSpellsByCastingTime("BA")
+		if len(bonusSpells) > 0 {
+			lines = append(lines, titleStyle.Render("Spells (Bonus Action)"))
+			for _, spell := range bonusSpells {
+				spellInfo := fmt.Sprintf("Level %d", spell.Level)
+				if spell.Level == 0 {
+					spellInfo = "Cantrip"
+				}
+				lines = append(lines, fmt.Sprintf("  %s - %s",
+					valueStyle.Render(spell.Name),
+					labelStyle.Render(spellInfo)))
+			}
+		} else {
+			// Placeholder for class/feature bonus actions
+			lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
+		}
 
 	case ActionTypeReaction:
 		lines = append(lines, titleStyle.Render("Reactions"))
@@ -1352,8 +1390,24 @@ func (m *MainSheetModel) renderActions(width int) string {
 					labelStyle.Render(action.Description)))
 			}
 		}
-		// Placeholder for class/feature reactions
-		lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
+
+		// Spells (Reaction casting time)
+		reactionSpells := m.getSpellsByCastingTime("R")
+		if len(reactionSpells) > 0 {
+			lines = append(lines, titleStyle.Render("Spells (Reaction)"))
+			for _, spell := range reactionSpells {
+				spellInfo := fmt.Sprintf("Level %d", spell.Level)
+				if spell.Level == 0 {
+					spellInfo = "Cantrip"
+				}
+				lines = append(lines, fmt.Sprintf("  %s - %s",
+					valueStyle.Render(spell.Name),
+					labelStyle.Render(spellInfo)))
+			}
+		} else {
+			// Placeholder for class/feature reactions
+			lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
+		}
 
 	case ActionTypeOther:
 		lines = append(lines, titleStyle.Render("Other"))
@@ -1368,6 +1422,47 @@ func (m *MainSheetModel) renderActions(width int) string {
 	}
 
 	return panelStyle.Render(strings.Join(lines, "\n"))
+}
+
+// getSpellsByCastingTime returns spells that match the given casting time.
+// castingTime can be: "A" (Action), "BA" (Bonus Action), "R" (Reaction), etc.
+func (m *MainSheetModel) getSpellsByCastingTime(castingTime string) []data.SpellData {
+	if m.character == nil || m.character.Spellcasting == nil || m.spellDatabase == nil {
+		return nil
+	}
+
+	var spells []data.SpellData
+	sc := m.character.Spellcasting
+
+	// Helper to check if spell is available
+	isAvailable := func(spellName string, level int) bool {
+		// Cantrips are always available
+		if level == 0 {
+			for _, c := range sc.CantripsKnown {
+				if c == spellName {
+					return true
+				}
+			}
+			return false
+		}
+
+		// For leveled spells, check if prepared (or always available for non-preparing classes)
+		for _, ks := range sc.KnownSpells {
+			if ks.Name == spellName {
+				return !sc.PreparesSpells || ks.Prepared || ks.Ritual
+			}
+		}
+		return false
+	}
+
+	// Search through all spells in database
+	for _, spell := range m.spellDatabase.Spells {
+		if spell.CastingTime == castingTime && isAvailable(spell.Name, spell.Level) {
+			spells = append(spells, spell)
+		}
+	}
+
+	return spells
 }
 
 func (m *MainSheetModel) renderRestOverlay(width int) string {
