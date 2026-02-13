@@ -738,12 +738,12 @@ func (m *MainSheetModel) View() string {
 	// Left column: Abilities/Saves on top, Skills below
 	abilitiesAndSaves := m.renderAbilitiesAndSaves(leftWidth)
 	skills := m.renderSkills(leftWidth)
-	leftColumn := lipgloss.JoinVertical(lipgloss.Left, abilitiesAndSaves, "", skills)
+	leftColumn := lipgloss.JoinVertical(lipgloss.Left, abilitiesAndSaves, skills)
 
 	// Right column: Combat on top, Actions below
 	combat := m.renderCombatStats(rightWidth)
 	actions := m.renderActions(rightWidth)
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, combat, "", actions)
+	rightColumn := lipgloss.JoinVertical(lipgloss.Left, combat, actions)
 
 	// Join columns horizontally
 	mainContent := lipgloss.JoinHorizontal(
@@ -762,39 +762,19 @@ func (m *MainSheetModel) View() string {
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
 			header,
-			"",
 			restOverlay,
-			"",
 			footer,
 		)
 	}
 
 	// Join all sections vertically
+	// TODO: Make view more dynamic based on terminal height to avoid overflow
 	fullView := lipgloss.JoinVertical(
 		lipgloss.Left,
 		header,
-		"",
 		mainContent,
-		"",
 		footer,
 	)
-
-	// Calculate total height
-	totalHeight := lipgloss.Height(fullView)
-
-	// If content is taller than available height, add a warning
-	// Bubble Tea's altscreen renders from bottom up when content overflows
-	if totalHeight > height && height > 0 {
-		warningStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("11")).
-			Bold(true)
-		warning := warningStyle.Render(fmt.Sprintf(
-			"⚠ Content height (%d lines) exceeds terminal height (%d lines). Please resize your terminal or press 'f' for fullscreen.",
-			totalHeight, height,
-		))
-		// Prepend warning so it's more visible
-		fullView = lipgloss.JoinVertical(lipgloss.Left, warning, "", fullView)
-	}
 
 	return fullView
 }
@@ -1288,7 +1268,6 @@ func (m *MainSheetModel) renderActions(width int) string {
 		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
 		lines = append(lines, hintStyle.Render("←/→: switch type"))
 	}
-	lines = append(lines, "")
 
 	switch m.selectedActionType {
 	case ActionTypeAction:
@@ -1296,11 +1275,9 @@ func (m *MainSheetModel) renderActions(width int) string {
 		lines = append(lines, titleStyle.Render("Weapon Attacks"))
 		
 		// Unarmed Strike first (base rules: no proficiency, no ability mod to damage)
-		lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render("Unarmed Strike")))
-		lines = append(lines, fmt.Sprintf("    %s %s, %s %s bludgeoning",
-			labelStyle.Render("Hit:"),
+		lines = append(lines, fmt.Sprintf("  %s - Hit: %s, Dmg: %s bludgeoning",
+			valueStyle.Render("Unarmed Strike"),
 			valueStyle.Render(formatModifier(char.AbilityScores.Strength.Modifier())),
-			labelStyle.Render("Dmg:"),
 			valueStyle.Render("1"),
 		))
 		
@@ -1320,15 +1297,14 @@ func (m *MainSheetModel) renderActions(width int) string {
 			if w.RangeNormal > 0 {
 				damageStr = fmt.Sprintf("%s (%d/%d ft)", damageStr, w.RangeNormal, w.RangeLong)
 			}
-			
-			lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(w.Name)))
-			lines = append(lines, fmt.Sprintf("    %s %s, %s %s",
-				labelStyle.Render("Hit:"),
+
+			// Compact single-line format with properties inline
+			weaponLine := fmt.Sprintf("  %s - Hit: %s, Dmg: %s",
+				valueStyle.Render(w.Name),
 				valueStyle.Render(hitStr),
-				labelStyle.Render("Dmg:"),
 				valueStyle.Render(damageStr),
-			))
-			
+			)
+
 			if len(w.WeaponProps) > 0 {
 				propStrs := make([]string, 0, len(w.WeaponProps))
 				for _, prop := range w.WeaponProps {
@@ -1339,17 +1315,19 @@ func (m *MainSheetModel) renderActions(width int) string {
 					propStrs = append(propStrs, propStr)
 				}
 				propsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
-				lines = append(lines, fmt.Sprintf("    %s", propsStyle.Render(strings.Join(propStrs, ", "))))
+				weaponLine += " " + propsStyle.Render("("+strings.Join(propStrs, ", ")+")")
 			}
+
+			lines = append(lines, weaponLine)
 		}
-		
-		// Standard Actions
-		lines = append(lines, "")
+
+		// Standard Actions (compact format)
 		lines = append(lines, titleStyle.Render("Standard Actions"))
 		for _, action := range standardActions {
 			if action.ActionType == ActionTypeAction && action.Name != "Attack" {
-				lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(action.Name)))
-				lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(action.Description)))
+				lines = append(lines, fmt.Sprintf("  %s - %s",
+					valueStyle.Render(action.Name),
+					labelStyle.Render(action.Description)))
 			}
 		}
 
@@ -1357,24 +1335,24 @@ func (m *MainSheetModel) renderActions(width int) string {
 		lines = append(lines, titleStyle.Render("Bonus Actions"))
 		for _, action := range standardActions {
 			if action.ActionType == ActionTypeBonus {
-				lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(action.Name)))
-				lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(action.Description)))
+				lines = append(lines, fmt.Sprintf("  %s - %s",
+					valueStyle.Render(action.Name),
+					labelStyle.Render(action.Description)))
 			}
 		}
 		// Placeholder for class/feature bonus actions
-		lines = append(lines, "")
 		lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
 
 	case ActionTypeReaction:
 		lines = append(lines, titleStyle.Render("Reactions"))
 		for _, action := range standardActions {
 			if action.ActionType == ActionTypeReaction {
-				lines = append(lines, fmt.Sprintf("  %s", valueStyle.Render(action.Name)))
-				lines = append(lines, fmt.Sprintf("    %s", labelStyle.Render(action.Description)))
+				lines = append(lines, fmt.Sprintf("  %s - %s",
+					valueStyle.Render(action.Name),
+					labelStyle.Render(action.Description)))
 			}
 		}
 		// Placeholder for class/feature reactions
-		lines = append(lines, "")
 		lines = append(lines, labelStyle.Render("  (Class features coming soon)"))
 
 	case ActionTypeOther:
