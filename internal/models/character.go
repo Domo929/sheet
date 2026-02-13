@@ -200,6 +200,18 @@ func ReadFrom(r io.Reader) (*Character, error) {
 	return &c, nil
 }
 
+// UpgradeCharacterSpellcasting upgrades character spellcasting data based on class info.
+// This handles migration when ritual caster flags were added to the schema.
+func UpgradeCharacterSpellcasting(char *Character, ritualCaster, ritualCasterUnprepared bool) {
+	if char == nil || char.Spellcasting == nil {
+		return
+	}
+
+	// Update Spellcasting with class ritual caster flags
+	char.Spellcasting.RitualCaster = ritualCaster
+	char.Spellcasting.RitualCasterUnprepared = ritualCasterUnprepared
+}
+
 // Validate checks if the character data is valid.
 func (c *Character) Validate() []string {
 	errors := []string{}
