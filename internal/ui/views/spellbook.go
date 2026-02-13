@@ -405,14 +405,20 @@ func (m *SpellbookModel) renderHeader() string {
 	stats := fmt.Sprintf("Ability: %s | Save DC: %d | Attack: +%d",
 		abilityDisplay, saveDC, attackBonus)
 
-	// Show prepared spell count if applicable
+	// Show prepared spell count and cantrips if applicable
 	prepInfo := ""
 	if sc.PreparesSpells && sc.MaxPrepared > 0 {
 		prepCount := sc.CountPreparedSpells()
-		prepInfo = fmt.Sprintf(" | Prepared: %d/%d", prepCount, sc.MaxPrepared)
+		prepInfo = fmt.Sprintf(" | Prepared Spells: %d/%d", prepCount, sc.MaxPrepared)
 	}
 
-	statsStyled := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("255")).Render(stats + prepInfo)
+	// Show cantrip count
+	cantripInfo := ""
+	if len(sc.CantripsKnown) > 0 {
+		cantripInfo = fmt.Sprintf(" | Cantrips: %d", len(sc.CantripsKnown))
+	}
+
+	statsStyled := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("255")).Render(stats + prepInfo + cantripInfo)
 
 	return lipgloss.JoinVertical(lipgloss.Left, title, statsStyled) + "\n"
 }
