@@ -38,6 +38,7 @@ type MainSheetModel struct {
 
 	// Action type selection (for Actions panel)
 	selectedActionType ActionType
+	actionCursor       int // Cursor for selecting actions within the current type
 
 	// Rest mode
 	restMode       RestMode
@@ -90,6 +91,28 @@ const (
 )
 
 const numActionTypes = 4
+
+// ActionItemType represents different types of action items
+type ActionItemType int
+
+const (
+	ActionItemWeapon ActionItemType = iota
+	ActionItemSpell
+	ActionItemStandard
+)
+
+// ActionItem represents a selectable action in the Actions panel
+type ActionItem struct {
+	Type        ActionItemType
+	Name        string
+	Description string
+	// For weapons
+	Weapon *models.Item
+	// For spells
+	Spell *data.SpellData
+	// For standard actions
+	StandardAction *StandardAction
+}
 
 // StandardAction represents a standard D&D 2024 action.
 type StandardAction struct {
@@ -1216,6 +1239,41 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 			labelStyle.Render("Spell Attack:"),
 			valueStyle.Render(formatModifier(char.GetSpellAttackBonus())),
 		))
+
+		// Show spell slots or pact magic
+		sc := char.Spellcasting
+		if sc.PactMagic != nil {
+			// Warlock pact magic
+			pm := sc.PactMagic
+			slotStyle := valueStyle
+			if pm.Remaining == 0 {
+				slotStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+			}
+			lines = append(lines, fmt.Sprintf("%s %s",
+				labelStyle.Render(fmt.Sprintf("Pact Slots (L%d):", pm.SlotLevel)),
+				slotStyle.Render(fmt.Sprintf("%d/%d", pm.Remaining, pm.Total)),
+			))
+		} else {
+			// Regular spell slots - show only levels with slots
+			hasSlots := false
+			for level := 1; level <= 9; level++ {
+				slot := sc.SpellSlots.GetSlot(level)
+				if slot != nil && slot.Total > 0 {
+					hasSlots = true
+					slotStyle := valueStyle
+					if slot.Remaining == 0 {
+						slotStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+					}
+					lines = append(lines, fmt.Sprintf("%s %s",
+						labelStyle.Render(fmt.Sprintf("Level %d:", level)),
+						slotStyle.Render(fmt.Sprintf("%d/%d", slot.Remaining, slot.Total)),
+					))
+				}
+			}
+			if !hasSlots {
+				lines = append(lines, labelStyle.Render("No spell slots"))
+			}
+		}
 	}
 
 	// Active conditions (always show section with hint when focused)
