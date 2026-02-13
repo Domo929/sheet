@@ -493,7 +493,11 @@ func (m *SpellbookModel) renderSpellList() string {
 
 			prepMarker := " "
 			if m.mode == ModePreparation {
-				if spell.Prepared {
+				// For non-preparing classes (Warlock, Bard, Sorcerer),
+				// all known spells are always "prepared" (available)
+				if !sc.PreparesSpells {
+					prepMarker = "✓"
+				} else if spell.Prepared {
 					prepMarker = "✓"
 				} else {
 					prepMarker = " "
@@ -1207,10 +1211,23 @@ func (m *SpellbookModel) calculateUpcastEffect(slotLevel int) string {
 	// Handle dice damage increases (like Burning Hands, Fireball)
 	var diceStr string
 	for _, part := range strings.Fields(spell.Upcast) {
-		if strings.Contains(part, "d") && len(part) > 2 {
-			// Found something like "+1d6" or "1d8"
-			diceStr = strings.TrimPrefix(strings.TrimPrefix(part, "+"), " ")
-			break
+		// Look for dice notation (e.g., "+1d6", "1d8")
+		// Must contain 'd' followed by a digit, and have a digit before 'd'
+		if strings.Contains(part, "d") && len(part) >= 3 {
+			// Check if this is actually dice notation (not "2nd", "3rd", etc.)
+			// Valid dice notation has: [number]d[number]
+			cleaned := strings.TrimPrefix(strings.TrimPrefix(part, "+"), " ")
+			dIndex := strings.Index(cleaned, "d")
+			if dIndex > 0 && dIndex < len(cleaned)-1 {
+				// Check if character before 'd' is a digit
+				beforeD := cleaned[dIndex-1]
+				// Check if character after 'd' is a digit
+				afterD := cleaned[dIndex+1]
+				if beforeD >= '0' && beforeD <= '9' && afterD >= '0' && afterD <= '9' {
+					diceStr = cleaned
+					break
+				}
+			}
 		}
 	}
 
