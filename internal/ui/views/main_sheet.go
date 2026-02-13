@@ -783,11 +783,12 @@ func (m *MainSheetModel) View() string {
 func (m *MainSheetModel) renderHeader(width int) string {
 	char := m.character
 
-	// Title style
+	// Title style - make character name very prominent
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("99")).
-		MarginBottom(1)
+		Foreground(lipgloss.Color("15")).  // Bright white for maximum visibility
+		MarginBottom(0).
+		Underline(true)  // Add underline for emphasis
 
 	// Info style
 	infoStyle := lipgloss.NewStyle().
