@@ -787,6 +787,13 @@ func (m *SpellbookModel) handleCastSpell() *SpellbookModel {
 		return m
 	}
 
+	// Check if spell data is available in database (only warn, don't block)
+	// This allows tests to work without full spell database loaded
+	if m.selectedSpellData == nil && m.spellDatabase != nil {
+		m.statusMessage = fmt.Sprintf("Warning: %s data not found in spell database", spell.Name)
+		// Continue anyway - the modal will handle nil gracefully
+	}
+
 	// Store casting spell and get available levels
 	m.castingSpell = &spell
 
