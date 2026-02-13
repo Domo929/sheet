@@ -770,7 +770,7 @@ func (m *MainSheetModel) View() string {
 	}
 
 	// Join all sections vertically
-	return lipgloss.JoinVertical(
+	fullView := lipgloss.JoinVertical(
 		lipgloss.Left,
 		header,
 		"",
@@ -778,6 +778,25 @@ func (m *MainSheetModel) View() string {
 		"",
 		footer,
 	)
+
+	// Calculate total height
+	totalHeight := lipgloss.Height(fullView)
+
+	// If content is taller than available height, add a warning
+	// Bubble Tea's altscreen renders from bottom up when content overflows
+	if totalHeight > height && height > 0 {
+		warningStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("11")).
+			Bold(true)
+		warning := warningStyle.Render(fmt.Sprintf(
+			"⚠ Content height (%d lines) exceeds terminal height (%d lines). Please resize your terminal or press 'f' for fullscreen.",
+			totalHeight, height,
+		))
+		// Prepend warning so it's more visible
+		fullView = lipgloss.JoinVertical(lipgloss.Left, warning, "", fullView)
+	}
+
+	return fullView
 }
 
 func (m *MainSheetModel) renderHeader(width int) string {
