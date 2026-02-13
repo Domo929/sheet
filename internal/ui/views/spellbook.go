@@ -1436,7 +1436,13 @@ func (m *SpellbookModel) renderCastConfirmationModal() string {
 	lines = append(lines, "")
 
 	// Basic spell info
-	lines = append(lines, fmt.Sprintf("Casting Time: %s", spell.CastingTime))
+	// If casting as ritual, show ritual casting time
+	castingTime := spell.CastingTime
+	if m.castingSpell.Ritual && len(m.availableCastLevels) == 0 {
+		// Being cast as ritual - add 10 minutes
+		castingTime = "10 minutes (ritual)"
+	}
+	lines = append(lines, fmt.Sprintf("Casting Time: %s", castingTime))
 	lines = append(lines, fmt.Sprintf("Range: %s", spell.Range))
 	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(spell.Components, ", ")))
 	lines = append(lines, fmt.Sprintf("Duration: %s", spell.Duration))
@@ -1477,11 +1483,9 @@ func (m *SpellbookModel) renderCastConfirmationModal() string {
 		lines = append(lines, "")
 	}
 
-	// Slot selection (if not a cantrip)
-	if m.castingSpell.Level > 0 {
-		if len(m.availableCastLevels) == 0 {
-			lines = append(lines, "No spell slots available")
-		} else if len(m.availableCastLevels) == 1 {
+	// Slot selection (if not a cantrip and not being cast as ritual)
+	if m.castingSpell.Level > 0 && len(m.availableCastLevels) > 0 {
+		if len(m.availableCastLevels) == 1 {
 			// Single slot option
 			level := m.availableCastLevels[0]
 			upcastInfo := m.calculateUpcastEffect(level)
@@ -1532,7 +1536,9 @@ func (m *SpellbookModel) renderCastConfirmationModal() string {
 	// Help text
 	lines = append(lines, "")
 	if m.castingSpell.Level == 0 {
-		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast | Esc: cancel"))
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast cantrip | Esc: cancel"))
+	} else if m.castingSpell.Ritual && len(m.availableCastLevels) == 0 {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast as ritual (no slot) | Esc: cancel"))
 	} else if len(m.availableCastLevels) <= 1 {
 		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast | Esc: cancel"))
 	} else {
