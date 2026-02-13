@@ -1601,20 +1601,7 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 			})
 		}
 
-		// Standard actions
-		for i := range standardActions {
-			action := &standardActions[i]
-			if action.ActionType == ActionTypeAction && action.Name != "Attack" {
-				items = append(items, ActionItem{
-					Type:           ActionItemStandard,
-					Name:           action.Name,
-					Description:    action.Description,
-					StandardAction: action,
-				})
-			}
-		}
-
-		// Action spells
+		// Action spells (before standard actions in display order)
 		actionSpells := m.getSpellsByCastingTime("A")
 		for i := range actionSpells {
 			spell := &actionSpells[i]
@@ -1630,11 +1617,10 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 			})
 		}
 
-	case ActionTypeBonus:
-		// Standard bonus actions
+		// Standard actions (after spells in display order)
 		for i := range standardActions {
 			action := &standardActions[i]
-			if action.ActionType == ActionTypeBonus {
+			if action.ActionType == ActionTypeAction && action.Name != "Attack" {
 				items = append(items, ActionItem{
 					Type:           ActionItemStandard,
 					Name:           action.Name,
@@ -1644,7 +1630,8 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 			}
 		}
 
-		// Bonus action spells
+	case ActionTypeBonus:
+		// Bonus action spells (before standard actions in display order)
 		bonusSpells := m.getSpellsByCastingTime("BA")
 		for i := range bonusSpells {
 			spell := &bonusSpells[i]
@@ -1660,11 +1647,10 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 			})
 		}
 
-	case ActionTypeReaction:
-		// Standard reactions
+		// Standard bonus actions (after spells in display order)
 		for i := range standardActions {
 			action := &standardActions[i]
-			if action.ActionType == ActionTypeReaction {
+			if action.ActionType == ActionTypeBonus {
 				items = append(items, ActionItem{
 					Type:           ActionItemStandard,
 					Name:           action.Name,
@@ -1674,7 +1660,8 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 			}
 		}
 
-		// Reaction spells
+	case ActionTypeReaction:
+		// Reaction spells (before standard actions in display order)
 		reactionSpells := m.getSpellsByCastingTime("R")
 		for i := range reactionSpells {
 			spell := &reactionSpells[i]
@@ -1688,6 +1675,19 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 				Description: spellInfo,
 				Spell:       spell,
 			})
+		}
+
+		// Standard reactions (after spells in display order)
+		for i := range standardActions {
+			action := &standardActions[i]
+			if action.ActionType == ActionTypeReaction {
+				items = append(items, ActionItem{
+					Type:           ActionItemStandard,
+					Name:           action.Name,
+					Description:    action.Description,
+					StandardAction: action,
+				})
+			}
 		}
 
 	case ActionTypeOther:
