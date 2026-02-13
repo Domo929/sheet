@@ -1415,7 +1415,7 @@ func (m *MainSheetModel) renderActions(width int) string {
 		m.actionCursor = 0
 	}
 
-	// Render action items with cursor
+	// Render action items with cursor, grouped by category
 	if len(actionItems) == 0 {
 		if m.selectedActionType == ActionTypeOther {
 			// Other tab - non-interactive items
@@ -1432,19 +1432,85 @@ func (m *MainSheetModel) renderActions(width int) string {
 			lines = append(lines, labelStyle.Render("  No actions available"))
 		}
 	} else {
-		for i, item := range actionItems {
-			cursor := "  "
-			if isFocused && i == m.actionCursor {
-				cursor = "> "
+		// Group items by type: Weapons, Spells, Standard Actions
+		var weaponItems, spellItems, standardItems []ActionItem
+		for _, item := range actionItems {
+			switch item.Type {
+			case ActionItemWeapon:
+				weaponItems = append(weaponItems, item)
+			case ActionItemSpell:
+				spellItems = append(spellItems, item)
+			case ActionItemStandard:
+				standardItems = append(standardItems, item)
 			}
+		}
 
-			itemLine := fmt.Sprintf("%s%s - %s", cursor, valueStyle.Render(item.Name), labelStyle.Render(item.Description))
+		currentIndex := 0
 
-			if isFocused && i == m.actionCursor {
-				itemLine = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(itemLine)
+		// Render weapons section
+		if len(weaponItems) > 0 {
+			lines = append(lines, titleStyle.Render("Weapon Attacks"))
+			for _, item := range weaponItems {
+				cursor := "  "
+				if isFocused && currentIndex == m.actionCursor {
+					cursor = "> "
+				}
+
+				itemLine := fmt.Sprintf("%s%s - %s", cursor, valueStyle.Render(item.Name), labelStyle.Render(item.Description))
+
+				if isFocused && currentIndex == m.actionCursor {
+					itemLine = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(itemLine)
+				}
+
+				lines = append(lines, itemLine)
+				currentIndex++
 			}
+		}
 
-			lines = append(lines, itemLine)
+		// Render spells section
+		if len(spellItems) > 0 {
+			if len(weaponItems) > 0 {
+				lines = append(lines, "")
+			}
+			lines = append(lines, titleStyle.Render("Spells"))
+			for _, item := range spellItems {
+				cursor := "  "
+				if isFocused && currentIndex == m.actionCursor {
+					cursor = "> "
+				}
+
+				itemLine := fmt.Sprintf("%s%s - %s", cursor, valueStyle.Render(item.Name), labelStyle.Render(item.Description))
+
+				if isFocused && currentIndex == m.actionCursor {
+					itemLine = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(itemLine)
+				}
+
+				lines = append(lines, itemLine)
+				currentIndex++
+			}
+		}
+
+		// Render standard actions section
+		if len(standardItems) > 0 {
+			if len(weaponItems) > 0 || len(spellItems) > 0 {
+				lines = append(lines, "")
+			}
+			lines = append(lines, titleStyle.Render("Standard Actions"))
+			for _, item := range standardItems {
+				cursor := "  "
+				if isFocused && currentIndex == m.actionCursor {
+					cursor = "> "
+				}
+
+				itemLine := fmt.Sprintf("%s%s - %s", cursor, valueStyle.Render(item.Name), labelStyle.Render(item.Description))
+
+				if isFocused && currentIndex == m.actionCursor {
+					itemLine = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(itemLine)
+				}
+
+				lines = append(lines, itemLine)
+				currentIndex++
+			}
 		}
 	}
 
