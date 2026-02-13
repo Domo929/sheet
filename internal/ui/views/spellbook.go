@@ -21,6 +21,7 @@ const (
 	ModePreparation                     // Preparing/unpreparing spells
 	ModeAddSpell                        // Adding a new spell
 	ModeSelectCastLevel                 // Selecting spell slot level for casting
+	ModeConfirmCast                     // Confirming spell cast with details
 )
 
 // SpellbookModel is the model for the spellbook view.
