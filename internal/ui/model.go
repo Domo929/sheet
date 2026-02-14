@@ -40,7 +40,7 @@ type Model struct {
 	mainSheetModel          *views.MainSheetModel
 	inventoryModel          *views.InventoryModel
 	spellbookModel          *views.SpellbookModel
-	// etc.
+	levelUpModel            *views.LevelUpModel
 }
 
 // NewModel creates a new application model.
@@ -123,10 +123,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case views.BackToSheetMsg:
-		// Return from inventory/spellbook to main sheet
+		// Return from inventory/spellbook/level-up to main sheet
 		m.currentView = ViewMainSheet
 		m.inventoryModel = nil
 		m.spellbookModel = nil
+		m.levelUpModel = nil
 		return m, nil
 
 	case views.OpenInventoryMsg:
@@ -152,6 +153,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.currentView = ViewSpellbook
 		return m, m.spellbookModel.Init()
+
+	case views.OpenLevelUpMsg:
+		// Navigate to level-up wizard
+		m.levelUpModel = views.NewLevelUpModel(m.character, m.storage, m.loader)
+		if m.width > 0 && m.height > 0 {
+			m.levelUpModel, _ = m.levelUpModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
+		m.currentView = ViewLevelUp
+		return m, m.levelUpModel.Init()
+
+	case views.LevelUpCompleteMsg:
+		// Return to main sheet after level-up, rebuild to reflect new stats
+		m.currentView = ViewMainSheet
+		m.levelUpModel = nil
+		m.mainSheetModel = views.NewMainSheetModel(m.character, m.storage)
+		if m.width > 0 && m.height > 0 {
+			m.mainSheetModel, _ = m.mainSheetModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
+		return m, m.mainSheetModel.Init()
 
 	case views.CharacterLoadedMsg:
 		// Load the character from storage
@@ -247,6 +273,12 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.spellbookModel = updatedModel
 			cmd = c
 		}
+	case ViewLevelUp:
+		if m.levelUpModel != nil {
+			updatedModel, c := m.levelUpModel.Update(msg)
+			m.levelUpModel = updatedModel
+			cmd = c
+		}
 	default:
 		// Other views not yet implemented
 	}
@@ -334,7 +366,10 @@ func (m Model) renderCharacterInfo() string {
 }
 
 func (m Model) renderLevelUp() string {
-	return "Level Up View (TODO)\n\nPress q to quit."
+	if m.levelUpModel != nil {
+		return m.levelUpModel.View()
+	}
+	return "Level Up View (loading...)"
 }
 
 func (m Model) renderCombat() string {
