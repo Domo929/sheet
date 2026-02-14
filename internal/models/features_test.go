@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	"github.com/Domo929/sheet/internal/domain"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,9 +13,9 @@ func TestFeaturesAdd(t *testing.T) {
 	f.AddRacialTrait("Darkvision", "Elf", "You can see in dim light within 60 feet as if it were bright light.")
 	f.AddRacialTrait("Fey Ancestry", "Elf", "You have advantage on saving throws against being charmed.")
 
-	f.AddClassFeature("Spellcasting", "Wizard 1", "You can cast wizard spells.", 1, "")
-	f.AddClassFeature("Arcane Recovery", "Wizard 1", "You can recover spell slots on a short rest.", 1, "")
-	f.AddClassFeature("Arcane Tradition", "Wizard 2", "You choose an arcane tradition.", 2, "")
+	f.AddClassFeature("Spellcasting", "Wizard 1", "You can cast wizard spells.", 1, domain.ActivationPassive)
+	f.AddClassFeature("Arcane Recovery", "Wizard 1", "You can recover spell slots on a short rest.", 1, domain.ActivationPassive)
+	f.AddClassFeature("Arcane Tradition", "Wizard 2", "You choose an arcane tradition.", 2, domain.ActivationPassive)
 
 	f.AddFeat("Alert", "+5 to initiative, can't be surprised.")
 
@@ -27,7 +28,7 @@ func TestFeaturesAllFeatures(t *testing.T) {
 	f := NewFeatures()
 
 	f.AddRacialTrait("Darkvision", "Elf", "See in the dark.")
-	f.AddClassFeature("Sneak Attack", "Rogue 1", "Extra damage.", 1, "")
+	f.AddClassFeature("Sneak Attack", "Rogue 1", "Extra damage.", 1, domain.ActivationPassive)
 	f.AddFeat("Lucky", "Reroll dice.")
 
 	all := f.AllFeatures()
@@ -36,7 +37,7 @@ func TestFeaturesAllFeatures(t *testing.T) {
 
 func TestFeatureLevel(t *testing.T) {
 	f := NewFeatures()
-	f.AddClassFeature("Extra Attack", "Fighter 5", "Attack twice.", 5, "")
+	f.AddClassFeature("Extra Attack", "Fighter 5", "Attack twice.", 5, domain.ActivationPassive)
 
 	assert.Equal(t, 5, f.ClassFeatures[0].Level)
 }

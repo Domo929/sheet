@@ -1,5 +1,106 @@
 package data
 
+import (
+	"github.com/Domo929/sheet/internal/domain"
+)
+
+// CastingTime represents the casting time of a spell.
+type CastingTime string
+
+const (
+	CastingTimeAction      CastingTime = "A"
+	CastingTimeBonusAction CastingTime = "BA"
+	CastingTimeReaction    CastingTime = "R"
+	CastingTimeOneMinute   CastingTime = "1 minute"
+)
+
+// SpellSchool represents the school of magic for a spell.
+type SpellSchool string
+
+const (
+	SchoolAbjuration    SpellSchool = "Abjuration"
+	SchoolConjuration   SpellSchool = "Conjuration"
+	SchoolDivination    SpellSchool = "Divination"
+	SchoolEnchantment   SpellSchool = "Enchantment"
+	SchoolEvocation     SpellSchool = "Evocation"
+	SchoolIllusion      SpellSchool = "Illusion"
+	SchoolNecromancy    SpellSchool = "Necromancy"
+	SchoolTransmutation SpellSchool = "Transmutation"
+)
+
+// SpellComponent represents a spell component type.
+type SpellComponent string
+
+const (
+	ComponentVerbal   SpellComponent = "V"
+	ComponentSomatic  SpellComponent = "S"
+	ComponentMaterial SpellComponent = "M"
+)
+
+// ComponentsToStrings converts a slice of SpellComponent to a slice of string.
+func ComponentsToStrings(c []SpellComponent) []string {
+	result := make([]string, len(c))
+	for i, comp := range c {
+		result[i] = string(comp)
+	}
+	return result
+}
+
+// EquipmentCategory represents the category of an equipment item.
+type EquipmentCategory string
+
+const (
+	CategoryWeapon EquipmentCategory = "weapon"
+	CategoryArmor  EquipmentCategory = "armor"
+	CategoryPack   EquipmentCategory = "pack"
+	CategoryGear   EquipmentCategory = "gear"
+	CategoryTool   EquipmentCategory = "tool"
+)
+
+// EquipmentChoiceType represents the type of equipment choice.
+type EquipmentChoiceType string
+
+const (
+	EquipmentChoiceFixed  EquipmentChoiceType = "fixed"
+	EquipmentChoiceSelect EquipmentChoiceType = "choice"
+)
+
+// WeaponType represents whether a weapon is simple or martial.
+type WeaponType string
+
+const (
+	WeaponTypeSimple  WeaponType = "simple"
+	WeaponTypeMartial WeaponType = "martial"
+)
+
+// WeaponStyle represents the style of a weapon (melee or ranged).
+type WeaponStyle string
+
+const (
+	WeaponStyleMelee  WeaponStyle = "melee"
+	WeaponStyleRanged WeaponStyle = "ranged"
+)
+
+// ArmorCategory represents the category of armor.
+type ArmorCategory string
+
+const (
+	ArmorCategoryLight  ArmorCategory = "light"
+	ArmorCategoryMedium ArmorCategory = "medium"
+	ArmorCategoryHeavy  ArmorCategory = "heavy"
+	ArmorCategoryShield ArmorCategory = "shield"
+)
+
+// FeatCategory represents the category of a feat.
+type FeatCategory string
+
+const (
+	FeatCategoryOrigin   FeatCategory = "Origin"
+	FeatCategoryGeneral  FeatCategory = "General"
+	FeatCategoryFighting FeatCategory = "Fighting"
+	FeatCategoryEpicBoon FeatCategory = "Epic Boon"
+)
+
 // Race represents a playable race in D&D 5e.
 type Race struct {
 	Name         string    `json:"name"`
@@ -53,24 +154,24 @@ type Class struct {
 
 // EquipmentChoice represents a starting equipment item or choice.
 type EquipmentChoice struct {
-	Type    string            `json:"type"` // "fixed" or "choice"
-	Item    *EquipmentItem    `json:"item,omitempty"` // For fixed items
-	Options []EquipmentOption `json:"options,omitempty"` // For choices
+	Type    EquipmentChoiceType `json:"type"` // "fixed" or "choice"
+	Item    *EquipmentItem     `json:"item,omitempty"` // For fixed items
+	Options []EquipmentOption  `json:"options,omitempty"` // For choices
 }
 
 // EquipmentItem represents a specific equipment item with quantity.
 type EquipmentItem struct {
 	Name     string           `json:"name"`              // "Greataxe", "Explorer's Pack", etc. (or empty if using filter)
 	Quantity int              `json:"quantity"`          // Number of items
-	Category string           `json:"category"`          // "weapon", "armor", "pack", "gear", "tool"
+	Category EquipmentCategory `json:"category"`          // "weapon", "armor", "pack", "gear", "tool"
 	Filter   *EquipmentFilter `json:"filter,omitempty"`  // Optional filter for dynamic selection (e.g., "any martial melee weapon")
 }
 
 // EquipmentFilter specifies criteria for dynamic equipment selection.
 type EquipmentFilter struct {
-	WeaponType   string `json:"weaponType,omitempty"`   // "simple" or "martial"
-	WeaponStyle  string `json:"weaponStyle,omitempty"`  // "melee" or "ranged"
-	ArmorType    string `json:"armorType,omitempty"`    // "light", "medium", "heavy", "shield"
+	WeaponType   WeaponType    `json:"weaponType,omitempty"`   // "simple" or "martial"
+	WeaponStyle  WeaponStyle   `json:"weaponStyle,omitempty"`  // "melee" or "ranged"
+	ArmorType    ArmorCategory `json:"armorType,omitempty"`    // "light", "medium", "heavy", "shield"
 }
 
 // EquipmentOption represents one option in an equipment choice.
@@ -100,10 +201,10 @@ type SkillChoices struct {
 
 // Feature represents a class feature.
 type Feature struct {
-	Level       int    `json:"level"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Activation  string `json:"activation,omitempty"` // "action", "bonus", "reaction", or "" (passive)
+	Level       int                  `json:"level"`
+	Name        string               `json:"name"`
+	Description string               `json:"description"`
+	Activation  domain.ActivationType `json:"activation,omitempty"` // "action", "bonus", "reaction", or "" (passive)
 }
 
 // Subclass represents a class specialization.
@@ -118,16 +219,16 @@ type Subclass struct {
 type SpellData struct {
 	Name        string            `json:"name"`
 	Level       int               `json:"level"`
-	School      string            `json:"school"`
-	CastingTime string            `json:"castingTime"`
+	School      SpellSchool       `json:"school"`
+	CastingTime CastingTime       `json:"castingTime"`
 	Range       string            `json:"range"`
-	Components  []string          `json:"components"`
+	Components  []SpellComponent  `json:"components"`
 	Duration    string            `json:"duration"`
 	Description string            `json:"description"`
 	Classes     []string          `json:"classes"`
 	Ritual      bool              `json:"ritual"`
 	Damage      string            `json:"damage,omitempty"`
-	DamageType  string            `json:"damageType,omitempty"`
+	DamageType  domain.DamageType `json:"damageType,omitempty"`
 	SavingThrow string            `json:"savingThrow,omitempty"`
 	Scaling     map[string]string `json:"scaling,omitempty"`
 	Upcast      string            `json:"upcast,omitempty"`
@@ -183,12 +284,12 @@ type ConditionData struct {
 
 // Feat represents a feat available for character selection.
 type Feat struct {
-	Name         string     `json:"name"`
-	Category     string     `json:"category"`              // "Origin", "General", "Fighting", "Epic Boon"
-	Prerequisite string     `json:"prerequisite,omitempty"` // Human-readable prerequisite text
-	Repeatable   bool       `json:"repeatable,omitempty"`   // Whether the feat can be taken multiple times
-	Description  string     `json:"description"`
-	Effects      FeatEffect `json:"effects"`
+	Name         string       `json:"name"`
+	Category     FeatCategory `json:"category"`              // "Origin", "General", "Fighting", "Epic Boon"
+	Prerequisite string       `json:"prerequisite,omitempty"` // Human-readable prerequisite text
+	Repeatable   bool         `json:"repeatable,omitempty"`   // Whether the feat can be taken multiple times
+	Description  string       `json:"description"`
+	Effects      FeatEffect   `json:"effects"`
 }
 
 // FeatEffect represents the mechanical effects of a feat.

@@ -1,6 +1,10 @@
 package models
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/Domo929/sheet/internal/domain"
+)
 
 // Error sentinels for inventory operations
 var (
@@ -268,9 +272,9 @@ type Item struct {
 	SubCategory   string        `json:"subCategory,omitempty"` // e.g., "Simple Melee Weapons", "Martial Ranged Weapons"
 
 	// Weapon properties
-	Damage          string   `json:"damage,omitempty"`           // e.g., "1d8"
-	DamageType      string   `json:"damageType,omitempty"`       // e.g., "slashing"
-	WeaponProps     []string `json:"weaponProperties,omitempty"` // e.g., ["finesse", "light", "topple"]
+	Damage          string                  `json:"damage,omitempty"`           // e.g., "1d8"
+	DamageType      domain.DamageType       `json:"damageType,omitempty"`       // e.g., "slashing"
+	WeaponProps     []domain.WeaponProperty `json:"weaponProperties,omitempty"` // e.g., ["finesse", "light", "topple"]
 	VersatileDamage string   `json:"versatileDamage,omitempty"`  // e.g., "1d10" for versatile weapons
 	RangeNormal     int      `json:"rangeNormal,omitempty"`      // Normal range in feet
 	RangeLong       int      `json:"rangeLong,omitempty"`        // Long range in feet

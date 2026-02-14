@@ -1,5 +1,7 @@
 package models
 
+import "github.com/Domo929/sheet/internal/domain"
+
 // HitPoints tracks the character's hit points.
 type HitPoints struct {
 	Maximum          int `json:"maximum"`
@@ -317,34 +319,19 @@ func CalculateAC(baseAC int, armorAC int, shieldBonus int, dexModifier int, addi
 	return ac
 }
 
-// WeaponProperty represents properties a weapon can have.
-type WeaponProperty string
-
-const (
-	PropertyFinesse    WeaponProperty = "finesse"
-	PropertyLight      WeaponProperty = "light"
-	PropertyHeavy      WeaponProperty = "heavy"
-	PropertyReach      WeaponProperty = "reach"
-	PropertyThrown     WeaponProperty = "thrown"
-	PropertyVersatile  WeaponProperty = "versatile"
-	PropertyTwoHanded  WeaponProperty = "two-handed"
-	PropertyAmmunition WeaponProperty = "ammunition"
-	PropertyLoading    WeaponProperty = "loading"
-)
-
 // CalculateAttackBonus calculates the attack bonus for a weapon.
 // strMod and dexMod are the character's STR and DEX modifiers.
 // proficiencyBonus is added if the character is proficient with the weapon.
 // magicBonus is from magic weapons (+1, +2, +3, etc.).
 // weaponProps contains the weapon's properties (e.g., "finesse", "thrown").
 // useStrength can force using STR even for ranged/finesse weapons.
-func CalculateAttackBonus(strMod int, dexMod int, proficient bool, proficiencyBonus int, magicBonus int, weaponProps []string, useStrength bool) int {
+func CalculateAttackBonus(strMod int, dexMod int, proficient bool, proficiencyBonus int, magicBonus int, weaponProps []domain.WeaponProperty, useStrength bool) int {
 	abilityMod := strMod // Default to STR for melee weapons
 
 	// Check if weapon has finesse property
 	hasFinesse := false
 	for _, prop := range weaponProps {
-		if prop == string(PropertyFinesse) {
+		if prop == domain.PropertyFinesse {
 			hasFinesse = true
 			break
 		}

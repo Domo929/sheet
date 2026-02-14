@@ -644,7 +644,7 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 	case " ":
 		// Spacebar: Select current option and enter sub-selection if needed
 		currentEquip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
-		if currentEquip.Type == "choice" {
+		if currentEquip.Type == data.EquipmentChoiceSelect {
 			// Select the focused option
 			m.equipmentChoices[m.focusedEquipmentChoice] = m.focusedEquipmentOption
 			
@@ -681,16 +681,16 @@ func (m *CharacterCreationModel) navigateEquipmentUp() {
 	
 	currentEquip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
 	
-	if currentEquip.Type == "choice" && m.focusedEquipmentOption > 0 {
+	if currentEquip.Type == data.EquipmentChoiceSelect && m.focusedEquipmentOption > 0 {
 		// Move up within current choice's options
 		m.focusedEquipmentOption--
 	} else if m.focusedEquipmentChoice > 0 {
 		// Move to previous choice
 		m.focusedEquipmentChoice--
-		
+
 		// Set focus to last option of previous choice (or 0 for fixed items)
 		prevEquip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
-		if prevEquip.Type == "choice" {
+		if prevEquip.Type == data.EquipmentChoiceSelect {
 			m.focusedEquipmentOption = len(prevEquip.Options) - 1
 		} else {
 			m.focusedEquipmentOption = 0
@@ -706,7 +706,7 @@ func (m *CharacterCreationModel) navigateEquipmentDown() {
 	
 	currentEquip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
 	
-	if currentEquip.Type == "choice" && m.focusedEquipmentOption < len(currentEquip.Options)-1 {
+	if currentEquip.Type == data.EquipmentChoiceSelect && m.focusedEquipmentOption < len(currentEquip.Options)-1 {
 		// Move down within current choice's options
 		m.focusedEquipmentOption++
 	} else if m.focusedEquipmentChoice < len(m.selectedClass.StartingEquipment)-1 {
@@ -723,7 +723,7 @@ func (m *CharacterCreationModel) allEquipmentChoicesMade() bool {
 	}
 	
 	for i, equip := range m.selectedClass.StartingEquipment {
-		if equip.Type == "choice" {
+		if equip.Type == data.EquipmentChoiceSelect {
 			// Check if a selection has been made
 			if i >= len(m.equipmentChoices) || m.equipmentChoices[i] < 0 {
 				return false
@@ -759,22 +759,22 @@ func (m *CharacterCreationModel) needsSubSelection() bool {
 	}
 	
 	equip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
-	if equip.Type != "choice" || m.focusedEquipmentChoice >= len(m.equipmentChoices) {
+	if equip.Type != data.EquipmentChoiceSelect || m.focusedEquipmentChoice >= len(m.equipmentChoices) {
 		return false
 	}
-	
+
 	selectedIdx := m.equipmentChoices[m.focusedEquipmentChoice]
 	if selectedIdx < 0 || selectedIdx >= len(equip.Options) {
 		return false
 	}
-	
+
 	// Check if any item in the selected option has a filter
 	for _, item := range equip.Options[selectedIdx].Items {
 		if m.needsItemSubSelection(item) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -783,9 +783,9 @@ func (m *CharacterCreationModel) enterSubSelection() {
 	if m.selectedClass == nil || m.focusedEquipmentChoice >= len(m.selectedClass.StartingEquipment) {
 		return
 	}
-	
+
 	equip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
-	if equip.Type != "choice" || m.focusedEquipmentChoice >= len(m.equipmentChoices) {
+	if equip.Type != data.EquipmentChoiceSelect || m.focusedEquipmentChoice >= len(m.equipmentChoices) {
 		return
 	}
 	
@@ -825,18 +825,18 @@ func (m *CharacterCreationModel) getItemsForFilter(filter *data.EquipmentFilter)
 	if filter.WeaponType != "" {
 		var weapons []data.Weapon
 		
-		if filter.WeaponType == "simple" {
-			if filter.WeaponStyle == "melee" {
+		if filter.WeaponType == data.WeaponTypeSimple {
+			if filter.WeaponStyle == data.WeaponStyleMelee {
 				weapons = equipment.Weapons.SimpleMelee
-			} else if filter.WeaponStyle == "ranged" {
+			} else if filter.WeaponStyle == data.WeaponStyleRanged {
 				weapons = equipment.Weapons.SimpleRanged
 			} else {
 				weapons = equipment.Weapons.GetSimpleWeapons()
 			}
-		} else if filter.WeaponType == "martial" {
-			if filter.WeaponStyle == "melee" {
+		} else if filter.WeaponType == data.WeaponTypeMartial {
+			if filter.WeaponStyle == data.WeaponStyleMelee {
 				weapons = equipment.Weapons.MartialMelee
-			} else if filter.WeaponStyle == "ranged" {
+			} else if filter.WeaponStyle == data.WeaponStyleRanged {
 				weapons = equipment.Weapons.MartialRanged
 			} else {
 				weapons = equipment.Weapons.GetMartialWeapons()
@@ -853,13 +853,13 @@ func (m *CharacterCreationModel) getItemsForFilter(filter *data.EquipmentFilter)
 		var armorItems []data.ArmorItem
 		
 		switch filter.ArmorType {
-		case "light":
+		case data.ArmorCategoryLight:
 			armorItems = equipment.Armor.Light
-		case "medium":
+		case data.ArmorCategoryMedium:
 			armorItems = equipment.Armor.Medium
-		case "heavy":
+		case data.ArmorCategoryHeavy:
 			armorItems = equipment.Armor.Heavy
-		case "shield":
+		case data.ArmorCategoryShield:
 			armorItems = equipment.Armor.Shield
 		}
 		
@@ -882,16 +882,16 @@ func (m *CharacterCreationModel) getFilterDisplayName(filter *data.EquipmentFilt
 	
 	if filter.WeaponType != "" {
 		parts = append(parts, "any")
-		parts = append(parts, filter.WeaponType)
+		parts = append(parts, string(filter.WeaponType))
 		if filter.WeaponStyle != "" {
-			parts = append(parts, filter.WeaponStyle)
+			parts = append(parts, string(filter.WeaponStyle))
 		}
 		parts = append(parts, "weapon")
 	}
-	
+
 	if filter.ArmorType != "" {
 		parts = append(parts, "any")
-		parts = append(parts, filter.ArmorType)
+		parts = append(parts, string(filter.ArmorType))
 		parts = append(parts, "armor")
 	}
 	
@@ -907,10 +907,10 @@ func (m *CharacterCreationModel) getSelectedEquipment() []data.EquipmentItem {
 	}
 	
 	for i, equip := range m.selectedClass.StartingEquipment {
-		if equip.Type == "fixed" && equip.Item != nil {
+		if equip.Type == data.EquipmentChoiceFixed && equip.Item != nil {
 			// Fixed item - add directly
 			items = append(items, *equip.Item)
-		} else if equip.Type == "choice" && i < len(m.equipmentChoices) {
+		} else if equip.Type == data.EquipmentChoiceSelect && i < len(m.equipmentChoices) {
 			selectedIdx := m.equipmentChoices[i]
 			if selectedIdx >= 0 && selectedIdx < len(equip.Options) {
 				// Add all items from the selected option
@@ -1115,7 +1115,7 @@ func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreati
 		if m.selectedClass != nil && m.equipmentChoices == nil {
 			m.equipmentChoices = make([]int, len(m.selectedClass.StartingEquipment))
 			for i, equip := range m.selectedClass.StartingEquipment {
-				if equip.Type == "fixed" {
+				if equip.Type == data.EquipmentChoiceFixed {
 					// Fixed items are automatically "selected" (0 = selected)
 					m.equipmentChoices[i] = 0
 				} else {
@@ -1558,7 +1558,7 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 		item.Quantity = equipItem.Quantity
 		
 		// Look up weapon data from equipment database
-		if equipItem.Category == "weapon" {
+		if equipItem.Category == data.CategoryWeapon {
 			if weapon := m.lookupWeapon(equipItem.Name); weapon != nil {
 				item.Damage = weapon.Damage
 				item.DamageType = weapon.DamageType
@@ -1574,7 +1574,7 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 		}
 		
 		// Look up armor data from equipment database
-		if equipItem.Category == "armor" {
+		if equipItem.Category == data.CategoryArmor {
 			if armor := m.lookupArmor(equipItem.Name); armor != nil {
 				item.Weight = armor.Weight
 				item.StealthDisadvantage = armor.StealthDisadvantage
@@ -1607,15 +1607,15 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 }
 
 // categoryToItemType converts equipment category to ItemType.
-func categoryToItemType(category string) models.ItemType {
+func categoryToItemType(category data.EquipmentCategory) models.ItemType {
 	switch category {
-	case "weapon":
+	case data.CategoryWeapon:
 		return models.ItemTypeWeapon
-	case "armor":
+	case data.CategoryArmor:
 		return models.ItemTypeArmor
-	case "pack":
+	case data.CategoryPack:
 		return models.ItemTypeGeneral
-	case "tool":
+	case data.CategoryTool:
 		return models.ItemTypeTool
 	default:
 		return models.ItemTypeGeneral
@@ -2103,7 +2103,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 		for i, equip := range m.selectedClass.StartingEquipment {
 			isFocused := (i == m.focusedEquipmentChoice)
 			
-			if equip.Type == "fixed" && equip.Item != nil {
+			if equip.Type == data.EquipmentChoiceFixed && equip.Item != nil {
 				// Fixed item - no choice needed
 				prefix := "  "
 				if isFocused {
@@ -2117,7 +2117,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 				}
 				
 				// If it's a pack, show contents
-				if equip.Item.Category == "pack" {
+				if equip.Item.Category == data.CategoryPack {
 					packContents := m.getPackContents(equip.Item.Name)
 					if len(packContents) > 0 {
 						dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
@@ -2126,7 +2126,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 						}
 					}
 				}
-			} else if equip.Type == "choice" && len(equip.Options) > 0 {
+			} else if equip.Type == data.EquipmentChoiceSelect && len(equip.Options) > 0 {
 				// Choice - show all options vertically
 				choiceText := fmt.Sprintf("%d. Choose one:", i+1)
 				content.WriteString("  " + choiceText + "\n")
@@ -2202,7 +2202,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 						
 						// If this option contains a pack, show its contents
 						for _, item := range opt.Items {
-							if item.Category == "pack" && item.Name != "" {
+							if item.Category == data.CategoryPack && item.Name != "" {
 								packContents := m.getPackContents(item.Name)
 								if len(packContents) > 0 {
 									dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
@@ -2395,13 +2395,13 @@ func (m *CharacterCreationModel) renderReview() string {
 	selectedEquipment := m.getSelectedEquipment()
 	if len(selectedEquipment) > 0 {
 		// Group items by type for better display
-		equipmentByType := make(map[string][]data.EquipmentItem)
+		equipmentByType := make(map[data.EquipmentCategory][]data.EquipmentItem)
 		for _, item := range selectedEquipment {
 			equipmentByType[item.Category] = append(equipmentByType[item.Category], item)
 		}
-		
+
 		// Display in order: weapon, armor, gear, tool, pack (pack last so contents are at end)
-		categories := []string{"weapon", "armor", "gear", "tool", "pack"}
+		categories := []data.EquipmentCategory{data.CategoryWeapon, data.CategoryArmor, data.CategoryGear, data.CategoryTool, data.CategoryPack}
 		for _, cat := range categories {
 			items := equipmentByType[cat]
 			if len(items) > 0 {
@@ -2411,9 +2411,9 @@ func (m *CharacterCreationModel) renderReview() string {
 					} else {
 						content.WriteString(fmt.Sprintf("  • %s\n", item.Name))
 					}
-					
+
 					// If it's a pack, show contents
-					if cat == "pack" {
+					if cat == data.CategoryPack {
 						packContents := m.getPackContents(item.Name)
 						if len(packContents) > 0 {
 							for _, packItem := range packContents {

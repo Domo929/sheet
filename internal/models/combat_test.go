@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	"github.com/Domo929/sheet/internal/domain"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -363,7 +364,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 		proficient       bool
 		proficiencyBonus int
 		magicBonus       int
-		weaponProps      []string
+		weaponProps      []domain.WeaponProperty
 		useStrength      bool
 		expected         int
 	}{
@@ -374,7 +375,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 			proficient:       true,
 			proficiencyBonus: 2,
 			magicBonus:       0,
-			weaponProps:      []string{},
+			weaponProps:      []domain.WeaponProperty{},
 			useStrength:      false,
 			expected:         5,
 		},
@@ -385,7 +386,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 			proficient:       true,
 			proficiencyBonus: 2,
 			magicBonus:       0,
-			weaponProps:      []string{string(PropertyFinesse)},
+			weaponProps:      []domain.WeaponProperty{domain.PropertyFinesse},
 			useStrength:      false,
 			expected:         6,
 		},
@@ -396,7 +397,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 			proficient:       true,
 			proficiencyBonus: 2,
 			magicBonus:       0,
-			weaponProps:      []string{string(PropertyFinesse)},
+			weaponProps:      []domain.WeaponProperty{domain.PropertyFinesse},
 			useStrength:      false,
 			expected:         6,
 		},
@@ -407,7 +408,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 			proficient:       true,
 			proficiencyBonus: 2,
 			magicBonus:       0,
-			weaponProps:      []string{string(PropertyFinesse)},
+			weaponProps:      []domain.WeaponProperty{domain.PropertyFinesse},
 			useStrength:      true,
 			expected:         4,
 		},
@@ -418,7 +419,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 			proficient:       true,
 			proficiencyBonus: 3,
 			magicBonus:       1,
-			weaponProps:      []string{},
+			weaponProps:      []domain.WeaponProperty{},
 			useStrength:      false,
 			expected:         7,
 		},
@@ -429,7 +430,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 			proficient:       false,
 			proficiencyBonus: 2,
 			magicBonus:       0,
-			weaponProps:      []string{},
+			weaponProps:      []domain.WeaponProperty{},
 			useStrength:      false,
 			expected:         3,
 		},
@@ -440,7 +441,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 			proficient:       true,
 			proficiencyBonus: 2,
 			magicBonus:       0,
-			weaponProps:      []string{string(PropertyFinesse), string(PropertyLight)},
+			weaponProps:      []domain.WeaponProperty{domain.PropertyFinesse, domain.PropertyLight},
 			useStrength:      false,
 			expected:         6,
 		},
@@ -451,7 +452,7 @@ func TestCalculateAttackBonus(t *testing.T) {
 			proficient:       true,
 			proficiencyBonus: 6,
 			magicBonus:       3,
-			weaponProps:      []string{},
+			weaponProps:      []domain.WeaponProperty{},
 			useStrength:      false,
 			expected:         14,
 		},

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Domo929/sheet/internal/domain"
 	"github.com/Domo929/sheet/internal/models"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
@@ -437,9 +438,9 @@ func TestMainSheetModelWeaponAttacks(t *testing.T) {
 	// Add a weapon to inventory
 	sword := models.NewItem("sword-1", "Longsword", models.ItemTypeWeapon)
 	sword.Damage = "1d8"
-	sword.DamageType = "slashing"
+	sword.DamageType = domain.DamageSlashing
 	char.Inventory.AddItem(sword)
-	
+
 	// Equip the weapon to main hand
 	char.Inventory.Equipment.MainHand = &sword
 
@@ -465,7 +466,7 @@ func TestMainSheetModelWeaponAttackBonus(t *testing.T) {
 	// Test regular melee weapon (uses STR)
 	sword := models.NewItem("sword-1", "Longsword", models.ItemTypeWeapon)
 	sword.Damage = "1d8"
-	sword.DamageType = "slashing"
+	sword.DamageType = domain.DamageSlashing
 	sword.SubCategory = "Martial Melee Weapons"
 	char.Inventory.AddItem(sword)
 
@@ -477,9 +478,9 @@ func TestMainSheetModelWeaponAttackBonus(t *testing.T) {
 	// Test finesse weapon (uses better of STR/DEX)
 	dagger := models.NewItem("dagger-1", "Dagger", models.ItemTypeWeapon)
 	dagger.Damage = "1d4"
-	dagger.DamageType = "piercing"
+	dagger.DamageType = domain.DamagePiercing
 	dagger.SubCategory = "Simple Melee Weapons"
-	dagger.WeaponProps = []string{"finesse", "light", "thrown"}
+	dagger.WeaponProps = []domain.WeaponProperty{domain.PropertyFinesse, domain.PropertyLight, domain.PropertyThrown}
 
 	bonus = model.getWeaponAttackBonus(dagger)
 	// Better of STR (+3) or DEX (+2) = STR (+3) + Prof (+3) = +6
