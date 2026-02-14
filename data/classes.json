@@ -459,7 +459,8 @@
         {
           "level": 1,
           "name": "Rage",
-          "description": "In battle, you fight with primal ferocity. On your turn, you can enter a rage as a bonus action. While raging, you gain bonus damage on melee attacks using Strength, advantage on Strength checks and saves, and resistance to bludgeoning, piercing, and slashing damage. Rage lasts 1 minute, ends early if you're knocked unconscious or if your turn ends and you haven't attacked or taken damage since your last turn. You can rage a number of times shown for your level, regaining all uses on a long rest."
+          "description": "In battle, you fight with primal ferocity. On your turn, you can enter a rage as a bonus action. While raging, you gain bonus damage on melee attacks using Strength, advantage on Strength checks and saves, and resistance to bludgeoning, piercing, and slashing damage. Rage lasts 1 minute, ends early if you're knocked unconscious or if your turn ends and you haven't attacked or taken damage since your last turn. You can rage a number of times shown for your level, regaining all uses on a long rest.",
+          "activation": "bonus"
         },
         {
           "level": 1,
@@ -1257,7 +1258,8 @@
         {
           "level": 1,
           "name": "Bardic Inspiration",
-          "description": "You can inspire others through stirring words or music. As a bonus action, choose one creature within 60 feet who can hear you. That creature gains one Bardic Inspiration die (d6). Once within the next 10 minutes, the creature can roll the die and add it to one ability check, attack roll, or saving throw. The creature can wait until after it rolls the d20 before using the die, but must decide before knowing whether the roll succeeds or fails. You can use this feature a number of times equal to your Charisma modifier (minimum of once), and regain uses on a long rest."
+          "description": "You can inspire others through stirring words or music. As a bonus action, choose one creature within 60 feet who can hear you. That creature gains one Bardic Inspiration die (d6). Once within the next 10 minutes, the creature can roll the die and add it to one ability check, attack roll, or saving throw. The creature can wait until after it rolls the d20 before using the die, but must decide before knowing whether the roll succeeds or fails. You can use this feature a number of times equal to your Charisma modifier (minimum of once), and regain uses on a long rest.",
+          "activation": "bonus"
         },
         {
           "level": 2,
@@ -1297,7 +1299,8 @@
         {
           "level": 6,
           "name": "Countercharm",
-          "description": "You can use musical notes or words of power to disrupt mind-influencing effects. As an action, you can start a performance that lasts until the end of your next turn. During that time, you and any friendly creatures within 30 feet of you have advantage on saving throws against being frightened or charmed."
+          "description": "You can use musical notes or words of power to disrupt mind-influencing effects. As an action, you can start a performance that lasts until the end of your next turn. During that time, you and any friendly creatures within 30 feet of you have advantage on saving throws against being frightened or charmed.",
+          "activation": "action"
         },
         {
           "level": 6,
@@ -2516,12 +2519,13 @@
         {
           "level": 2,
           "name": "Wild Shape",
-          "description": "You can use your action to magically assume the shape of a beast you have seen before. You can use this feature twice, regaining uses on a short or long rest. Your druid level determines the beasts you can transform into."
+          "description": "You can use your action to magically assume the shape of a beast you have seen before. You can use this feature twice, regaining uses on a short or long rest. Your druid level determines the beasts you can transform into.",
+          "activation": "action"
         },
         {
           "level": 2,
           "name": "Druid Circle",
-          "description": "Choose a circle: Circle of the Land, Circle of the Moon, or others. Your choice grants features at 2nd, 6th, 10th, and 14th level."
+          "description": "At level 3, you choose a Druid Circle: Circle of the Land, Circle of the Moon, or others. Your choice grants features at 3rd, 6th, 10th, and 14th level."
         },
         {
           "level": 4,
@@ -2855,7 +2859,8 @@
         {
           "level": 1,
           "name": "Second Wind",
-          "description": "You can use a bonus action to regain hit points equal to 1d10 + your fighter level. Once used, you must finish a short or long rest before you can use it again."
+          "description": "You can use a bonus action to regain hit points equal to 1d10 + your fighter level. Once used, you must finish a short or long rest before you can use it again.",
+          "activation": "bonus"
         },
         {
           "level": 2,
@@ -3235,7 +3240,8 @@
         {
           "level": 1,
           "name": "Martial Arts",
-          "description": "You gain the following benefits while unarmed or wielding only monk weapons and not wearing armor or wielding a shield: You can use Dexterity instead of Strength for attack and damage rolls; you can roll your Martial Arts die in place of normal damage; when you use the Attack action with an unarmed strike or monk weapon, you can make one unarmed strike as a bonus action. Your Martial Arts die is a d4, increasing at higher levels."
+          "description": "You gain the following benefits while unarmed or wielding only monk weapons and not wearing armor or wielding a shield: You can use Dexterity instead of Strength for attack and damage rolls; you can roll your Martial Arts die in place of normal damage; when you use the Attack action with an unarmed strike or monk weapon, you can make one unarmed strike as a bonus action. Your Martial Arts die is a d4, increasing at higher levels.",
+          "activation": "bonus"
         },
         {
           "level": 2,
@@ -3255,12 +3261,14 @@
         {
           "level": 3,
           "name": "Deflect Missiles",
-          "description": "You can use your reaction to deflect or catch a missile when hit by a ranged weapon attack. The damage you take is reduced by 1d10 + Dexterity modifier + monk level. If you reduce damage to 0 and have a free hand, you can catch the missile and spend 1 ki point to make a ranged attack with it."
+          "description": "You can use your reaction to deflect or catch a missile when hit by a ranged weapon attack. The damage you take is reduced by 1d10 + Dexterity modifier + monk level. If you reduce damage to 0 and have a free hand, you can catch the missile and spend 1 ki point to make a ranged attack with it.",
+          "activation": "reaction"
         },
         {
           "level": 4,
           "name": "Slow Fall",
-          "description": "You can use your reaction to reduce falling damage by an amount equal to five times your monk level."
+          "description": "You can use your reaction to reduce falling damage by an amount equal to five times your monk level.",
+          "activation": "reaction"
         },
         {
           "level": 4,
@@ -3350,7 +3358,8 @@
         {
           "level": 18,
           "name": "Empty Body",
-          "description": "You can use your action to spend 4 ki points to become invisible for 1 minute. During that time, you also have resistance to all damage but force damage. Additionally, you can spend 8 ki points to cast the astral projection spell without material components."
+          "description": "You can use your action to spend 4 ki points to become invisible for 1 minute. During that time, you also have resistance to all damage but force damage. Additionally, you can spend 8 ki points to cast the astral projection spell without material components.",
+          "activation": "action"
         },
         {
           "level": 19,
@@ -3808,12 +3817,14 @@
         {
           "level": 1,
           "name": "Divine Sense",
-          "description": "As an action, you can detect celestials, fiends, and undead within 60 feet. You can use this feature a number of times equal to 1 + your Charisma modifier. You regain all uses on a long rest."
+          "description": "As an action, you can detect celestials, fiends, and undead within 60 feet. You can use this feature a number of times equal to 1 + your Charisma modifier. You regain all uses on a long rest.",
+          "activation": "action"
         },
         {
           "level": 1,
           "name": "Lay on Hands",
-          "description": "You have a pool of healing power equal to 5 × your paladin level. As an action, you can touch a creature and restore hit points (up to the maximum in your pool) or cure one disease or neutralize one poison. You regain all uses on a long rest."
+          "description": "You have a pool of healing power equal to 5 × your paladin level. As an action, you can touch a creature and restore hit points (up to the maximum in your pool) or cure one disease or neutralize one poison. You regain all uses on a long rest.",
+          "activation": "action"
         },
         {
           "level": 2,
@@ -3883,7 +3894,8 @@
         {
           "level": 14,
           "name": "Cleansing Touch",
-          "description": "You can use your action to end one spell on yourself or one willing creature you touch. You can use this feature a number of times equal to your Charisma modifier (minimum once). You regain uses on a long rest."
+          "description": "You can use your action to end one spell on yourself or one willing creature you touch. You can use this feature a number of times equal to your Charisma modifier (minimum once). You regain uses on a long rest.",
+          "activation": "action"
         },
         {
           "level": 15,
@@ -4469,7 +4481,8 @@
         {
           "level": 3,
           "name": "Primeval Awareness",
-          "description": "You can use your action and expend one ranger spell slot to focus your awareness. For 1 minute per level of the spell slot, you sense whether aberrations, celestials, dragons, elementals, fey, fiends, or undead are present within 1 mile of you (or 6 miles in your favored terrain)."
+          "description": "You can use your action and expend one ranger spell slot to focus your awareness. For 1 minute per level of the spell slot, you sense whether aberrations, celestials, dragons, elementals, fey, fiends, or undead are present within 1 mile of you (or 6 miles in your favored terrain).",
+          "activation": "action"
         },
         {
           "level": 4,
@@ -4529,7 +4542,8 @@
         {
           "level": 14,
           "name": "Vanish",
-          "description": "You can use the Hide action as a bonus action on your turn. Also, you can't be tracked by nonmagical means unless you choose to leave a trail."
+          "description": "You can use the Hide action as a bonus action on your turn. Also, you can't be tracked by nonmagical means unless you choose to leave a trail.",
+          "activation": "bonus"
         },
         {
           "level": 15,
@@ -4865,7 +4879,8 @@
         {
           "level": 2,
           "name": "Cunning Action",
-          "description": "You can take a bonus action on each of your turns to take the Dash, Disengage, or Hide action."
+          "description": "You can take a bonus action on each of your turns to take the Dash, Disengage, or Hide action.",
+          "activation": "bonus"
         },
         {
           "level": 3,
@@ -4880,7 +4895,8 @@
         {
           "level": 5,
           "name": "Uncanny Dodge",
-          "description": "When an attacker you can see hits you with an attack, you can use your reaction to halve the attack's damage against you."
+          "description": "When an attacker you can see hits you with an attack, you can use your reaction to halve the attack's damage against you.",
+          "activation": "reaction"
         },
         {
           "level": 6,

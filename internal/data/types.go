@@ -103,6 +103,7 @@ type Feature struct {
 	Level       int    `json:"level"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Activation  string `json:"activation,omitempty"` // "action", "bonus", "reaction", or "" (passive)
 }
 
 // Subclass represents a class specialization.

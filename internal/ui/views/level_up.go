@@ -1022,6 +1022,7 @@ func (m *LevelUpModel) applyLevelUp() {
 				fmt.Sprintf("%s (%s)", char.Info.Class, m.stagedSubclass.Name),
 				f.Description,
 				f.Level,
+				f.Activation,
 			)
 		}
 	}
@@ -1098,6 +1099,7 @@ func (m *LevelUpModel) applyLevelUp() {
 			fmt.Sprintf("%s %d", char.Info.Class, m.newLevel),
 			f.Description,
 			m.newLevel,
+			f.Activation,
 		)
 	}
 

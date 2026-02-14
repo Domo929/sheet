@@ -105,6 +105,7 @@ const (
 	ActionItemWeapon ActionItemType = iota
 	ActionItemSpell
 	ActionItemStandard
+	ActionItemFeature
 )
 
 // ActionItem represents a selectable action in the Actions panel
@@ -118,6 +119,8 @@ type ActionItem struct {
 	Spell *data.SpellData
 	// For standard actions
 	StandardAction *StandardAction
+	// For class features
+	Feature *models.Feature
 }
 
 // StandardAction represents a standard D&D 2024 action.
@@ -598,6 +601,13 @@ func (m *MainSheetModel) handleActionSelection() (*MainSheetModel, tea.Cmd) {
 		// For standard actions, show the description
 		if selectedItem.StandardAction != nil {
 			m.statusMessage = fmt.Sprintf("📋 %s: %s", selectedItem.Name, selectedItem.StandardAction.Description)
+		}
+		return m, nil
+
+	case ActionItemFeature:
+		// For class features, show the description
+		if selectedItem.Feature != nil {
+			m.statusMessage = fmt.Sprintf("⚡ %s: %s", selectedItem.Name, selectedItem.Feature.Description)
 		}
 		return m, nil
 	}
@@ -1585,14 +1595,16 @@ func (m *MainSheetModel) renderActions(width int) string {
 			lines = append(lines, labelStyle.Render("  No actions available"))
 		}
 	} else {
-		// Group items by type: Weapons, Spells, Standard Actions
-		var weaponItems, spellItems, standardItems []ActionItem
+		// Group items by type: Weapons, Spells, Class Features, Standard Actions
+		var weaponItems, spellItems, featureItems, standardItems []ActionItem
 		for _, item := range actionItems {
 			switch item.Type {
 			case ActionItemWeapon:
 				weaponItems = append(weaponItems, item)
 			case ActionItemSpell:
 				spellItems = append(spellItems, item)
+			case ActionItemFeature:
+				featureItems = append(featureItems, item)
 			case ActionItemStandard:
 				standardItems = append(standardItems, item)
 			}
@@ -1643,9 +1655,32 @@ func (m *MainSheetModel) renderActions(width int) string {
 			}
 		}
 
+		// Render class features section
+		if len(featureItems) > 0 {
+			if len(weaponItems) > 0 || len(spellItems) > 0 {
+				lines = append(lines, "")
+			}
+			lines = append(lines, titleStyle.Render("Class Features"))
+			for _, item := range featureItems {
+				cursor := "  "
+				if isFocused && currentIndex == m.actionCursor {
+					cursor = "> "
+				}
+
+				itemLine := fmt.Sprintf("%s%s - %s", cursor, valueStyle.Render(item.Name), labelStyle.Render(item.Description))
+
+				if isFocused && currentIndex == m.actionCursor {
+					itemLine = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render(itemLine)
+				}
+
+				lines = append(lines, itemLine)
+				currentIndex++
+			}
+		}
+
 		// Render standard actions section
 		if len(standardItems) > 0 {
-			if len(weaponItems) > 0 || len(spellItems) > 0 {
+			if len(weaponItems) > 0 || len(spellItems) > 0 || len(featureItems) > 0 {
 				lines = append(lines, "")
 			}
 			lines = append(lines, titleStyle.Render("Standard Actions"))
@@ -1790,6 +1825,19 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 			})
 		}
 
+		// Class features with action activation
+		for i := range m.character.Features.ClassFeatures {
+			f := &m.character.Features.ClassFeatures[i]
+			if f.Activation == "action" {
+				items = append(items, ActionItem{
+					Type:        ActionItemFeature,
+					Name:        f.Name,
+					Description: f.Source,
+					Feature:     f,
+				})
+			}
+		}
+
 		// Standard actions (after spells in display order)
 		for i := range standardActions {
 			action := &standardActions[i]
@@ -1820,6 +1868,19 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 			})
 		}
 
+		// Class features with bonus action activation
+		for i := range m.character.Features.ClassFeatures {
+			f := &m.character.Features.ClassFeatures[i]
+			if f.Activation == "bonus" {
+				items = append(items, ActionItem{
+					Type:        ActionItemFeature,
+					Name:        f.Name,
+					Description: f.Source,
+					Feature:     f,
+				})
+			}
+		}
+
 		// Standard bonus actions (after spells in display order)
 		for i := range standardActions {
 			action := &standardActions[i]
@@ -1848,6 +1909,19 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 				Description: spellInfo,
 				Spell:       spell,
 			})
+		}
+
+		// Class features with reaction activation
+		for i := range m.character.Features.ClassFeatures {
+			f := &m.character.Features.ClassFeatures[i]
+			if f.Activation == "reaction" {
+				items = append(items, ActionItem{
+					Type:        ActionItemFeature,
+					Name:        f.Name,
+					Description: f.Source,
+					Feature:     f,
+				})
+			}
 		}
 
 		// Standard reactions (after spells in display order)

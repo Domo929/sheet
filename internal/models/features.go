@@ -5,7 +5,8 @@ type Feature struct {
 	Name        string `json:"name"`
 	Source      string `json:"source"` // e.g., "Cleric 1", "Elf", "Alert (Feat)"
 	Description string `json:"description"`
-	Level       int    `json:"level,omitempty"` // Level gained (for class features)
+	Level       int    `json:"level,omitempty"`      // Level gained (for class features)
+	Activation  string `json:"activation,omitempty"` // "action", "bonus", "reaction", or "" (passive)
 }
 
 // NewFeature creates a new feature.
@@ -39,9 +40,10 @@ func (f *Features) AddRacialTrait(name, source, description string) {
 }
 
 // AddClassFeature adds a class feature.
-func (f *Features) AddClassFeature(name, source, description string, level int) {
+func (f *Features) AddClassFeature(name, source, description string, level int, activation string) {
 	feature := NewFeature(name, source, description)
 	feature.Level = level
+	feature.Activation = activation
 	f.ClassFeatures = append(f.ClassFeatures, feature)
 }
 
