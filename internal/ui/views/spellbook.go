@@ -213,15 +213,16 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 					m.mode = ModeSpellList
 					m.castingSpell = nil
 					return m, m.saveCharacter()
-				} else if m.castingSpell.Ritual && len(m.availableCastLevels) == 0 {
-					// Ritual spell cast as ritual - no slot needed, takes 10 extra minutes
-					m.statusMessage = fmt.Sprintf("Cast %s as ritual (no slot required, takes 10 extra minutes)", m.castingSpell.Name)
-					m.mode = ModeSpellList
-					m.castingSpell = nil
-					return m, m.saveCharacter()
 				} else if len(m.availableCastLevels) > 0 {
-					// Cast with selected slot level
 					selectedLevel := m.availableCastLevels[m.castLevelCursor]
+					if selectedLevel == 0 {
+						// Ritual cast (sentinel value 0) - no slot needed, takes 10 extra minutes
+						m.statusMessage = fmt.Sprintf("Cast %s as ritual (no slot required, takes 10 extra minutes)", m.castingSpell.Name)
+						m.mode = ModeSpellList
+						m.castingSpell = nil
+						return m, m.saveCharacter()
+					}
+					// Cast with selected slot level
 					m.mode = ModeSpellList
 					return m.castSpellAtLevel(m.castingSpell, selectedLevel), m.saveCharacter()
 				} else {
@@ -853,9 +854,13 @@ func (m *SpellbookModel) handleCastSpell() *SpellbookModel {
 	// Store casting spell and get available levels
 	m.castingSpell = &spell
 
-	// Ritual spells and cantrips don't use slots
-	if spell.Level == 0 || spell.Ritual {
+	// Cantrips don't use slots
+	if spell.Level == 0 {
 		m.availableCastLevels = []int{}
+	} else if spell.Ritual {
+		// Ritual spells can be cast as a ritual (no slot, +10 min) OR with a spell slot
+		// Use 0 as sentinel value for "cast as ritual" option
+		m.availableCastLevels = append([]int{0}, m.getAvailableCastLevels(spell.Level)...)
 	} else {
 		// Find available spell slot levels
 		m.availableCastLevels = m.getAvailableCastLevels(spell.Level)
@@ -1443,20 +1448,25 @@ func (m *SpellbookModel) renderCastLevelOverlay() string {
 			cursor = "> "
 		}
 
-		// Check if this is pact magic
-		isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
-
 		var line string
-		if isPactMagic {
-			remaining := sc.PactMagic.Remaining
-			total := sc.PactMagic.Total
-			upcastInfo := m.calculateUpcastEffect(level)
-			line = fmt.Sprintf("%sPact Magic - Level %d%s [%d/%d remaining]", cursor, level, upcastInfo, remaining, total)
+		if level == 0 {
+			// Ritual casting option
+			line = fmt.Sprintf("%sCast as Ritual (no slot, +10 min)", cursor)
 		} else {
-			slot := sc.SpellSlots.GetSlot(level)
-			if slot != nil {
+			// Check if this is pact magic
+			isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
+
+			if isPactMagic {
+				remaining := sc.PactMagic.Remaining
+				total := sc.PactMagic.Total
 				upcastInfo := m.calculateUpcastEffect(level)
-				line = fmt.Sprintf("%sLevel %d Slot%s [%d/%d remaining]", cursor, level, upcastInfo, slot.Remaining, slot.Total)
+				line = fmt.Sprintf("%sPact Magic - Level %d%s [%d/%d remaining]", cursor, level, upcastInfo, remaining, total)
+			} else {
+				slot := sc.SpellSlots.GetSlot(level)
+				if slot != nil {
+					upcastInfo := m.calculateUpcastEffect(level)
+					line = fmt.Sprintf("%sLevel %d Slot%s [%d/%d remaining]", cursor, level, upcastInfo, slot.Remaining, slot.Total)
+				}
 			}
 		}
 
@@ -1508,10 +1518,10 @@ func (m *SpellbookModel) renderCastConfirmationModal() string {
 	lines = append(lines, "")
 
 	// Basic spell info
-	// If casting as ritual, show ritual casting time
+	// If casting as ritual (cursor on ritual option), show ritual casting time
 	castingTime := spell.CastingTime
-	if m.castingSpell.Ritual && len(m.availableCastLevels) == 0 {
-		// Being cast as ritual - add 10 minutes
+	isRitualSelected := m.castingSpell.Ritual && len(m.availableCastLevels) > 0 && m.availableCastLevels[m.castLevelCursor] == 0
+	if isRitualSelected {
 		castingTime = "10 minutes (ritual)"
 	}
 	lines = append(lines, fmt.Sprintf("Casting Time: %s", castingTime))
@@ -1558,20 +1568,25 @@ func (m *SpellbookModel) renderCastConfirmationModal() string {
 	// Slot selection (if not a cantrip and not being cast as ritual)
 	if m.castingSpell.Level > 0 && len(m.availableCastLevels) > 0 {
 		if len(m.availableCastLevels) == 1 {
-			// Single slot option
+			// Single option
 			level := m.availableCastLevels[0]
-			upcastInfo := m.calculateUpcastEffect(level)
-			sc := m.character.Spellcasting
-
-			isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
-			if isPactMagic {
-				lines = append(lines, fmt.Sprintf("Using: Pact Magic - Level %d%s", level, upcastInfo))
+			if level == 0 {
+				// Only ritual option available
+				lines = append(lines, "Using: Cast as Ritual (no slot, +10 min)")
 			} else {
-				lines = append(lines, fmt.Sprintf("Using: Level %d Slot%s", level, upcastInfo))
+				upcastInfo := m.calculateUpcastEffect(level)
+				sc := m.character.Spellcasting
+
+				isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
+				if isPactMagic {
+					lines = append(lines, fmt.Sprintf("Using: Pact Magic - Level %d%s", level, upcastInfo))
+				} else {
+					lines = append(lines, fmt.Sprintf("Using: Level %d Slot%s", level, upcastInfo))
+				}
 			}
 		} else {
-			// Multiple slot options
-			lines = append(lines, "Select Spell Slot Level:")
+			// Multiple options (may include ritual + slot levels)
+			lines = append(lines, "Select Casting Method:")
 			lines = append(lines, "")
 
 			sc := m.character.Spellcasting
@@ -1581,18 +1596,23 @@ func (m *SpellbookModel) renderCastConfirmationModal() string {
 					cursor = "> "
 				}
 
-				isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
-				upcastInfo := m.calculateUpcastEffect(level)
-
 				var line string
-				if isPactMagic {
-					remaining := sc.PactMagic.Remaining
-					total := sc.PactMagic.Total
-					line = fmt.Sprintf("%sPact Magic - Level %d%s [%d/%d remaining]", cursor, level, upcastInfo, remaining, total)
+				if level == 0 {
+					// Ritual casting option
+					line = fmt.Sprintf("%sCast as Ritual (no slot, +10 min)", cursor)
 				} else {
-					slot := sc.SpellSlots.GetSlot(level)
-					if slot != nil {
-						line = fmt.Sprintf("%sLevel %d Slot%s [%d/%d remaining]", cursor, level, upcastInfo, slot.Remaining, slot.Total)
+					isPactMagic := sc.PactMagic != nil && sc.PactMagic.SlotLevel == level
+					upcastInfo := m.calculateUpcastEffect(level)
+
+					if isPactMagic {
+						remaining := sc.PactMagic.Remaining
+						total := sc.PactMagic.Total
+						line = fmt.Sprintf("%sPact Magic - Level %d%s [%d/%d remaining]", cursor, level, upcastInfo, remaining, total)
+					} else {
+						slot := sc.SpellSlots.GetSlot(level)
+						if slot != nil {
+							line = fmt.Sprintf("%sLevel %d Slot%s [%d/%d remaining]", cursor, level, upcastInfo, slot.Remaining, slot.Total)
+						}
 					}
 				}
 
@@ -1609,12 +1629,10 @@ func (m *SpellbookModel) renderCastConfirmationModal() string {
 	lines = append(lines, "")
 	if m.castingSpell.Level == 0 {
 		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast cantrip | Esc: cancel"))
-	} else if m.castingSpell.Ritual && len(m.availableCastLevels) == 0 {
-		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast as ritual (no slot) | Esc: cancel"))
 	} else if len(m.availableCastLevels) <= 1 {
 		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Enter: cast | Esc: cancel"))
 	} else {
-		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("↑↓: select slot | Enter: cast | Esc: cancel"))
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("↑↓: select method | Enter: cast | Esc: cancel"))
 	}
 
 	content := strings.Join(lines, "\n")
