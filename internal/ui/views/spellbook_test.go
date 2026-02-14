@@ -560,16 +560,16 @@ func TestSpellbookModel_MagicMissileUpcast(t *testing.T) {
 func TestSpellbookModel_CastRitualSpell(t *testing.T) {
 	char := models.NewCharacter("test-id", "Test Wizard", "Human", "Wizard")
 	sc := &models.Spellcasting{
-		Ability:        models.AbilityIntelligence,
-		SpellSlots:     models.NewSpellSlots(),
-		KnownSpells:    []models.KnownSpell{},
-		PreparesSpells: true,
-		MaxPrepared:    5,
+		Ability:                models.AbilityIntelligence,
+		SpellSlots:             models.NewSpellSlots(),
+		KnownSpells:            []models.KnownSpell{},
+		PreparesSpells:         true,
+		MaxPrepared:            5,
+		RitualCasterUnprepared: true, // Wizards can cast rituals without preparing
 	}
 	sc.SpellSlots.SetSlots(1, 2) // 2 level 1 slots
 	sc.AddSpell("Detect Magic", 1)
 	sc.KnownSpells[0].Ritual = true // Mark as ritual
-	// Note: Ritual spells don't need to be prepared to cast
 	char.Spellcasting = sc
 
 	store, err := storage.NewCharacterStorage("")
@@ -582,12 +582,16 @@ func TestSpellbookModel_CastRitualSpell(t *testing.T) {
 	// Start casting ritual spell
 	model = model.handleCastSpell()
 	assert.Equal(t, ModeConfirmCast, model.mode)
-	assert.Equal(t, 0, len(model.availableCastLevels), "Ritual spells cast as ritual should have no slot levels")
+	// Ritual spells should offer both: ritual (0 sentinel) and slot options
+	require.GreaterOrEqual(t, len(model.availableCastLevels), 1, "Should have at least ritual option")
+	assert.Equal(t, 0, model.availableCastLevels[0], "First option should be ritual (sentinel 0)")
+	assert.Equal(t, 2, len(model.availableCastLevels), "Should have ritual option + level 1 slot")
 
-	// Confirm cast
+	// Cursor defaults to 0 (ritual option), confirm cast
+	assert.Equal(t, 0, model.castLevelCursor)
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-	// Should cast without consuming spell slots
+	// Should cast as ritual without consuming spell slots
 	assert.Equal(t, ModeSpellList, model.mode)
 	assert.Contains(t, model.statusMessage, "as ritual")
 	assert.Contains(t, model.statusMessage, "no slot required")
@@ -596,4 +600,47 @@ func TestSpellbookModel_CastRitualSpell(t *testing.T) {
 	// Spell slot should NOT be consumed
 	slot := sc.SpellSlots.GetSlot(1)
 	assert.Equal(t, 2, slot.Remaining, "Should not consume slot when casting as ritual")
+}
+
+func TestSpellbookModel_CastRitualSpellWithSlot(t *testing.T) {
+	char := models.NewCharacter("test-id", "Test Wizard", "Human", "Wizard")
+	sc := &models.Spellcasting{
+		Ability:                models.AbilityIntelligence,
+		SpellSlots:             models.NewSpellSlots(),
+		KnownSpells:            []models.KnownSpell{},
+		PreparesSpells:         true,
+		MaxPrepared:            5,
+		RitualCasterUnprepared: true,
+	}
+	sc.SpellSlots.SetSlots(1, 2) // 2 level 1 slots
+	sc.AddSpell("Detect Magic", 1)
+	sc.KnownSpells[0].Ritual = true
+	char.Spellcasting = sc
+
+	store, err := storage.NewCharacterStorage("")
+	require.NoError(t, err)
+	loader := data.NewLoader("../../data")
+
+	model := NewSpellbookModel(char, store, loader)
+	model.mode = ModeSpellList
+
+	// Start casting ritual spell
+	model = model.handleCastSpell()
+	assert.Equal(t, ModeConfirmCast, model.mode)
+
+	// Move cursor to slot option (index 1 = level 1 slot)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	assert.Equal(t, 1, model.castLevelCursor)
+
+	// Confirm cast with spell slot
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	// Should cast using a spell slot
+	assert.Equal(t, ModeSpellList, model.mode)
+	assert.Contains(t, model.statusMessage, "Detect Magic")
+	assert.Contains(t, model.statusMessage, "level 1 slot")
+
+	// Spell slot SHOULD be consumed
+	slot := sc.SpellSlots.GetSlot(1)
+	assert.Equal(t, 1, slot.Remaining, "Should consume slot when casting with slot")
 }
