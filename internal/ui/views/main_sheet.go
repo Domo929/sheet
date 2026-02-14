@@ -60,6 +60,7 @@ const (
 	HPInputDamage
 	HPInputHeal
 	HPInputTemp
+	HPInputXP
 )
 
 // RestMode represents the current rest interaction mode.
@@ -189,6 +190,8 @@ type mainSheetKeyMap struct {
 	RemCondition   key.Binding
 	NextActionType key.Binding
 	PrevActionType key.Binding
+	AddXP          key.Binding
+	LevelUp        key.Binding
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -272,6 +275,14 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		PrevActionType: key.NewBinding(
 			key.WithKeys("left", "h"),
 			key.WithHelp("←", "prev action type"),
+		),
+		AddXP: key.NewBinding(
+			key.WithKeys("x"),
+			key.WithHelp("x", "add XP"),
+		),
+		LevelUp: key.NewBinding(
+			key.WithKeys("L"),
+			key.WithHelp("L", "level up"),
 		),
 	}
 }
@@ -394,6 +405,24 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Rest):
 			m.restMode = RestModeMenu
 			return m, nil
+		case key.Matches(msg, m.keys.AddXP):
+			if m.character.Info.ProgressionType == models.ProgressionXP {
+				m.hpInputMode = HPInputXP
+				m.hpInputBuffer = ""
+				return m, nil
+			}
+			m.statusMessage = "Milestone progression — no XP tracking"
+			return m, nil
+		case key.Matches(msg, m.keys.LevelUp):
+			if m.character.Info.Level >= 20 {
+				m.statusMessage = "Already at max level (20)"
+				return m, nil
+			}
+			if m.character.Info.ProgressionType == models.ProgressionXP && !m.character.Info.CanLevelUp() {
+				m.statusMessage = fmt.Sprintf("Not enough XP to level up (need %d)", models.XPForNextLevel(m.character.Info.Level))
+				return m, nil
+			}
+			return m, func() tea.Msg { return OpenLevelUpMsg{} }
 		case key.Matches(msg, m.keys.Damage):
 			if m.focusArea == FocusCombat {
 				m.hpInputMode = HPInputDamage
@@ -609,6 +638,14 @@ func (m *MainSheetModel) handleHPInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd
 		case HPInputTemp:
 			m.character.CombatStats.HitPoints.AddTemporaryHP(amount)
 			m.statusMessage = fmt.Sprintf("Gained %d temp HP", amount)
+		case HPInputXP:
+			m.character.Info.AddXP(amount)
+			if m.character.Info.CanLevelUp() {
+				m.statusMessage = fmt.Sprintf("Gained %d XP! Level up available — press L to level up", amount)
+			} else {
+				nextLevelXP := models.XPForNextLevel(m.character.Info.Level)
+				m.statusMessage = fmt.Sprintf("Gained %d XP (total: %d / %d)", amount, m.character.Info.ExperiencePoints, nextLevelXP)
+			}
 		}
 
 		// Save character
@@ -896,6 +933,11 @@ func (m *MainSheetModel) performLongRest() {
 	result.WriteString("\nAll spell slots restored\n")
 	result.WriteString("Death saves reset\n")
 	result.WriteString("Exhaustion reduced by 1 level")
+
+	// Prompt level-up if XP threshold reached
+	if m.character.Info.CanLevelUp() {
+		result.WriteString("\n\n★ You have enough XP to level up! Press L to level up")
+	}
 
 	m.restResult = result.String()
 	m.restMode = RestModeResult
@@ -2192,7 +2234,7 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Foreground(lipgloss.Color("244")).
 		Width(width)
 
-	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • c: character info • r: rest • esc: back • q: quit"
+	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • x: add XP • L: level up • r: rest • esc: back • q: quit"
 
 	// Show condition selection if in condition mode
 	if m.conditionMode {
@@ -2248,6 +2290,8 @@ func (m *MainSheetModel) renderFooter(width int) string {
 			prompt = "Heal amount: "
 		case HPInputTemp:
 			prompt = "Temp HP amount: "
+		case HPInputXP:
+			prompt = "Add XP: "
 		}
 		inputStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("99")).
@@ -2557,3 +2601,9 @@ func formatModifier(mod int) string {
 
 // BackToSelectionMsg is sent when the user wants to return to character selection.
 type BackToSelectionMsg struct{}
+
+// OpenLevelUpMsg is sent when the user wants to level up.
+type OpenLevelUpMsg struct{}
+
+// LevelUpCompleteMsg is sent when a level-up is complete.
+type LevelUpCompleteMsg struct{}
