@@ -407,6 +407,48 @@ func getSpellSlotCount(ss data.SpellSlot, spellLevel int) int {
 }
 
 // ---------------------------------------------------------------------------
+// Word wrapping
+// ---------------------------------------------------------------------------
+
+// wordWrap wraps text to the given width, respecting word boundaries.
+// It prepends the given indent to continuation lines.
+func wordWrap(text string, width int, indent string) string {
+	if width <= 0 {
+		width = 80
+	}
+	// Account for indent width on first line is handled by caller
+	words := strings.Fields(text)
+	if len(words) == 0 {
+		return ""
+	}
+
+	var lines []string
+	currentLine := words[0]
+
+	for _, word := range words[1:] {
+		if len(currentLine)+1+len(word) > width {
+			lines = append(lines, currentLine)
+			currentLine = word
+		} else {
+			currentLine += " " + word
+		}
+	}
+	lines = append(lines, currentLine)
+
+	return strings.Join(lines, "\n"+indent)
+}
+
+// descWidth returns the available width for description text, accounting for
+// indentation. Falls back to 76 if terminal width is unknown.
+func (m *LevelUpModel) descWidth(indent int) int {
+	w := m.width - indent
+	if w <= 20 {
+		w = 76
+	}
+	return w
+}
+
+// ---------------------------------------------------------------------------
 // Hit dice parsing
 // ---------------------------------------------------------------------------
 
@@ -1227,7 +1269,8 @@ func (m *LevelUpModel) viewSubclass() string {
 
 	highlighted := m.classData.Subclasses[m.subclassCursor]
 	if highlighted.Description != "" {
-		b.WriteString(descStyle.Render(highlighted.Description))
+		wrapped := wordWrap(highlighted.Description, m.descWidth(0), "")
+		b.WriteString(descStyle.Render(wrapped))
 		b.WriteString("\n\n")
 	}
 
@@ -1244,12 +1287,8 @@ func (m *LevelUpModel) viewSubclass() string {
 		for _, f := range levelFeatures {
 			b.WriteString(fmt.Sprintf("  • %s (Level %d)\n", f.Name, f.Level))
 			if f.Description != "" {
-				// Truncate long descriptions
-				desc := f.Description
-				if len(desc) > 120 {
-					desc = desc[:117] + "..."
-				}
-				b.WriteString(dimStyle.Render(fmt.Sprintf("    %s", desc)))
+				wrapped := wordWrap(f.Description, m.descWidth(4), "    ")
+				b.WriteString(dimStyle.Render(fmt.Sprintf("    %s", wrapped)))
 				b.WriteString("\n")
 			}
 		}
@@ -1422,12 +1461,9 @@ func (m *LevelUpModel) viewFeatMode(headerStyle, selectedStyle, dimStyle lipglos
 				b.WriteString(dimStyle.Render(fmt.Sprintf("Prerequisite: %s", feat.Prerequisite)))
 				b.WriteString("\n")
 			}
-			// Show truncated description
-			desc := feat.Description
-			if len(desc) > 200 {
-				desc = desc[:197] + "..."
-			}
-			b.WriteString(descStyle.Render(desc))
+			// Show word-wrapped description
+			wrapped := wordWrap(feat.Description, m.descWidth(0), "")
+			b.WriteString(descStyle.Render(wrapped))
 			b.WriteString("\n")
 
 			// Show effects
@@ -1544,12 +1580,9 @@ func (m *LevelUpModel) viewFeatures() string {
 			}
 			b.WriteString("\n")
 			if f.desc != "" {
-				desc := f.desc
-				if len(desc) > 200 {
-					desc = desc[:197] + "..."
-				}
+				wrapped := wordWrap(f.desc, m.descWidth(4), "    ")
 				b.WriteString("    ")
-				b.WriteString(descStyle.Render(desc))
+				b.WriteString(descStyle.Render(wrapped))
 				b.WriteString("\n")
 			}
 			b.WriteString("\n")
