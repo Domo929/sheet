@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Domo929/sheet/internal/data"
+	"github.com/Domo929/sheet/internal/domain"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/charmbracelet/bubbles/key"
@@ -587,7 +588,7 @@ func (m *MainSheetModel) handleActionSelection() (*MainSheetModel, tea.Cmd) {
 			if damageMod != 0 {
 				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
 			}
-			damageStr += " " + w.DamageType
+			damageStr += " " + string(w.DamageType)
 
 			m.statusMessage = fmt.Sprintf("⚔ %s: Hit %s, Dmg %s", w.Name, formatModifier(attackBonus), damageStr)
 		} else {
@@ -1706,8 +1707,7 @@ func (m *MainSheetModel) renderActions(width int) string {
 }
 
 // getSpellsByCastingTime returns spells that match the given casting time.
-// castingTime can be: "A" (Action), "BA" (Bonus Action), "R" (Reaction), etc.
-func (m *MainSheetModel) getSpellsByCastingTime(castingTime string) []data.SpellData {
+func (m *MainSheetModel) getSpellsByCastingTime(castingTime data.CastingTime) []data.SpellData {
 	if m.character == nil || m.character.Spellcasting == nil || m.spellDatabase == nil {
 		return nil
 	}
@@ -1795,7 +1795,7 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 			if damageMod != 0 {
 				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
 			}
-			damageStr += " " + w.DamageType
+			damageStr += " " + string(w.DamageType)
 
 			if w.RangeNormal > 0 {
 				damageStr = fmt.Sprintf("%s (%d/%d ft)", damageStr, w.RangeNormal, w.RangeLong)
@@ -1810,7 +1810,7 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 		}
 
 		// Action spells (before standard actions in display order)
-		actionSpells := m.getSpellsByCastingTime("A")
+		actionSpells := m.getSpellsByCastingTime(data.CastingTimeAction)
 		for i := range actionSpells {
 			spell := &actionSpells[i]
 			spellInfo := fmt.Sprintf("Level %d", spell.Level)
@@ -1828,7 +1828,7 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 		// Class features with action activation
 		for i := range m.character.Features.ClassFeatures {
 			f := &m.character.Features.ClassFeatures[i]
-			if f.Activation == "action" {
+			if f.Activation == domain.ActivationAction {
 				items = append(items, ActionItem{
 					Type:        ActionItemFeature,
 					Name:        f.Name,
@@ -1853,7 +1853,7 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 
 	case ActionTypeBonus:
 		// Bonus action spells (before standard actions in display order)
-		bonusSpells := m.getSpellsByCastingTime("BA")
+		bonusSpells := m.getSpellsByCastingTime(data.CastingTimeBonusAction)
 		for i := range bonusSpells {
 			spell := &bonusSpells[i]
 			spellInfo := fmt.Sprintf("Level %d", spell.Level)
@@ -1871,7 +1871,7 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 		// Class features with bonus action activation
 		for i := range m.character.Features.ClassFeatures {
 			f := &m.character.Features.ClassFeatures[i]
-			if f.Activation == "bonus" {
+			if f.Activation == domain.ActivationBonus {
 				items = append(items, ActionItem{
 					Type:        ActionItemFeature,
 					Name:        f.Name,
@@ -1896,7 +1896,7 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 
 	case ActionTypeReaction:
 		// Reaction spells (before standard actions in display order)
-		reactionSpells := m.getSpellsByCastingTime("R")
+		reactionSpells := m.getSpellsByCastingTime(data.CastingTimeReaction)
 		for i := range reactionSpells {
 			spell := &reactionSpells[i]
 			spellInfo := fmt.Sprintf("Level %d", spell.Level)
@@ -1914,7 +1914,7 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 		// Class features with reaction activation
 		for i := range m.character.Features.ClassFeatures {
 			f := &m.character.Features.ClassFeatures[i]
-			if f.Activation == "reaction" {
+			if f.Activation == domain.ActivationReaction {
 				items = append(items, ActionItem{
 					Type:        ActionItemFeature,
 					Name:        f.Name,
@@ -2143,21 +2143,21 @@ func (m *MainSheetModel) renderCastConfirmationModal() string {
 	lines = append(lines, "")
 
 	// Basic spell info
-	castingTime := spell.CastingTime
+	castingTime := string(spell.CastingTime)
 	// Check if being cast as ritual (no slots available but spell has ritual tag)
 	if spell.Ritual && len(m.availableCastLevels) == 0 {
 		castingTime = "10 minutes (ritual)"
 	}
 	lines = append(lines, fmt.Sprintf("Casting Time: %s", castingTime))
 	lines = append(lines, fmt.Sprintf("Range: %s", spell.Range))
-	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(spell.Components, ", ")))
+	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(data.ComponentsToStrings(spell.Components), ", ")))
 	lines = append(lines, fmt.Sprintf("Duration: %s", spell.Duration))
 
 	// Damage if present
 	if spell.Damage != "" {
 		damageInfo := spell.Damage
 		if spell.DamageType != "" {
-			damageInfo = fmt.Sprintf("%s %s", damageInfo, spell.DamageType)
+			damageInfo = fmt.Sprintf("%s %s", damageInfo, string(spell.DamageType))
 		}
 		lines = append(lines, fmt.Sprintf("Damage: %s", damageInfo))
 	}
@@ -2442,10 +2442,10 @@ func (m *MainSheetModel) getWeaponAbilityMod(weapon models.Item) int {
 	isFinesse := false
 	isRanged := false
 	for _, prop := range weapon.WeaponProps {
-		if prop == "finesse" {
+		if prop == domain.PropertyFinesse {
 			isFinesse = true
 		}
-		if prop == "ammunition" {
+		if prop == domain.PropertyAmmunition {
 			isRanged = true
 		}
 	}

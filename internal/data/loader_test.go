@@ -345,7 +345,7 @@ func TestLoaderGetFeats(t *testing.T) {
 
 	// Verify origin feats have no prerequisite
 	for _, feat := range feats.Feats {
-		if feat.Category == "Origin" {
+		if feat.Category == FeatCategoryOrigin {
 			assert.Empty(t, feat.Prerequisite, "Origin feat '%s' should have no prerequisite", feat.Name)
 		}
 	}

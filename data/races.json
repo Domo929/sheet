@@ -91,16 +91,16 @@
       ],
       "languages": ["Common", "Draconic"],
       "subtypes": [
-        {"name": "Black", "damageType": "Acid"},
-        {"name": "Blue", "damageType": "Lightning"},
-        {"name": "Brass", "damageType": "Fire"},
-        {"name": "Bronze", "damageType": "Lightning"},
-        {"name": "Copper", "damageType": "Acid"},
-        {"name": "Gold", "damageType": "Fire"},
-        {"name": "Green", "damageType": "Poison"},
-        {"name": "Red", "damageType": "Fire"},
-        {"name": "Silver", "damageType": "Cold"},
-        {"name": "White", "damageType": "Cold"}
+        {"name": "Black", "damageType": "acid"},
+        {"name": "Blue", "damageType": "lightning"},
+        {"name": "Brass", "damageType": "fire"},
+        {"name": "Bronze", "damageType": "lightning"},
+        {"name": "Copper", "damageType": "acid"},
+        {"name": "Gold", "damageType": "fire"},
+        {"name": "Green", "damageType": "poison"},
+        {"name": "Red", "damageType": "fire"},
+        {"name": "Silver", "damageType": "cold"},
+        {"name": "White", "damageType": "cold"}
       ]
     },
     {

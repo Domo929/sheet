@@ -1,12 +1,14 @@
 package models
 
+import "github.com/Domo929/sheet/internal/domain"
+
 // Feature represents a class feature, racial trait, or feat.
 type Feature struct {
-	Name        string `json:"name"`
-	Source      string `json:"source"` // e.g., "Cleric 1", "Elf", "Alert (Feat)"
-	Description string `json:"description"`
-	Level       int    `json:"level,omitempty"`      // Level gained (for class features)
-	Activation  string `json:"activation,omitempty"` // "action", "bonus", "reaction", or "" (passive)
+	Name        string               `json:"name"`
+	Source      string               `json:"source"` // e.g., "Cleric 1", "Elf", "Alert (Feat)"
+	Description string               `json:"description"`
+	Level       int                  `json:"level,omitempty"`      // Level gained (for class features)
+	Activation  domain.ActivationType `json:"activation,omitempty"` // "action", "bonus", "reaction", or "" (passive)
 }
 
 // NewFeature creates a new feature.
@@ -40,7 +42,7 @@ func (f *Features) AddRacialTrait(name, source, description string) {
 }
 
 // AddClassFeature adds a class feature.
-func (f *Features) AddClassFeature(name, source, description string, level int, activation string) {
+func (f *Features) AddClassFeature(name, source, description string, level int, activation domain.ActivationType) {
 	feature := NewFeature(name, source, description)
 	feature.Level = level
 	feature.Activation = activation

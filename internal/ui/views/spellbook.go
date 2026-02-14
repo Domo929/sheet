@@ -577,7 +577,7 @@ func (m *SpellbookModel) renderSpellDetails() string {
 
 	lines = append(lines, fmt.Sprintf("Casting Time: %s", spell.CastingTime))
 	lines = append(lines, fmt.Sprintf("Range: %s", spell.Range))
-	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(spell.Components, ", ")))
+	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(data.ComponentsToStrings(spell.Components), ", ")))
 	lines = append(lines, fmt.Sprintf("Duration: %s", spell.Duration))
 
 	// Add damage if present
@@ -1526,7 +1526,7 @@ func (m *SpellbookModel) renderCastConfirmationModal() string {
 	}
 	lines = append(lines, fmt.Sprintf("Casting Time: %s", castingTime))
 	lines = append(lines, fmt.Sprintf("Range: %s", spell.Range))
-	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(spell.Components, ", ")))
+	lines = append(lines, fmt.Sprintf("Components: %s", strings.Join(data.ComponentsToStrings(spell.Components), ", ")))
 	lines = append(lines, fmt.Sprintf("Duration: %s", spell.Duration))
 
 	// Damage if present

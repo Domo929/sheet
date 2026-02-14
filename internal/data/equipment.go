@@ -1,5 +1,9 @@
 package data
 
+import (
+	"github.com/Domo929/sheet/internal/domain"
+)
+
 // Equipment represents the full equipment database.
 type Equipment struct {
 	Weapons          Weapons `json:"weapons"`
@@ -34,12 +38,12 @@ type Weapon struct {
 	Name            string         `json:"name"`
 	Cost            map[string]int `json:"cost"`
 	Damage          string         `json:"damage"`
-	DamageType      string         `json:"damageType"`
+	DamageType      domain.DamageType `json:"damageType"`
 	Weight          float64        `json:"weight"`
-	Properties      []string       `json:"properties"`
+	Properties      []domain.WeaponProperty `json:"properties"`
 	Range           *WeaponRange   `json:"range,omitempty"`
 	VersatileDamage string         `json:"versatileDamage,omitempty"`
-	Category        string         `json:"category,omitempty"`
+	Category        EquipmentCategory `json:"category,omitempty"`
 	SubCategory     string         `json:"subCategory,omitempty"`
 }
 
@@ -58,29 +62,29 @@ type ArmorItem struct {
 	Weight              float64        `json:"weight"`
 	StealthDisadvantage bool           `json:"stealthDisadvantage,omitempty"`
 	StrengthRequired    int            `json:"strengthRequired,omitempty"`
-	Category            string         `json:"category,omitempty"`
+	Category            EquipmentCategory `json:"category,omitempty"`
 	SubCategory         string         `json:"subCategory,omitempty"`
 }
 
 // Pack represents an equipment pack.
 type Pack struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name"`
-	Cost        map[string]int `json:"cost"`
-	Weight      float64        `json:"weight"`
-	Contents    []string       `json:"contents"`
-	Category    string         `json:"category,omitempty"`
-	SubCategory string         `json:"subCategory,omitempty"`
+	ID          string            `json:"id"`
+	Name        string            `json:"name"`
+	Cost        map[string]int    `json:"cost"`
+	Weight      float64           `json:"weight"`
+	Contents    []string          `json:"contents"`
+	Category    EquipmentCategory `json:"category,omitempty"`
+	SubCategory string            `json:"subCategory,omitempty"`
 }
 
 // Item represents a general gear item.
 type Item struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name"`
-	Cost        map[string]int `json:"cost"`
-	Weight      float64        `json:"weight"`
-	Category    string         `json:"category,omitempty"`
-	SubCategory string         `json:"subCategory,omitempty"`
+	ID          string            `json:"id"`
+	Name        string            `json:"name"`
+	Cost        map[string]int    `json:"cost"`
+	Weight      float64           `json:"weight"`
+	Category    EquipmentCategory `json:"category,omitempty"`
+	SubCategory string            `json:"subCategory,omitempty"`
 }
 
 // GetAllWeapons returns all weapons in a flat list.
