@@ -177,6 +177,7 @@ func TestLoaderLoadAll(t *testing.T) {
 	assert.NotNil(t, loader.spells, "LoadAll() did not cache spells")
 	assert.NotNil(t, loader.backgrounds, "LoadAll() did not cache backgrounds")
 	assert.NotNil(t, loader.conditions, "LoadAll() did not cache conditions")
+	assert.NotNil(t, loader.feats, "LoadAll() did not cache feats")
 }
 
 func TestLoaderFindRaceByName(t *testing.T) {
@@ -313,6 +314,72 @@ func TestLoaderFindConditionByName(t *testing.T) {
 				require.NoError(t, err, "FindConditionByName() error")
 				require.NotNil(t, cond, "FindConditionByName() returned nil condition")
 				assert.Equal(t, tt.conditionName, cond.Name)
+			}
+		})
+	}
+}
+
+func TestLoaderGetFeats(t *testing.T) {
+	loader := NewLoader("../../data")
+
+	feats, err := loader.GetFeats()
+	require.NoError(t, err, "GetFeats() error")
+	require.NotNil(t, feats, "GetFeats() returned nil")
+	assert.NotEmpty(t, feats.Feats, "GetFeats() returned empty feats list")
+
+	// Verify some expected feats exist
+	expectedFeats := []string{"Alert", "Lucky", "Tough", "Great Weapon Master", "Sentinel"}
+	featMap := make(map[string]*Feat)
+	for i := range feats.Feats {
+		featMap[feats.Feats[i].Name] = &feats.Feats[i]
+	}
+
+	for _, expected := range expectedFeats {
+		feat, found := featMap[expected]
+		assert.True(t, found, "expected feat '%s' not found", expected)
+		if found {
+			assert.NotEmpty(t, feat.Description, "feat '%s' has empty Description", feat.Name)
+			assert.NotEmpty(t, feat.Category, "feat '%s' has empty Category", feat.Name)
+		}
+	}
+
+	// Verify origin feats have no prerequisite
+	for _, feat := range feats.Feats {
+		if feat.Category == "Origin" {
+			assert.Empty(t, feat.Prerequisite, "Origin feat '%s' should have no prerequisite", feat.Name)
+		}
+	}
+
+	// Test caching
+	feats2, err := loader.GetFeats()
+	require.NoError(t, err, "GetFeats() second call error")
+	assert.Same(t, feats, feats2, "GetFeats() did not return cached data")
+}
+
+func TestLoaderFindFeatByName(t *testing.T) {
+	loader := NewLoader("../../data")
+
+	tests := []struct {
+		name      string
+		featName  string
+		wantError bool
+	}{
+		{"find Alert", "Alert", false},
+		{"find Tough", "Tough", false},
+		{"find Great Weapon Master", "Great Weapon Master", false},
+		{"find nonexistent", "NonexistentFeat", true},
+		{"case sensitive", "alert", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			feat, err := loader.FindFeatByName(tt.featName)
+			if tt.wantError {
+				assert.Error(t, err, "FindFeatByName() expected error for '%s'", tt.featName)
+			} else {
+				require.NoError(t, err, "FindFeatByName() error")
+				require.NotNil(t, feat, "FindFeatByName() returned nil feat")
+				assert.Equal(t, tt.featName, feat.Name)
 			}
 		})
 	}

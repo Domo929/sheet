@@ -179,3 +179,33 @@ type BackgroundData struct {
 type ConditionData struct {
 	Conditions []Condition `json:"conditions"`
 }
+
+// Feat represents a feat available for character selection.
+type Feat struct {
+	Name         string     `json:"name"`
+	Category     string     `json:"category"`              // "Origin", "General", "Fighting", "Epic Boon"
+	Prerequisite string     `json:"prerequisite,omitempty"` // Human-readable prerequisite text
+	Repeatable   bool       `json:"repeatable,omitempty"`   // Whether the feat can be taken multiple times
+	Description  string     `json:"description"`
+	Effects      FeatEffect `json:"effects"`
+}
+
+// FeatEffect represents the mechanical effects of a feat.
+type FeatEffect struct {
+	AbilityScoreIncrease *FeatASI `json:"abilityScoreIncrease,omitempty"` // +1 to a choice of abilities
+	InitiativeBonus      int      `json:"initiativeBonus,omitempty"`
+	SpeedBonus           int      `json:"speedBonus,omitempty"`
+	HPPerLevel           int      `json:"hpPerLevel,omitempty"` // Tough feat: +2 HP per level
+	ACBonus              int      `json:"acBonus,omitempty"`
+}
+
+// FeatASI represents an ability score increase granted by a feat.
+type FeatASI struct {
+	Options []string `json:"options"` // Which abilities can be increased
+	Amount  int      `json:"amount"`  // How much to increase by (usually 1)
+}
+
+// FeatData contains all feat data.
+type FeatData struct {
+	Feats []Feat `json:"feats"`
+}

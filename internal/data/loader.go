@@ -56,6 +56,7 @@ type Loader struct {
 	backgrounds *BackgroundData
 	conditions  *ConditionData
 	equipment   *Equipment
+	feats       *FeatData
 
 	// Mutex for thread-safe access
 	mu sync.RWMutex
@@ -106,6 +107,11 @@ func (l *Loader) LoadAll() error {
 	// Load equipment
 	if err := l.loadEquipmentUnsafe(); err != nil {
 		return fmt.Errorf("failed to load equipment: %w", err)
+	}
+
+	// Load feats
+	if err := l.loadFeatsUnsafe(); err != nil {
+		return fmt.Errorf("failed to load feats: %w", err)
 	}
 
 	return nil
@@ -311,6 +317,46 @@ func (l *Loader) FindConditionByName(name string) (*Condition, error) {
 	return nil, fmt.Errorf("condition not found: %s", name)
 }
 
+// GetFeats returns all feat data, loading it if necessary.
+func (l *Loader) GetFeats() (*FeatData, error) {
+	l.mu.RLock()
+	if l.feats != nil {
+		defer l.mu.RUnlock()
+		return l.feats, nil
+	}
+	l.mu.RUnlock()
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	// Check again in case another goroutine loaded it
+	if l.feats != nil {
+		return l.feats, nil
+	}
+
+	if err := l.loadFeatsUnsafe(); err != nil {
+		return nil, err
+	}
+
+	return l.feats, nil
+}
+
+// FindFeatByName finds a feat by name (case-sensitive).
+func (l *Loader) FindFeatByName(name string) (*Feat, error) {
+	feats, err := l.GetFeats()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, feat := range feats.Feats {
+		if feat.Name == name {
+			return &feat, nil
+		}
+	}
+
+	return nil, fmt.Errorf("feat not found: %s", name)
+}
+
 // ClearCache clears all cached data, forcing a reload on next access.
 func (l *Loader) ClearCache() {
 	l.mu.Lock()
@@ -322,6 +368,7 @@ func (l *Loader) ClearCache() {
 	l.backgrounds = nil
 	l.conditions = nil
 	l.equipment = nil
+	l.feats = nil
 }
 
 // Internal unsafe methods (must be called with lock held)
@@ -465,5 +512,32 @@ func (l *Loader) loadEquipmentUnsafe() error {
 	}
 
 	l.equipment = &equipment
+	return nil
+}
+
+// loadFeatsUnsafe loads feat data without acquiring locks.
+// Caller must hold the write lock.
+func (l *Loader) loadFeatsUnsafe() error {
+	if l.feats != nil {
+		return nil
+	}
+
+	path := filepath.Join(l.dataDir, "feats.json")
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open feats.json: %w", err)
+	}
+	defer f.Close()
+
+	var feats FeatData
+	if err := json.NewDecoder(f).Decode(&feats); err != nil {
+		return fmt.Errorf("failed to parse feats.json: %w", err)
+	}
+
+	if len(feats.Feats) == 0 {
+		return fmt.Errorf("feats.json contains no feats")
+	}
+
+	l.feats = &feats
 	return nil
 }

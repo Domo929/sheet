@@ -1,0 +1,659 @@
+{
+  "feats": [
+    {
+      "name": "Alert",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": false,
+      "description": "You gain a +5 bonus to Initiative. You can't be surprised, and creatures you can't see don't gain Advantage on attack rolls against you. You can swap your Initiative with a willing ally at the start of combat.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Dexterity", "Charisma", "Wisdom"],
+          "amount": 1
+        },
+        "initiativeBonus": 5
+      }
+    },
+    {
+      "name": "Crafter",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": false,
+      "description": "You gain proficiency with three Artisan's Tools of your choice. Whenever you buy a nonmagical item, you pay 20% less for it. When you craft an item using a tool you have proficiency with, the required crafting time is reduced by 20%.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Healer",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": false,
+      "description": "You gain proficiency with the Medicine skill if you don't already have it. When you use a Healer's Kit to stabilize a dying creature, that creature regains 1d4 Hit Points. As a Utilize action, you can spend a use of a Healer's Kit to tend to a creature within 5 feet, restoring 2d4 + the creature's number of Hit Dice HP. A creature can benefit from this only once per Short or Long Rest.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Wisdom"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Lucky",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": false,
+      "description": "You have a number of Luck Points equal to your Proficiency Bonus. When you or a creature you can see makes a d20 Test, you can spend a Luck Point to give Advantage or Disadvantage on the roll. You regain all Luck Points when you finish a Long Rest.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Dexterity", "Constitution", "Charisma", "Intelligence", "Wisdom", "Strength"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Magic Initiate",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": true,
+      "description": "You learn two cantrips and one 1st-level spell from the Cleric, Druid, or Wizard spell list (chosen when you select this feat). You can cast the 1st-level spell once without a spell slot per Long Rest, or using any spell slots you have. You can replace one of these spells whenever you gain a level. Your spellcasting ability for these spells is Intelligence, Wisdom, or Charisma (chosen when you select this feat).",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Musician",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": false,
+      "description": "You gain proficiency with three Musical Instruments of your choice. After you finish a Short or Long Rest, you can play a musical instrument and give Heroic Inspiration to a number of allies who hear the performance equal to your Proficiency Bonus.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Charisma", "Dexterity", "Intelligence"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Savage Attacker",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": false,
+      "description": "Once per turn when you hit with a weapon or Unarmed Strike, you can roll the damage dice twice and use either roll against the target.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity", "Constitution"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Skilled",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": false,
+      "description": "You gain proficiency in any combination of three skills or tools of your choice.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom", "Charisma", "Dexterity", "Strength", "Constitution"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Tavern Brawler",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": false,
+      "description": "When you hit with an Unarmed Strike as part of the Attack action, you can deal damage and also push the target 5 feet away. You can also use your Bonus Action to grapple a creature you hit. You are proficient with Improvised Weapons, and when you roll a 1 on a damage die for an Unarmed Strike, you can reroll the die.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity", "Constitution"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Tough",
+      "category": "Origin",
+      "prerequisite": "",
+      "repeatable": false,
+      "description": "Your Hit Point maximum increases by an amount equal to twice your character level when you gain this feat and by 2 whenever you gain a level thereafter.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Constitution"],
+          "amount": 1
+        },
+        "hpPerLevel": 2
+      }
+    },
+    {
+      "name": "Actor",
+      "category": "General",
+      "prerequisite": "Level 4+, Charisma 13+",
+      "repeatable": false,
+      "description": "You have Advantage on Charisma (Deception) and Charisma (Performance) checks when trying to pass yourself off as a different person. You can mimic the speech of another person or the sounds made by other creatures if you have heard them for at least 1 minute; a successful Wisdom (Insight) check contested by your Charisma (Deception) reveals the mimicry.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Athlete",
+      "category": "General",
+      "prerequisite": "Level 4+, Strength or Dexterity 13+",
+      "repeatable": false,
+      "description": "When you are Prone, standing up uses only 5 feet of movement. Your Climb and Swim speeds equal your Speed. You can make a running Long Jump or High Jump after moving only 5 feet on foot rather than 10 feet.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Charger",
+      "category": "General",
+      "prerequisite": "Level 4+, Strength or Dexterity 13+",
+      "repeatable": false,
+      "description": "When you take the Dash action on your turn and then make a melee attack with a weapon or Unarmed Strike as part of a Bonus Action, you can add +1d8 to the damage roll. You can also push the target up to 10 feet directly away from you if it is Large or smaller.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Chef",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "You gain proficiency with Cook's Utensils. During a Short Rest, you can prepare special food. A number of creatures equal to 4 + your Proficiency Bonus who eat it regain an extra 1d8 HP. With 1 hour of work or at the end of a Long Rest, you can cook treats (equal to your Proficiency Bonus) that grant a creature 1d8 Temporary HP when eaten.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Constitution", "Wisdom"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Crossbow Expert",
+      "category": "General",
+      "prerequisite": "Level 4+, Dexterity 13+",
+      "repeatable": false,
+      "description": "You ignore the Loading property of crossbows you are proficient with. Being within 5 feet of an enemy doesn't impose Disadvantage on your ranged attack rolls. When you make an attack with a one-handed weapon, you can use a Bonus Action to attack with a loaded Hand Crossbow you are holding.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Crusher",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "Once per turn, when you hit a creature with an attack that deals Bludgeoning damage, you can move it 5 feet to an unoccupied space (if it is no more than one size larger). When you score a Critical Hit that deals Bludgeoning damage, attack rolls against that creature have Advantage until the start of your next turn.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Constitution"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Defensive Duelist",
+      "category": "General",
+      "prerequisite": "Level 4+, Dexterity 13+",
+      "repeatable": false,
+      "description": "When you are holding a Finesse weapon and a creature you can see hits you with a melee attack, you can use your Reaction to add your Proficiency Bonus to your AC for that attack, potentially causing it to miss.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Dual Wielder",
+      "category": "General",
+      "prerequisite": "Level 4+, Strength or Dexterity 13+",
+      "repeatable": false,
+      "description": "When you take the Attack action and attack with a weapon that has the Light property, you can make one extra attack as part of the same action with a different Light weapon. You can draw or stow two one-handed weapons when you would normally be able to draw or stow only one. You gain a +1 bonus to AC while wielding a weapon in each hand.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        },
+        "acBonus": 1
+      }
+    },
+    {
+      "name": "Durable",
+      "category": "General",
+      "prerequisite": "Level 4+, Constitution 13+",
+      "repeatable": false,
+      "description": "When you roll a Hit Die to regain HP, the minimum you can restore equals twice your Constitution modifier (minimum of 2). You can use your Bonus Action to expend one of your Hit Dice, roll it, and regain HP.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Constitution"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Elemental Adept",
+      "category": "General",
+      "prerequisite": "Level 4+, Spellcasting or Pact Magic feature",
+      "repeatable": true,
+      "description": "Choose one of the following damage types: Acid, Cold, Fire, Lightning, or Thunder. Spells you cast ignore Resistance to the chosen damage type. When you roll damage for a spell that deals the chosen type, you can treat any 1 on a damage die as a 2. You can select this feat multiple times, choosing a different damage type each time.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Fey Touched",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "You learn the Misty Step spell and one 1st-level spell of your choice from the Divination or Enchantment school. You can cast each of these spells once without a spell slot per Long Rest, or using any spell slots you have. Your spellcasting ability for these is Intelligence, Wisdom, or Charisma (chosen when you select this feat).",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Great Weapon Master",
+      "category": "General",
+      "prerequisite": "Level 4+, Strength 13+",
+      "repeatable": false,
+      "description": "When you hit with an attack using a Heavy weapon, you can deal extra damage equal to your Proficiency Bonus. On your turn, when you score a Critical Hit with a melee weapon or reduce a creature to 0 HP with one, you can make one melee weapon attack as a Bonus Action.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Heavily Armored",
+      "category": "General",
+      "prerequisite": "Level 4+, Medium Armor proficiency",
+      "repeatable": false,
+      "description": "You gain proficiency with Heavy Armor. While wearing Heavy Armor, Critical Hits against you function as normal hits.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Constitution"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Heavy Armor Master",
+      "category": "General",
+      "prerequisite": "Level 4+, Heavy Armor proficiency",
+      "repeatable": false,
+      "description": "While wearing Heavy Armor, Bludgeoning, Piercing, and Slashing damage that you take from nonmagical attacks is reduced by your Proficiency Bonus.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Constitution"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Inspiring Leader",
+      "category": "General",
+      "prerequisite": "Level 4+, Wisdom or Charisma 13+",
+      "repeatable": false,
+      "description": "At the end of a Short or Long Rest, you can give an inspiring speech. When you do, a number of creatures equal to your Proficiency Bonus (which can include yourself) gain Temporary HP equal to your character level + the modifier of the ability score increased by this feat.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Keen Mind",
+      "category": "General",
+      "prerequisite": "Level 4+, Intelligence 13+",
+      "repeatable": false,
+      "description": "You always know which direction is north. You always know the number of hours left before the next sunrise or sunset. You have Advantage on Ability Checks to navigate or recall information. You can do one of the following as a Study action: Decipher Writing, Identify a Creature, Recall Lore.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Lightly Armored",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "You gain proficiency with Light Armor and Shields.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Mage Slayer",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "When a creature within 5 feet of you casts a spell, you can use your Reaction to make a melee attack against it. When you damage a creature concentrating on a spell, it has Disadvantage on the Concentration saving throw. You have Advantage on saving throws against spells cast by creatures within 5 feet of you.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Medium Armor Master",
+      "category": "General",
+      "prerequisite": "Level 4+, Medium Armor proficiency",
+      "repeatable": false,
+      "description": "When you wear Medium Armor, you can add up to 3 (instead of 2) if your Dexterity modifier is 3 or higher. Medium Armor you wear doesn't impose Disadvantage on Dexterity (Stealth) checks.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Mobile",
+      "category": "General",
+      "prerequisite": "Level 4+, Dexterity or Constitution 13+",
+      "repeatable": false,
+      "description": "Your Speed increases by 10 feet. When you take the Dash action, Difficult Terrain doesn't cost you extra movement for the rest of the turn. When you make a melee attack against a creature, you don't provoke Opportunity Attacks from that creature for the rest of the turn.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Dexterity", "Constitution"],
+          "amount": 1
+        },
+        "speedBonus": 10
+      }
+    },
+    {
+      "name": "Moderately Armored",
+      "category": "General",
+      "prerequisite": "Level 4+, Light Armor proficiency",
+      "repeatable": false,
+      "description": "You gain proficiency with Medium Armor. While wearing Medium Armor, you can use your Bonus Action to gain a Shield bonus of +2 to AC until the start of your next turn.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Mounted Combatant",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "While mounted and not Incapacitated, you have Advantage on melee attack rolls against unmounted creatures smaller than your mount. You can force an attack targeting your mount to target you instead. If your mount is subjected to an effect that allows a Dexterity save for half damage, it takes no damage on a success and half on a failure.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity", "Wisdom"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Observant",
+      "category": "General",
+      "prerequisite": "Level 4+, Intelligence or Wisdom 13+",
+      "repeatable": false,
+      "description": "You gain a +5 bonus to your Passive Perception and Passive Investigation scores. You can read lips if you can see a creature's mouth and it is speaking a language you understand. You can use a Search action as a Bonus Action.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Piercer",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "Once per turn, when you hit a creature with an attack that deals Piercing damage, you can reroll one of the attack's damage dice and use the higher roll. When you score a Critical Hit that deals Piercing damage, you roll one additional damage die.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Polearm Master",
+      "category": "General",
+      "prerequisite": "Level 4+, Strength or Dexterity 13+",
+      "repeatable": false,
+      "description": "When you take the Attack action with a Quarterstaff, Spear, Halberd, Glaive, or Pike, you can use a Bonus Action to make a melee attack with the opposite end of the weapon dealing 1d4 Bludgeoning damage. Other creatures provoke an Opportunity Attack from you when they enter your reach while you wield such a weapon.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Poisoner",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "You gain proficiency with the Poisoner's Kit. When you make a damage roll that deals Poison damage, it ignores Resistance to Poison damage. You can apply poison to a weapon or piece of ammunition as a Bonus Action. You can craft special poisons with your Poisoner's Kit.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Dexterity", "Intelligence", "Wisdom"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Resilient",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "You gain proficiency in one saving throw of your choice. Whenever you roll that saving throw, you can treat a d20 roll of 7 or lower as an 8.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Ritual Caster",
+      "category": "General",
+      "prerequisite": "Level 4+, Intelligence or Wisdom 13+",
+      "repeatable": false,
+      "description": "You have a ritual book holding two 1st-level spells that have the Ritual tag from the Cleric, Druid, or Wizard spell list. You can cast these as Rituals, and you can add more ritual spells to the book as you find them. Whenever you gain a level, you can add one eligible Ritual spell to the book. Intelligence or Wisdom is your spellcasting ability for these spells.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Sentinel",
+      "category": "General",
+      "prerequisite": "Level 4+, Strength or Dexterity 13+",
+      "repeatable": false,
+      "description": "When you hit a creature with an Opportunity Attack, the creature's Speed becomes 0 for the rest of the turn. Creatures provoke Opportunity Attacks from you even if they take the Disengage action. When a creature within 5 feet of you makes an attack against a target other than you, you can use your Reaction to make a melee attack against it.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Shadow Touched",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "You learn the Invisibility spell and one 1st-level spell of your choice from the Illusion or Necromancy school. You can cast each of these spells once without a spell slot per Long Rest, or using any spell slots you have. Your spellcasting ability for these is Intelligence, Wisdom, or Charisma (chosen when you select this feat).",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Sharpshooter",
+      "category": "General",
+      "prerequisite": "Level 4+, Dexterity 13+",
+      "repeatable": false,
+      "description": "Attacking at long range doesn't impose Disadvantage on your ranged weapon attack rolls. Your ranged weapon attacks ignore Half Cover and Three-Quarters Cover. When you hit with a ranged weapon attack, you can deal extra damage equal to your Proficiency Bonus.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Shield Master",
+      "category": "General",
+      "prerequisite": "Level 4+, Shield proficiency",
+      "repeatable": false,
+      "description": "While holding a Shield, you can use a Bonus Action to shove a creature within 5 feet of you. If you are subjected to an effect that allows a Dexterity saving throw for half damage, you can use your Reaction to take no damage on a success (interposing your Shield). You can also add your Shield's AC bonus to Dexterity saving throws.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Skill Expert",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "You gain proficiency in one skill of your choice. Choose one skill in which you have proficiency; you gain Expertise in that skill.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Skulker",
+      "category": "General",
+      "prerequisite": "Level 4+, Dexterity 13+",
+      "repeatable": false,
+      "description": "You have Advantage on Dexterity (Stealth) checks. You can try to hide when you are Lightly Obscured. When you are hidden and miss with a ranged weapon attack, making the attack doesn't reveal your position. You gain Darkvision with a range of 60 feet; if you already have Darkvision, its range increases by 60 feet.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Dexterity", "Wisdom"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Slasher",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "Once per turn, when you hit a creature with an attack that deals Slashing damage, you can reduce the target's Speed by 10 feet until the start of your next turn. When you score a Critical Hit that deals Slashing damage, the target has Disadvantage on all attack rolls until the start of your next turn.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Speedy",
+      "category": "General",
+      "prerequisite": "Level 4+, Dexterity or Constitution 13+",
+      "repeatable": false,
+      "description": "Your Speed increases by 10 feet. When you take the Dash action on your turn, you can use a Bonus Action to make one melee attack or to shove a creature. Opportunity Attacks against you have Disadvantage.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Dexterity", "Constitution"],
+          "amount": 1
+        },
+        "speedBonus": 10
+      }
+    },
+    {
+      "name": "Spell Sniper",
+      "category": "General",
+      "prerequisite": "Level 4+, Spellcasting or Pact Magic feature",
+      "repeatable": false,
+      "description": "You learn one cantrip that requires an attack roll from the Cleric, Druid, or Wizard spell list. When you cast a spell that requires an attack roll, the spell's range is doubled. Your ranged spell attacks ignore Half Cover and Three-Quarters Cover.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Telepathic",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "You can speak telepathically to any creature within 60 feet of you. The creature understands you only if you share a language. You can communicate this way while Incapacitated. You can also cast Detect Thoughts once without a spell slot per Long Rest, using the ability increased by this feat as your spellcasting ability.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "War Caster",
+      "category": "General",
+      "prerequisite": "Level 4+, Spellcasting or Pact Magic feature",
+      "repeatable": false,
+      "description": "You have Advantage on Constitution saving throws to maintain Concentration on a spell. You can perform Somatic components of spells even when you have weapons or a Shield in one or both hands. When a creature provokes an Opportunity Attack from you, you can cast a spell with a casting time of one action at the creature rather than making an Opportunity Attack.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Intelligence", "Wisdom", "Charisma"],
+          "amount": 1
+        }
+      }
+    },
+    {
+      "name": "Weapon Master",
+      "category": "General",
+      "prerequisite": "Level 4+",
+      "repeatable": false,
+      "description": "You gain proficiency with Martial Weapons. When you finish a Long Rest, you can choose one weapon you are proficient with and gain a Mastery property for it that the weapon can use, until you finish your next Long Rest.",
+      "effects": {
+        "abilityScoreIncrease": {
+          "options": ["Strength", "Dexterity"],
+          "amount": 1
+        }
+      }
+    }
+  ]
+}
