@@ -21,6 +21,7 @@ const (
 	ViewLevelUp
 	ViewCombat
 	ViewRest
+	ViewNotes
 )
 
 // Model is the main application model that manages view routing.
@@ -41,6 +42,7 @@ type Model struct {
 	inventoryModel          *views.InventoryModel
 	spellbookModel          *views.SpellbookModel
 	levelUpModel            *views.LevelUpModel
+	notesEditorModel        *views.NotesEditorModel
 }
 
 // NewModel creates a new application model.
@@ -128,6 +130,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.inventoryModel = nil
 		m.spellbookModel = nil
 		m.levelUpModel = nil
+		m.notesEditorModel = nil
 		return m, nil
 
 	case views.OpenInventoryMsg:
@@ -165,6 +168,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.currentView = ViewLevelUp
 		return m, m.levelUpModel.Init()
+
+	case views.OpenNotesMsg:
+		m.notesEditorModel = views.NewNotesEditorModel(m.character, m.storage, msg.ReturnTo)
+		if m.width > 0 && m.height > 0 {
+			m.notesEditorModel, _ = m.notesEditorModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
+		m.currentView = ViewNotes
+		return m, m.notesEditorModel.Init()
+
+	case views.BackToCharacterInfoMsg:
+		m.notesEditorModel = nil
+		m.currentView = ViewCharacterInfo
+		return m, nil
 
 	case views.LevelUpCompleteMsg:
 		// Return to main sheet after level-up, rebuild to reflect new stats
@@ -279,6 +298,12 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.levelUpModel = updatedModel
 			cmd = c
 		}
+	case ViewNotes:
+		if m.notesEditorModel != nil {
+			updatedModel, c := m.notesEditorModel.Update(msg)
+			m.notesEditorModel = updatedModel
+			cmd = c
+		}
 	default:
 		// Other views not yet implemented
 	}
@@ -317,6 +342,8 @@ func (m Model) View() string {
 		return m.renderCombat()
 	case ViewRest:
 		return m.renderRest()
+	case ViewNotes:
+		return m.renderNotes()
 	default:
 		return "Unknown view"
 	}
@@ -378,4 +405,11 @@ func (m Model) renderCombat() string {
 
 func (m Model) renderRest() string {
 	return "Rest View (TODO)\n\nPress q to quit."
+}
+
+func (m Model) renderNotes() string {
+	if m.notesEditorModel != nil {
+		return m.notesEditorModel.View()
+	}
+	return "Notes View (loading...)"
 }

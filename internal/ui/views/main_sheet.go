@@ -196,6 +196,7 @@ type mainSheetKeyMap struct {
 	PrevActionType key.Binding
 	AddXP          key.Binding
 	LevelUp        key.Binding
+	Notes          key.Binding
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -287,6 +288,10 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		LevelUp: key.NewBinding(
 			key.WithKeys("L"),
 			key.WithHelp("L", "level up"),
+		),
+		Notes: key.NewBinding(
+			key.WithKeys("n"),
+			key.WithHelp("n", "notes"),
 		),
 	}
 }
@@ -403,6 +408,8 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Info):
 			m.statusMessage = "Character info view coming soon..."
 			return m, nil
+		case key.Matches(msg, m.keys.Notes):
+			return m, func() tea.Msg { return OpenNotesMsg{ReturnTo: "sheet"} }
 		case key.Matches(msg, m.keys.Combat):
 			m.statusMessage = "Combat tracker coming soon..."
 			return m, nil
@@ -2403,7 +2410,7 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Foreground(lipgloss.Color("244")).
 		Width(width)
 
-	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • x: add XP • L: level up • r: rest • esc: back • q: quit"
+	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • n: notes • x: add XP • L: level up • r: rest • esc: back • q: quit"
 
 	// Show condition selection if in condition mode
 	if m.conditionMode {
