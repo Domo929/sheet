@@ -988,10 +988,11 @@ func (m *MainSheetModel) View() string {
 		rightWidth = 45
 	}
 
-	// Left column: Abilities/Saves on top, Skills below
+	// Left column: Abilities/Saves on top, Proficiencies, then Skills below
 	abilitiesAndSaves := m.renderAbilitiesAndSaves(leftWidth)
+	proficiencies := m.renderProficiencies(leftWidth)
 	skills := m.renderSkills(leftWidth)
-	leftColumn := lipgloss.JoinVertical(lipgloss.Left, abilitiesAndSaves, skills)
+	leftColumn := lipgloss.JoinVertical(lipgloss.Left, abilitiesAndSaves, proficiencies, skills)
 
 	// Right column: Combat on top, Actions below
 	combat := m.renderCombatStats(rightWidth)
@@ -1199,6 +1200,100 @@ func (m *MainSheetModel) renderAbilitiesAndSaves(width int) string {
 // renderAbilities is kept for backwards compatibility but now redirects
 func (m *MainSheetModel) renderAbilities(width int) string {
 	return m.renderAbilitiesAndSaves(width)
+}
+
+func (m *MainSheetModel) renderProficiencies(width int) string {
+	char := m.character
+
+	panelStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		Padding(0, 1).
+		Width(width)
+
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("12"))
+
+	labelStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("244"))
+
+	// Collect non-empty categories
+	type category struct {
+		label  string
+		values []string
+	}
+
+	categories := []category{
+		{"Armor", char.Proficiencies.Armor},
+		{"Weapons", char.Proficiencies.Weapons},
+		{"Tools", char.Proficiencies.Tools},
+		{"Languages", char.Proficiencies.Languages},
+	}
+
+	var lines []string
+	lines = append(lines, titleStyle.Render("Proficiencies"))
+
+	hasAny := false
+	// Available width for values: panel width - border (2) - padding (2) - label (max "Languages: " = 11)
+	// We calculate per-category for accurate wrapping
+	for _, cat := range categories {
+		if len(cat.values) == 0 {
+			continue
+		}
+		hasAny = true
+
+		label := cat.label + ": "
+		valuesStr := strings.Join(cat.values, ", ")
+
+		// Calculate available width for values on first line
+		// Panel inner width = width - 2 (border) - 2 (padding)
+		innerWidth := width - 4
+		labelWidth := len(label)
+		valueWidth := innerWidth - labelWidth
+
+		if valueWidth <= 0 || len(valuesStr) <= valueWidth {
+			// Fits on one line
+			lines = append(lines, labelStyle.Render(label)+valuesStr)
+		} else {
+			// Word-wrap: split values and wrap with indentation
+			indent := strings.Repeat(" ", labelWidth)
+			words := strings.Split(valuesStr, " ")
+			currentLine := ""
+			first := true
+
+			for _, word := range words {
+				if currentLine == "" {
+					currentLine = word
+				} else if len(currentLine)+1+len(word) <= valueWidth {
+					currentLine += " " + word
+				} else {
+					// Emit current line
+					if first {
+						lines = append(lines, labelStyle.Render(label)+currentLine)
+						first = false
+					} else {
+						lines = append(lines, indent+currentLine)
+					}
+					currentLine = word
+				}
+			}
+			// Emit last line
+			if currentLine != "" {
+				if first {
+					lines = append(lines, labelStyle.Render(label)+currentLine)
+				} else {
+					lines = append(lines, indent+currentLine)
+				}
+			}
+		}
+	}
+
+	if !hasAny {
+		lines = append(lines, "None")
+	}
+
+	return panelStyle.Render(strings.Join(lines, "\n"))
 }
 
 func (m *MainSheetModel) renderSkills(width int) string {
