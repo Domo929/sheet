@@ -1,5 +1,10 @@
 package models
 
+import (
+	"fmt"
+	"time"
+)
+
 // ProgressionType indicates how the character progresses in level.
 type ProgressionType string
 
@@ -123,6 +128,27 @@ func ProficiencyBonusByLevel(level int) int {
 	return (level-1)/4 + 2
 }
 
+// Note represents a single named note document.
+type Note struct {
+	ID        string    `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// NewNote creates a new note with the given title.
+func NewNote(title string) Note {
+	now := time.Now()
+	return Note{
+		ID:        fmt.Sprintf("note-%d", now.UnixNano()),
+		Title:     title,
+		Content:   "",
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+}
+
 // Personality contains character personality and roleplay information.
 type Personality struct {
 	Traits    []string `json:"traits,omitempty"`
@@ -130,7 +156,8 @@ type Personality struct {
 	Bonds     []string `json:"bonds,omitempty"`
 	Flaws     []string `json:"flaws,omitempty"`
 	Backstory string   `json:"backstory,omitempty"`
-	Notes     string   `json:"notes,omitempty"`
+	Notes     string   `json:"notes,omitempty"`    // Deprecated: kept for migration
+	Documents []Note   `json:"documents,omitempty"` // Multi-document notes
 }
 
 // NewPersonality creates an empty personality.
@@ -161,4 +188,42 @@ func (p *Personality) AddBond(bond string) {
 // AddFlaw adds a flaw.
 func (p *Personality) AddFlaw(flaw string) {
 	p.Flaws = append(p.Flaws, flaw)
+}
+
+// AddNote creates a new note with the given title and returns it.
+func (p *Personality) AddNote(title string) *Note {
+	note := NewNote(title)
+	p.Documents = append(p.Documents, note)
+	return &p.Documents[len(p.Documents)-1]
+}
+
+// DeleteNote removes a note by ID.
+func (p *Personality) DeleteNote(id string) bool {
+	for i, n := range p.Documents {
+		if n.ID == id {
+			p.Documents = append(p.Documents[:i], p.Documents[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// FindNote finds a note by ID and returns a pointer to it.
+func (p *Personality) FindNote(id string) *Note {
+	for i := range p.Documents {
+		if p.Documents[i].ID == id {
+			return &p.Documents[i]
+		}
+	}
+	return nil
+}
+
+// MigrateNotes converts the deprecated Notes string to a Document if needed.
+func (p *Personality) MigrateNotes() {
+	if p.Notes != "" && len(p.Documents) == 0 {
+		note := NewNote("Notes")
+		note.Content = p.Notes
+		p.Documents = append(p.Documents, note)
+		p.Notes = "" // Clear deprecated field
+	}
 }

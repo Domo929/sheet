@@ -126,6 +126,9 @@ func (cs *CharacterStorage) Load(characterName string) (*models.Character, error
 		return nil, fmt.Errorf("failed to read character: %w", err)
 	}
 
+	// Migrate deprecated notes field
+	character.Personality.MigrateNotes()
+
 	return character, nil
 }
 
@@ -148,6 +151,9 @@ func (cs *CharacterStorage) LoadByPath(path string) (*models.Character, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read character: %w", err)
 	}
+
+	// Migrate deprecated notes field
+	character.Personality.MigrateNotes()
 
 	return character, nil
 }

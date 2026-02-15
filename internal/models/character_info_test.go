@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProficiencyBonusByLevel(t *testing.T) {
@@ -114,4 +115,49 @@ func TestNewCharacterInfo(t *testing.T) {
 	assert.Equal(t, "Wizard", ci.Class)
 	assert.Equal(t, 1, ci.Level)
 	assert.Equal(t, ProgressionXP, ci.ProgressionType)
+}
+
+func TestNote_AddAndDelete(t *testing.T) {
+	p := NewPersonality()
+	note := p.AddNote("Session 1")
+	assert.NotEmpty(t, note.ID)
+	assert.Equal(t, "Session 1", note.Title)
+	assert.Equal(t, 1, len(p.Documents))
+
+	found := p.FindNote(note.ID)
+	require.NotNil(t, found)
+	assert.Equal(t, "Session 1", found.Title)
+
+	ok := p.DeleteNote(note.ID)
+	assert.True(t, ok)
+	assert.Equal(t, 0, len(p.Documents))
+
+	ok = p.DeleteNote("nonexistent")
+	assert.False(t, ok)
+}
+
+func TestNote_MigrateNotes(t *testing.T) {
+	p := NewPersonality()
+	p.Notes = "Old notes content"
+	p.MigrateNotes()
+	assert.Empty(t, p.Notes)
+	assert.Equal(t, 1, len(p.Documents))
+	assert.Equal(t, "Notes", p.Documents[0].Title)
+	assert.Equal(t, "Old notes content", p.Documents[0].Content)
+}
+
+func TestNote_MigrateNotes_NoOp(t *testing.T) {
+	p := NewPersonality()
+	p.Notes = ""
+	p.MigrateNotes()
+	assert.Equal(t, 0, len(p.Documents))
+}
+
+func TestNote_MigrateNotes_AlreadyMigrated(t *testing.T) {
+	p := NewPersonality()
+	p.Notes = "Old notes"
+	p.Documents = []Note{{ID: "existing", Title: "Existing"}}
+	p.MigrateNotes()
+	assert.Equal(t, 1, len(p.Documents))
+	assert.Equal(t, "Old notes", p.Notes) // Should NOT clear if already has documents
 }
