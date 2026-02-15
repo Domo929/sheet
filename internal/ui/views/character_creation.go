@@ -1002,6 +1002,10 @@ func (m *CharacterCreationModel) handlePersonalityKeys(msg tea.KeyMsg) (*Charact
 
 	switch msg.String() {
 	case "tab":
+		if m.personalityFocusField == 4 {
+			// Tab from last field advances to Review
+			return m.moveToStep(StepReview)
+		}
 		m.personalityFocusField = (m.personalityFocusField + 1) % 5
 		m.personalityItemCursor = 0
 		return m, nil
@@ -2563,7 +2567,7 @@ func (m *CharacterCreationModel) renderPersonality() string {
 	content.WriteString("\n")
 
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
-	content.WriteString(helpStyle.Render("Tab: next field • Enter: edit/add • d: delete • Esc: back"))
+	content.WriteString(helpStyle.Render("Tab: next field/continue • Enter: edit/add • d: delete • Esc: back"))
 
 	return content.String()
 }

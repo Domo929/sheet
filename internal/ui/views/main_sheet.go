@@ -2409,7 +2409,7 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Foreground(lipgloss.Color("244")).
 		Width(width)
 
-	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • n: notes • x: add XP • L: level up • r: rest • esc: back • q: quit"
+	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • c: char info • n: notes • x: add XP • L: level up • r: rest • esc: back • q: quit"
 
 	// Show condition selection if in condition mode
 	if m.conditionMode {
