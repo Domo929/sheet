@@ -143,6 +143,16 @@ func (m *CharacterInfoModel) Update(msg tea.Msg) (*CharacterInfoModel, tea.Cmd) 
 			return m, tea.Quit
 		}
 
+		// Handle edit mode input
+		if m.editMode {
+			return m.handleEditMode(msg)
+		}
+
+		// Handle delete confirmation
+		if m.confirmingDelete {
+			return m.handleConfirmDelete(msg)
+		}
+
 		m.statusMessage = ""
 
 		switch {
@@ -182,6 +192,21 @@ func (m *CharacterInfoModel) Update(msg tea.Msg) (*CharacterInfoModel, tea.Cmd) 
 
 		case key.Matches(msg, m.keys.Select):
 			return m.handleSelect()
+
+		case key.Matches(msg, m.keys.Edit):
+			if m.focus == CharInfoFocusPersonality {
+				return m.startEdit()
+			}
+
+		case key.Matches(msg, m.keys.Add):
+			if m.focus == CharInfoFocusPersonality {
+				return m.startAdd()
+			}
+
+		case key.Matches(msg, m.keys.Delete):
+			if m.focus == CharInfoFocusPersonality {
+				return m.startDelete()
+			}
 		}
 	}
 
@@ -245,6 +270,278 @@ func (m *CharacterInfoModel) handleSelect() (*CharacterInfoModel, tea.Cmd) {
 		m.backstoryExpanded = !m.backstoryExpanded
 	}
 	return m, nil
+}
+
+// handleEditMode handles key input when in edit mode.
+func (m *CharacterInfoModel) handleEditMode(msg tea.KeyMsg) (*CharacterInfoModel, tea.Cmd) {
+	if m.editSection == PersonalitySectionBackstory {
+		// Multiline editing
+		switch msg.Type {
+		case tea.KeyEsc:
+			m.editMode = false
+			return m, nil
+		case tea.KeyEnter:
+			m.editBuffer += "\n"
+			return m, nil
+		case tea.KeyBackspace:
+			if len(m.editBuffer) > 0 {
+				m.editBuffer = m.editBuffer[:len(m.editBuffer)-1]
+			}
+			return m, nil
+		case tea.KeyRunes:
+			m.editBuffer += string(msg.Runes)
+			return m, nil
+		default:
+			// Handle ctrl+s for save
+			if msg.String() == "ctrl+s" {
+				m.applyEdit()
+				m.editMode = false
+			}
+			return m, nil
+		}
+	}
+
+	// Single-line editing
+	switch msg.Type {
+	case tea.KeyEsc:
+		m.editMode = false
+		return m, nil
+	case tea.KeyEnter:
+		m.applyEdit()
+		m.editMode = false
+		return m, nil
+	case tea.KeyBackspace:
+		if len(m.editBuffer) > 0 {
+			m.editBuffer = m.editBuffer[:len(m.editBuffer)-1]
+		}
+		return m, nil
+	case tea.KeyRunes:
+		m.editBuffer += string(msg.Runes)
+		return m, nil
+	}
+	return m, nil
+}
+
+// handleConfirmDelete handles key input during delete confirmation.
+func (m *CharacterInfoModel) handleConfirmDelete(msg tea.KeyMsg) (*CharacterInfoModel, tea.Cmd) {
+	switch {
+	case msg.Type == tea.KeyRunes && len(msg.Runes) > 0 && msg.Runes[0] == 'y':
+		m.deleteCurrentItem()
+		m.confirmingDelete = false
+		return m, nil
+	case msg.Type == tea.KeyRunes && len(msg.Runes) > 0 && msg.Runes[0] == 'n',
+		msg.Type == tea.KeyEsc:
+		m.confirmingDelete = false
+		return m, nil
+	}
+	return m, nil
+}
+
+// startEdit begins editing the currently focused personality item.
+func (m *CharacterInfoModel) startEdit() (*CharacterInfoModel, tea.Cmd) {
+	items := m.getAllPersonalityItems()
+	if m.personalityCursor < 0 || m.personalityCursor >= len(items) {
+		return m, nil
+	}
+
+	item := items[m.personalityCursor]
+	if item.header {
+		return m, nil
+	}
+
+	m.editMode = true
+	m.editAction = "edit"
+	m.editSection = item.section
+	m.editIndex = item.index
+
+	if item.text == "(none)" {
+		m.editBuffer = ""
+	} else {
+		m.editBuffer = item.text
+	}
+
+	return m, nil
+}
+
+// startAdd begins adding a new item to the current personality section.
+func (m *CharacterInfoModel) startAdd() (*CharacterInfoModel, tea.Cmd) {
+	// Determine which section we're in based on cursor position
+	items := m.getAllPersonalityItems()
+	if m.personalityCursor < 0 || m.personalityCursor >= len(items) {
+		return m, nil
+	}
+
+	section := items[m.personalityCursor].section
+
+	m.editMode = true
+	m.editAction = "add"
+	m.editSection = section
+	m.editIndex = -1
+	m.editBuffer = ""
+
+	return m, nil
+}
+
+// startDelete begins delete confirmation for the currently focused item.
+func (m *CharacterInfoModel) startDelete() (*CharacterInfoModel, tea.Cmd) {
+	items := m.getAllPersonalityItems()
+	if m.personalityCursor < 0 || m.personalityCursor >= len(items) {
+		return m, nil
+	}
+
+	item := items[m.personalityCursor]
+	if item.header {
+		return m, nil
+	}
+
+	m.confirmingDelete = true
+	return m, nil
+}
+
+// applyEdit saves the current edit to the character.
+func (m *CharacterInfoModel) applyEdit() {
+	text := strings.TrimSpace(m.editBuffer)
+	if text == "" && m.editSection != PersonalitySectionBackstory {
+		return // don't save empty items (except backstory can be cleared)
+	}
+
+	switch m.editSection {
+	case PersonalitySectionTraits:
+		if m.editAction == "add" {
+			m.character.Personality.AddTrait(text)
+		} else {
+			if m.editIndex >= 0 && m.editIndex < len(m.character.Personality.Traits) {
+				m.character.Personality.Traits[m.editIndex] = text
+			}
+		}
+	case PersonalitySectionIdeals:
+		if m.editAction == "add" {
+			m.character.Personality.AddIdeal(text)
+		} else {
+			if m.editIndex >= 0 && m.editIndex < len(m.character.Personality.Ideals) {
+				m.character.Personality.Ideals[m.editIndex] = text
+			}
+		}
+	case PersonalitySectionBonds:
+		if m.editAction == "add" {
+			m.character.Personality.AddBond(text)
+		} else {
+			if m.editIndex >= 0 && m.editIndex < len(m.character.Personality.Bonds) {
+				m.character.Personality.Bonds[m.editIndex] = text
+			}
+		}
+	case PersonalitySectionFlaws:
+		if m.editAction == "add" {
+			m.character.Personality.AddFlaw(text)
+		} else {
+			if m.editIndex >= 0 && m.editIndex < len(m.character.Personality.Flaws) {
+				m.character.Personality.Flaws[m.editIndex] = text
+			}
+		}
+	case PersonalitySectionBackstory:
+		m.character.Personality.Backstory = text
+	}
+
+	m.saveCharacter()
+}
+
+// deleteCurrentItem deletes the currently focused personality item.
+func (m *CharacterInfoModel) deleteCurrentItem() {
+	items := m.getAllPersonalityItems()
+	if m.personalityCursor < 0 || m.personalityCursor >= len(items) {
+		return
+	}
+
+	item := items[m.personalityCursor]
+	if item.header {
+		return
+	}
+
+	switch item.section {
+	case PersonalitySectionTraits:
+		if item.index >= 0 && item.index < len(m.character.Personality.Traits) {
+			m.character.Personality.Traits = append(
+				m.character.Personality.Traits[:item.index],
+				m.character.Personality.Traits[item.index+1:]...,
+			)
+		}
+	case PersonalitySectionIdeals:
+		if item.index >= 0 && item.index < len(m.character.Personality.Ideals) {
+			m.character.Personality.Ideals = append(
+				m.character.Personality.Ideals[:item.index],
+				m.character.Personality.Ideals[item.index+1:]...,
+			)
+		}
+	case PersonalitySectionBonds:
+		if item.index >= 0 && item.index < len(m.character.Personality.Bonds) {
+			m.character.Personality.Bonds = append(
+				m.character.Personality.Bonds[:item.index],
+				m.character.Personality.Bonds[item.index+1:]...,
+			)
+		}
+	case PersonalitySectionFlaws:
+		if item.index >= 0 && item.index < len(m.character.Personality.Flaws) {
+			m.character.Personality.Flaws = append(
+				m.character.Personality.Flaws[:item.index],
+				m.character.Personality.Flaws[item.index+1:]...,
+			)
+		}
+	case PersonalitySectionBackstory:
+		m.character.Personality.Backstory = ""
+	}
+
+	m.saveCharacter()
+
+	// Adjust cursor - rebuild items after deletion and clamp
+	newItems := m.getAllPersonalityItems()
+	if m.personalityCursor >= len(newItems) && m.personalityCursor > 0 {
+		m.personalityCursor--
+	}
+	m.updatePersonalitySection()
+}
+
+// getCurrentSectionItems returns items for the current personality section.
+func (m *CharacterInfoModel) getCurrentSectionItems() []string {
+	if m.character == nil {
+		return nil
+	}
+	switch m.personalitySection {
+	case PersonalitySectionTraits:
+		return m.character.Personality.Traits
+	case PersonalitySectionIdeals:
+		return m.character.Personality.Ideals
+	case PersonalitySectionBonds:
+		return m.character.Personality.Bonds
+	case PersonalitySectionFlaws:
+		return m.character.Personality.Flaws
+	case PersonalitySectionBackstory:
+		return []string{m.character.Personality.Backstory}
+	}
+	return nil
+}
+
+// saveCharacter saves the character to storage.
+func (m *CharacterInfoModel) saveCharacter() {
+	if m.storage != nil {
+		_ = m.storage.AutoSave(m.character)
+	}
+}
+
+// sectionName returns a human-readable name for a personality section.
+func sectionName(section PersonalitySection) string {
+	switch section {
+	case PersonalitySectionTraits:
+		return "Trait"
+	case PersonalitySectionIdeals:
+		return "Ideal"
+	case PersonalitySectionBonds:
+		return "Bond"
+	case PersonalitySectionFlaws:
+		return "Flaw"
+	case PersonalitySectionBackstory:
+		return "Backstory"
+	}
+	return "Item"
 }
 
 // movePersonalityCursorUp moves the personality cursor up across sections.
@@ -416,7 +713,32 @@ func (m *CharacterInfoModel) View() string {
 	// Footer
 	footer := m.renderFooter(width)
 
-	return lipgloss.JoinVertical(lipgloss.Left, header, "", columns, "", footer)
+	base := lipgloss.JoinVertical(lipgloss.Left, header, "", columns, "", footer)
+
+	// Overlay edit modal if in edit mode
+	if m.editMode {
+		modal := m.renderEditModal(width, height)
+		base = lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, modal,
+			lipgloss.WithWhitespaceChars(" "),
+			lipgloss.WithWhitespaceForeground(lipgloss.Color("236")),
+		)
+	}
+
+	// Show delete confirmation overlay
+	if m.confirmingDelete {
+		items := m.getAllPersonalityItems()
+		sectionLabel := "item"
+		if m.personalityCursor >= 0 && m.personalityCursor < len(items) {
+			sectionLabel = strings.ToLower(sectionName(items[m.personalityCursor].section))
+		}
+		confirmModal := m.renderConfirmDeleteModal(width, height, sectionLabel)
+		base = lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, confirmModal,
+			lipgloss.WithWhitespaceChars(" "),
+			lipgloss.WithWhitespaceForeground(lipgloss.Color("236")),
+		)
+	}
+
+	return base
 }
 
 func (m *CharacterInfoModel) renderHeader(width int) string {
@@ -634,6 +956,74 @@ func (m *CharacterInfoModel) renderCategoryTabs() string {
 	return strings.Join(tabs, " ")
 }
 
+// renderEditModal renders the centered edit modal overlay.
+func (m *CharacterInfoModel) renderEditModal(width, height int) string {
+	modalWidth := width * 50 / 100
+	if modalWidth < 40 {
+		modalWidth = 40
+	}
+	if modalWidth > 80 {
+		modalWidth = 80
+	}
+
+	borderStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("99")).
+		Padding(1, 2).
+		Width(modalWidth)
+
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+	inputStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+
+	// Title
+	action := "Edit"
+	if m.editAction == "add" {
+		action = "Add"
+	}
+	title := titleStyle.Render(fmt.Sprintf("%s %s", action, sectionName(m.editSection)))
+
+	// Input area
+	displayText := m.editBuffer + "█"
+	input := inputStyle.Render(displayText)
+
+	// Help text
+	var helpText string
+	if m.editSection == PersonalitySectionBackstory {
+		helpText = dimStyle.Render("Ctrl+S: save • Esc: cancel • Enter: newline")
+	} else {
+		helpText = dimStyle.Render("Enter: save • Esc: cancel")
+	}
+
+	content := lipgloss.JoinVertical(lipgloss.Left, title, "", input, "", helpText)
+
+	return borderStyle.Render(content)
+}
+
+// renderConfirmDeleteModal renders a delete confirmation modal.
+func (m *CharacterInfoModel) renderConfirmDeleteModal(width, height int, sectionLabel string) string {
+	modalWidth := 50
+	if modalWidth > width-4 {
+		modalWidth = width - 4
+	}
+
+	borderStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("196")).
+		Padding(1, 2).
+		Width(modalWidth)
+
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("196"))
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+
+	title := titleStyle.Render(fmt.Sprintf("Delete this %s?", sectionLabel))
+	help := dimStyle.Render("y: confirm • n/Esc: cancel")
+
+	content := lipgloss.JoinVertical(lipgloss.Left, title, "", help)
+
+	return borderStyle.Render(content)
+}
+
 func (m *CharacterInfoModel) renderFooter(width int) string {
 	helpStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("244")).
@@ -647,7 +1037,7 @@ func (m *CharacterInfoModel) renderFooter(width int) string {
 	var help string
 	switch m.focus {
 	case CharInfoFocusPersonality:
-		help = "↑/↓: navigate • tab: features panel • n: notes • esc: back"
+		help = "↑/↓: navigate • e: edit • a: add • d: delete • tab: features panel • n: notes • esc: back"
 	case CharInfoFocusFeatures:
 		help = "←/→: category • ↑/↓: navigate • tab: personality panel • n: notes • esc: back"
 	}
