@@ -23,6 +23,7 @@ const (
 	StepAbilities
 	StepProficiencies
 	StepEquipment
+	StepPersonality
 	StepReview
 )
 
@@ -90,7 +91,18 @@ type CharacterCreationModel struct {
 	inEquipmentSubSelection  bool     // Whether we're in the sub-selection UI
 	equipmentSubItems        []string // Available items for sub-selection
 	focusedSubItem           int      // Which sub-item is focused
-	
+
+	// Personality step
+	personalityTraits     []string
+	personalityIdeals     []string
+	personalityBonds      []string
+	personalityFlaws      []string
+	personalityBackstory  string
+	personalityFocusField int // 0=traits, 1=ideals, 2=bonds, 3=flaws, 4=backstory
+	personalityItemCursor int // cursor within the focused field's entries
+	personalityEditing    bool
+	personalityEditBuffer string
+
 	// Navigation
 	helpFooter components.HelpFooter
 	buttons    components.ButtonGroup
@@ -173,6 +185,10 @@ func NewCharacterCreationModel(store *storage.CharacterStorage, loader *data.Loa
 		abilityScoreMode:    AbilityModePointBuy, // Default to point buy
 		abilityScores:       [6]int{8, 8, 8, 8, 8, 8}, // Start at minimum for point buy
 		standardArrayValues: models.StandardArray(),
+		personalityTraits:   []string{""},
+		personalityIdeals:   []string{""},
+		personalityBonds:    []string{""},
+		personalityFlaws:    []string{""},
 		character: &models.Character{
 			Info: models.CharacterInfo{
 				Level: 1,
@@ -256,6 +272,8 @@ func (m *CharacterCreationModel) handleKey(msg tea.KeyMsg) (*CharacterCreationMo
 		return m.handleProficiencyKeys(msg)
 	case StepEquipment:
 		return m.handleEquipmentKeys(msg)
+	case StepPersonality:
+		return m.handlePersonalityKeys(msg)
 	case StepReview:
 		return m.handleReviewKeys(msg)
 	default:
@@ -574,7 +592,7 @@ func (m *CharacterCreationModel) renderProficiencySelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 6 of 8: Proficiency Selection"))
+	content.WriteString(stepStyle.Render("Step 6 of 9: Proficiency Selection"))
 	content.WriteString("\n\n")
 	
 	content.WriteString(m.proficiencyManager.View())
@@ -590,7 +608,7 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 		case "enter":
 			m.equipmentConfirmed = true
 			m.startingGold = m.getStartingGold()
-			return m.moveToStep(StepReview)
+			return m.moveToStep(StepPersonality)
 		case "esc":
 			return m.moveToStep(StepProficiencies)
 		}
@@ -657,11 +675,11 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 		return m, nil
 		
 	case "enter":
-		// Enter: Always proceed to review if all choices made (never enters sub-selection)
+		// Enter: Always proceed to personality if all choices made (never enters sub-selection)
 		if m.allEquipmentChoicesMade() {
 			m.equipmentConfirmed = true
 			m.startingGold = m.getStartingGold()
-			return m.moveToStep(StepReview)
+			return m.moveToStep(StepPersonality)
 		}
 		return m, nil
 		
@@ -945,11 +963,177 @@ func (m *CharacterCreationModel) handleReviewKeys(msg tea.KeyMsg) (*CharacterCre
 		return m.finalizeCharacter()
 		
 	case "esc":
-		// Go back to equipment
-		return m.moveToStep(StepEquipment)
+		// Go back to personality
+		return m.moveToStep(StepPersonality)
 	}
 	
 	return m, nil
+}
+
+// handlePersonalityKeys handles keys for the personality step.
+func (m *CharacterCreationModel) handlePersonalityKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+	// If editing an entry, handle text input
+	if m.personalityEditing {
+		switch msg.Type {
+		case tea.KeyEnter:
+			if m.personalityFocusField == 4 {
+				// Backstory: Enter inserts newline
+				m.personalityEditBuffer += "\n"
+				return m, nil
+			}
+			// Save the edit
+			m.savePersonalityEdit()
+			m.personalityEditing = false
+			return m, nil
+		case tea.KeyEsc:
+			m.personalityEditing = false
+			return m, nil
+		case tea.KeyBackspace:
+			if len(m.personalityEditBuffer) > 0 {
+				m.personalityEditBuffer = m.personalityEditBuffer[:len(m.personalityEditBuffer)-1]
+			}
+			return m, nil
+		case tea.KeyRunes:
+			m.personalityEditBuffer += string(msg.Runes)
+			return m, nil
+		}
+		return m, nil
+	}
+
+	switch msg.String() {
+	case "tab":
+		m.personalityFocusField = (m.personalityFocusField + 1) % 5
+		m.personalityItemCursor = 0
+		return m, nil
+	case "shift+tab":
+		m.personalityFocusField = (m.personalityFocusField + 4) % 5
+		m.personalityItemCursor = 0
+		return m, nil
+	case "up", "k":
+		if m.personalityItemCursor > 0 {
+			m.personalityItemCursor--
+		}
+		return m, nil
+	case "down", "j":
+		items := m.getPersonalityFieldItems()
+		if m.personalityItemCursor < len(items) {
+			m.personalityItemCursor++
+		}
+		return m, nil
+	case "enter":
+		items := m.getPersonalityFieldItems()
+		if m.personalityFocusField < 4 && m.personalityItemCursor == len(items) {
+			// On "+ Add another"
+			m.addPersonalityEntry()
+			return m, nil
+		}
+		if m.personalityFocusField == 4 {
+			// Backstory: enter edit mode
+			m.personalityEditing = true
+			m.personalityEditBuffer = m.personalityBackstory
+			return m, nil
+		}
+		if m.personalityFocusField < 4 && m.personalityItemCursor < len(items) {
+			// Edit current item
+			m.personalityEditing = true
+			m.personalityEditBuffer = items[m.personalityItemCursor]
+			return m, nil
+		}
+		// Advance to review
+		return m.moveToStep(StepReview)
+	case "d":
+		m.deletePersonalityEntry()
+		return m, nil
+	case "esc":
+		return m.moveToStep(StepEquipment)
+	}
+
+	// If on backstory and not editing, capture runes to start editing
+	if m.personalityFocusField == 4 && msg.Type == tea.KeyRunes {
+		m.personalityEditing = true
+		m.personalityEditBuffer = m.personalityBackstory + string(msg.Runes)
+		return m, nil
+	}
+
+	// If on a list item, capture runes to start editing
+	items := m.getPersonalityFieldItems()
+	if m.personalityFocusField < 4 && m.personalityItemCursor < len(items) && msg.Type == tea.KeyRunes {
+		m.personalityEditing = true
+		m.personalityEditBuffer = items[m.personalityItemCursor] + string(msg.Runes)
+		return m, nil
+	}
+
+	return m, nil
+}
+
+func (m *CharacterCreationModel) getPersonalityFieldItems() []string {
+	switch m.personalityFocusField {
+	case 0:
+		return m.personalityTraits
+	case 1:
+		return m.personalityIdeals
+	case 2:
+		return m.personalityBonds
+	case 3:
+		return m.personalityFlaws
+	default:
+		return nil
+	}
+}
+
+func (m *CharacterCreationModel) addPersonalityEntry() {
+	switch m.personalityFocusField {
+	case 0:
+		m.personalityTraits = append(m.personalityTraits, "")
+		m.personalityItemCursor = len(m.personalityTraits) - 1
+	case 1:
+		m.personalityIdeals = append(m.personalityIdeals, "")
+		m.personalityItemCursor = len(m.personalityIdeals) - 1
+	case 2:
+		m.personalityBonds = append(m.personalityBonds, "")
+		m.personalityItemCursor = len(m.personalityBonds) - 1
+	case 3:
+		m.personalityFlaws = append(m.personalityFlaws, "")
+		m.personalityItemCursor = len(m.personalityFlaws) - 1
+	}
+	m.personalityEditing = true
+	m.personalityEditBuffer = ""
+}
+
+func (m *CharacterCreationModel) deletePersonalityEntry() {
+	items := m.getPersonalityFieldItems()
+	if len(items) <= 1 || m.personalityItemCursor >= len(items) {
+		return
+	}
+	switch m.personalityFocusField {
+	case 0:
+		m.personalityTraits = append(m.personalityTraits[:m.personalityItemCursor], m.personalityTraits[m.personalityItemCursor+1:]...)
+	case 1:
+		m.personalityIdeals = append(m.personalityIdeals[:m.personalityItemCursor], m.personalityIdeals[m.personalityItemCursor+1:]...)
+	case 2:
+		m.personalityBonds = append(m.personalityBonds[:m.personalityItemCursor], m.personalityBonds[m.personalityItemCursor+1:]...)
+	case 3:
+		m.personalityFlaws = append(m.personalityFlaws[:m.personalityItemCursor], m.personalityFlaws[m.personalityItemCursor+1:]...)
+	}
+	if m.personalityItemCursor >= len(m.getPersonalityFieldItems()) {
+		m.personalityItemCursor = len(m.getPersonalityFieldItems()) - 1
+	}
+}
+
+func (m *CharacterCreationModel) savePersonalityEdit() {
+	text := m.personalityEditBuffer
+	switch m.personalityFocusField {
+	case 0:
+		m.personalityTraits[m.personalityItemCursor] = text
+	case 1:
+		m.personalityIdeals[m.personalityItemCursor] = text
+	case 2:
+		m.personalityBonds[m.personalityItemCursor] = text
+	case 3:
+		m.personalityFlaws[m.personalityItemCursor] = text
+	case 4:
+		m.personalityBackstory = text
+	}
 }
 
 // adjustBackgroundBonus handles left/right adjustments in the background bonus section.
@@ -1126,6 +1310,8 @@ func (m *CharacterCreationModel) moveToStep(step CreationStep) (*CharacterCreati
 			m.focusedEquipmentChoice = 0
 			m.focusedEquipmentOption = 0
 		}
+	case StepPersonality:
+		// No data loading needed
 	}
 	
 	return m, nil
@@ -1591,6 +1777,31 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 		m.character.Inventory.AddItem(item)
 	}
 	
+	// Apply personality data (strip empty entries)
+	for _, trait := range m.personalityTraits {
+		if strings.TrimSpace(trait) != "" {
+			m.character.Personality.AddTrait(strings.TrimSpace(trait))
+		}
+	}
+	for _, ideal := range m.personalityIdeals {
+		if strings.TrimSpace(ideal) != "" {
+			m.character.Personality.AddIdeal(strings.TrimSpace(ideal))
+		}
+	}
+	for _, bond := range m.personalityBonds {
+		if strings.TrimSpace(bond) != "" {
+			m.character.Personality.AddBond(strings.TrimSpace(bond))
+		}
+	}
+	for _, flaw := range m.personalityFlaws {
+		if strings.TrimSpace(flaw) != "" {
+			m.character.Personality.AddFlaw(strings.TrimSpace(flaw))
+		}
+	}
+	if strings.TrimSpace(m.personalityBackstory) != "" {
+		m.character.Personality.Backstory = strings.TrimSpace(m.personalityBackstory)
+	}
+
 	// Save character
 	path, err := m.storage.Save(m.character)
 	if err != nil {
@@ -1709,6 +1920,8 @@ func (m *CharacterCreationModel) View() string {
 		content.WriteString(m.renderProficiencySelection())
 	case StepEquipment:
 		content.WriteString(m.renderEquipmentSelection())
+	case StepPersonality:
+		content.WriteString(m.renderPersonality())
 	case StepReview:
 		content.WriteString(m.renderReview())
 	}
@@ -1723,7 +1936,7 @@ func (m *CharacterCreationModel) renderBasicInfo() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 1 of 8: Basic Information"))
+	content.WriteString(stepStyle.Render("Step 1 of 9: Basic Information"))
 	content.WriteString("\n\n")
 	
 	// Character name input
@@ -1760,7 +1973,7 @@ func (m *CharacterCreationModel) renderRaceSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 2 of 8: Race Selection"))
+	content.WriteString(stepStyle.Render("Step 2 of 9: Race Selection"))
 	content.WriteString("\n\n")
 	
 	// Render race list
@@ -1783,7 +1996,7 @@ func (m *CharacterCreationModel) renderClassSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 3 of 8: Class Selection"))
+	content.WriteString(stepStyle.Render("Step 3 of 9: Class Selection"))
 	content.WriteString("\n\n")
 	
 	// Render class list
@@ -1806,7 +2019,7 @@ func (m *CharacterCreationModel) renderBackgroundSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 4 of 8: Background Selection"))
+	content.WriteString(stepStyle.Render("Step 4 of 9: Background Selection"))
 	content.WriteString("\n\n")
 	
 	// Show background list
@@ -1931,7 +2144,7 @@ func (m *CharacterCreationModel) renderAbilityScores() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 5 of 8: Ability Score Assignment"))
+	content.WriteString(stepStyle.Render("Step 5 of 9: Ability Score Assignment"))
 	content.WriteString("\n\n")
 	
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
@@ -2083,7 +2296,7 @@ func (m *CharacterCreationModel) renderEquipmentSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 7 of 8: Starting Equipment"))
+	content.WriteString(stepStyle.Render("Step 7 of 9: Starting Equipment"))
 	content.WriteString("\n\n")
 	
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
@@ -2246,7 +2459,7 @@ func (m *CharacterCreationModel) renderEquipmentSubSelection() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Step 7 of 8: Starting Equipment - Choose Specific Item"))
+	content.WriteString(stepStyle.Render("Step 7 of 9: Starting Equipment - Choose Specific Item"))
 	content.WriteString("\n\n")
 	
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
@@ -2280,6 +2493,81 @@ func (m *CharacterCreationModel) renderEquipmentSubSelection() string {
 	return content.String()
 }
 
+// renderPersonality renders the personality step.
+func (m *CharacterCreationModel) renderPersonality() string {
+	var content strings.Builder
+
+	stepStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8")).Italic(true)
+	content.WriteString(stepStyle.Render("Step 8 of 9: Personality"))
+	content.WriteString("\n\n")
+
+	infoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
+	content.WriteString(infoStyle.Render("All fields are optional. You can fill these in later from the Character Info view."))
+	content.WriteString("\n\n")
+
+	headerStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("12"))
+	cursorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("99"))
+
+	fields := []struct {
+		label string
+		items []string
+		index int
+	}{
+		{"Personality Traits", m.personalityTraits, 0},
+		{"Ideals", m.personalityIdeals, 1},
+		{"Bonds", m.personalityBonds, 2},
+		{"Flaws", m.personalityFlaws, 3},
+	}
+
+	for _, field := range fields {
+		focused := m.personalityFocusField == field.index
+		content.WriteString(headerStyle.Render(field.label + ":"))
+		content.WriteString("\n")
+
+		for i, item := range field.items {
+			prefix := "  "
+			if focused && i == m.personalityItemCursor {
+				prefix = cursorStyle.Render("> ")
+				if m.personalityEditing {
+					content.WriteString(prefix + m.personalityEditBuffer + "█\n")
+					continue
+				}
+			}
+			if item == "" {
+				content.WriteString(prefix + lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("(empty)") + "\n")
+			} else {
+				content.WriteString(prefix + item + "\n")
+			}
+		}
+
+		if focused && m.personalityItemCursor == len(field.items) {
+			content.WriteString(cursorStyle.Render("> ") + "+ Add another\n")
+		} else {
+			content.WriteString("  + Add another\n")
+		}
+		content.WriteString("\n")
+	}
+
+	// Backstory
+	bsFocused := m.personalityFocusField == 4
+	content.WriteString(headerStyle.Render("Backstory:"))
+	content.WriteString("\n")
+	if bsFocused && m.personalityEditing {
+		content.WriteString("  " + m.personalityEditBuffer + "█\n")
+	} else if m.personalityBackstory == "" {
+		content.WriteString("  " + lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("(empty — press Enter to write)") + "\n")
+	} else {
+		content.WriteString("  " + m.personalityBackstory + "\n")
+	}
+
+	content.WriteString("\n")
+
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+	content.WriteString(helpStyle.Render("Tab: next field • Enter: edit/add • d: delete • Esc: back"))
+
+	return content.String()
+}
+
 // renderReview renders the final review step before saving.
 func (m *CharacterCreationModel) renderReview() string {
 	var content strings.Builder
@@ -2287,7 +2575,7 @@ func (m *CharacterCreationModel) renderReview() string {
 	stepStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8")).
 		Italic(true)
-	content.WriteString(stepStyle.Render("Final Step: Review & Confirm"))
+	content.WriteString(stepStyle.Render("Step 9 of 9: Review & Confirm"))
 	content.WriteString("\n\n")
 	
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
