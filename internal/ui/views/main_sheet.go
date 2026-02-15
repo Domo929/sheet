@@ -406,8 +406,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Spellbook):
 			return m, func() tea.Msg { return OpenSpellbookMsg{} }
 		case key.Matches(msg, m.keys.Info):
-			m.statusMessage = "Character info view coming soon..."
-			return m, nil
+			return m, func() tea.Msg { return OpenCharacterInfoMsg{} }
 		case key.Matches(msg, m.keys.Notes):
 			return m, func() tea.Msg { return OpenNotesMsg{ReturnTo: "sheet"} }
 		case key.Matches(msg, m.keys.Combat):

@@ -43,6 +43,7 @@ type Model struct {
 	spellbookModel          *views.SpellbookModel
 	levelUpModel            *views.LevelUpModel
 	notesEditorModel        *views.NotesEditorModel
+	characterInfoModel      *views.CharacterInfoModel
 }
 
 // NewModel creates a new application model.
@@ -131,6 +132,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spellbookModel = nil
 		m.levelUpModel = nil
 		m.notesEditorModel = nil
+		m.characterInfoModel = nil
 		return m, nil
 
 	case views.OpenInventoryMsg:
@@ -179,6 +181,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.currentView = ViewNotes
 		return m, m.notesEditorModel.Init()
+
+	case views.OpenCharacterInfoMsg:
+		m.characterInfoModel = views.NewCharacterInfoModel(m.character, m.storage)
+		if m.width > 0 && m.height > 0 {
+			m.characterInfoModel, _ = m.characterInfoModel.Update(tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			})
+		}
+		m.currentView = ViewCharacterInfo
+		return m, m.characterInfoModel.Init()
 
 	case views.BackToCharacterInfoMsg:
 		m.notesEditorModel = nil
@@ -304,6 +317,12 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.notesEditorModel = updatedModel
 			cmd = c
 		}
+	case ViewCharacterInfo:
+		if m.characterInfoModel != nil {
+			updatedModel, c := m.characterInfoModel.Update(msg)
+			m.characterInfoModel = updatedModel
+			cmd = c
+		}
 	default:
 		// Other views not yet implemented
 	}
@@ -389,7 +408,10 @@ func (m Model) renderSpellbook() string {
 }
 
 func (m Model) renderCharacterInfo() string {
-	return "Character Info View (TODO)\n\nPress q to quit."
+	if m.characterInfoModel != nil {
+		return m.characterInfoModel.View()
+	}
+	return "Character Info View (loading...)"
 }
 
 func (m Model) renderLevelUp() string {
