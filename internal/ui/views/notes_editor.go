@@ -140,14 +140,7 @@ func (m *NotesEditorModel) Update(msg tea.Msg) (*NotesEditorModel, tea.Cmd) {
 		case NotesModeList:
 			return m.updateListMode(msg)
 		case NotesModeEditor:
-			// Task 4 stub: just go back to list mode on Esc
-			if key.Matches(msg, m.keys.Back) {
-				m.mode = NotesModeList
-				m.editingNote = nil
-				m.statusMessage = ""
-				return m, nil
-			}
-			return m, nil
+			return m.updateEditorMode(msg)
 		}
 	}
 
@@ -337,15 +330,218 @@ func (m *NotesEditorModel) handleDeleteConfirm(msg tea.KeyMsg) (*NotesEditorMode
 	}
 }
 
-// enterEditorMode switches to editor mode for the selected note.
+// updateEditorMode handles key messages in editor mode.
+func (m *NotesEditorModel) updateEditorMode(msg tea.KeyMsg) (*NotesEditorModel, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEscape:
+		m.exitEditorMode()
+		return m, nil
+
+	case tea.KeyEnter:
+		// Split current line at cursor position
+		line := m.editorLines[m.cursorRow]
+		before := line[:m.cursorCol]
+		after := line[m.cursorCol:]
+		m.editorLines[m.cursorRow] = before
+		// Insert new line after current row
+		newLines := make([]string, len(m.editorLines)+1)
+		copy(newLines, m.editorLines[:m.cursorRow+1])
+		newLines[m.cursorRow+1] = after
+		copy(newLines[m.cursorRow+2:], m.editorLines[m.cursorRow+1:])
+		m.editorLines = newLines
+		m.cursorRow++
+		m.cursorCol = 0
+		m.ensureCursorVisible()
+		return m, nil
+
+	case tea.KeyBackspace:
+		if m.cursorCol > 0 {
+			// Delete character before cursor
+			line := m.editorLines[m.cursorRow]
+			m.editorLines[m.cursorRow] = line[:m.cursorCol-1] + line[m.cursorCol:]
+			m.cursorCol--
+		} else if m.cursorRow > 0 {
+			// Merge current line with previous line
+			prevLine := m.editorLines[m.cursorRow-1]
+			curLine := m.editorLines[m.cursorRow]
+			m.cursorCol = len(prevLine)
+			m.editorLines[m.cursorRow-1] = prevLine + curLine
+			// Remove current line
+			m.editorLines = append(m.editorLines[:m.cursorRow], m.editorLines[m.cursorRow+1:]...)
+			m.cursorRow--
+		}
+		m.ensureCursorVisible()
+		return m, nil
+
+	case tea.KeyDelete:
+		line := m.editorLines[m.cursorRow]
+		if m.cursorCol < len(line) {
+			// Delete character at cursor
+			m.editorLines[m.cursorRow] = line[:m.cursorCol] + line[m.cursorCol+1:]
+		} else if m.cursorRow < len(m.editorLines)-1 {
+			// Merge with next line
+			m.editorLines[m.cursorRow] = line + m.editorLines[m.cursorRow+1]
+			m.editorLines = append(m.editorLines[:m.cursorRow+1], m.editorLines[m.cursorRow+2:]...)
+		}
+		return m, nil
+
+	case tea.KeyUp:
+		if m.cursorRow > 0 {
+			m.cursorRow--
+			if m.cursorCol > len(m.editorLines[m.cursorRow]) {
+				m.cursorCol = len(m.editorLines[m.cursorRow])
+			}
+		}
+		m.ensureCursorVisible()
+		return m, nil
+
+	case tea.KeyDown:
+		if m.cursorRow < len(m.editorLines)-1 {
+			m.cursorRow++
+			if m.cursorCol > len(m.editorLines[m.cursorRow]) {
+				m.cursorCol = len(m.editorLines[m.cursorRow])
+			}
+		}
+		m.ensureCursorVisible()
+		return m, nil
+
+	case tea.KeyLeft:
+		if m.cursorCol > 0 {
+			m.cursorCol--
+		} else if m.cursorRow > 0 {
+			m.cursorRow--
+			m.cursorCol = len(m.editorLines[m.cursorRow])
+		}
+		m.ensureCursorVisible()
+		return m, nil
+
+	case tea.KeyRight:
+		line := m.editorLines[m.cursorRow]
+		if m.cursorCol < len(line) {
+			m.cursorCol++
+		} else if m.cursorRow < len(m.editorLines)-1 {
+			m.cursorRow++
+			m.cursorCol = 0
+		}
+		m.ensureCursorVisible()
+		return m, nil
+
+	case tea.KeyHome:
+		m.cursorCol = 0
+		return m, nil
+
+	case tea.KeyEnd:
+		m.cursorCol = len(m.editorLines[m.cursorRow])
+		return m, nil
+
+	case tea.KeyPgUp:
+		visibleHeight := m.height - 4
+		if visibleHeight < 1 {
+			visibleHeight = 1
+		}
+		m.cursorRow -= visibleHeight
+		if m.cursorRow < 0 {
+			m.cursorRow = 0
+		}
+		if m.cursorCol > len(m.editorLines[m.cursorRow]) {
+			m.cursorCol = len(m.editorLines[m.cursorRow])
+		}
+		m.ensureCursorVisible()
+		return m, nil
+
+	case tea.KeyPgDown:
+		visibleHeight := m.height - 4
+		if visibleHeight < 1 {
+			visibleHeight = 1
+		}
+		m.cursorRow += visibleHeight
+		if m.cursorRow >= len(m.editorLines) {
+			m.cursorRow = len(m.editorLines) - 1
+		}
+		if m.cursorCol > len(m.editorLines[m.cursorRow]) {
+			m.cursorCol = len(m.editorLines[m.cursorRow])
+		}
+		m.ensureCursorVisible()
+		return m, nil
+
+	case tea.KeyRunes:
+		// Insert character(s) at cursor position
+		line := m.editorLines[m.cursorRow]
+		chars := string(msg.Runes)
+		m.editorLines[m.cursorRow] = line[:m.cursorCol] + chars + line[m.cursorCol:]
+		m.cursorCol += len(chars)
+		m.ensureCursorVisible()
+		return m, nil
+	}
+
+	return m, nil
+}
+
+// ensureCursorVisible adjusts scrollOffset so the cursor row is visible.
+func (m *NotesEditorModel) ensureCursorVisible() {
+	visibleHeight := m.height - 4
+	if visibleHeight < 1 {
+		visibleHeight = 1
+	}
+	if m.cursorRow < m.scrollOffset {
+		m.scrollOffset = m.cursorRow
+	}
+	if m.cursorRow >= m.scrollOffset+visibleHeight {
+		m.scrollOffset = m.cursorRow - visibleHeight + 1
+	}
+}
+
+// enterEditorMode switches to editor mode for the selected note (from list cursor).
 func (m *NotesEditorModel) enterEditorMode() {
 	if len(m.sortedDocs) == 0 || m.listCursor >= len(m.sortedDocs) {
 		return
 	}
 	docIdx := m.sortedDocs[m.listCursor]
-	m.editingNote = &m.character.Personality.Documents[docIdx]
+	note := &m.character.Personality.Documents[docIdx]
+	m.enterEditorModeForNote(note)
+}
+
+// enterEditorModeByID switches to editor mode for the note with the given ID.
+func (m *NotesEditorModel) enterEditorModeByID(noteID string) {
+	note := m.character.Personality.FindNote(noteID)
+	if note == nil {
+		return
+	}
+	m.enterEditorModeForNote(note)
+}
+
+// enterEditorModeForNote sets up editor mode state for the given note.
+func (m *NotesEditorModel) enterEditorModeForNote(note *models.Note) {
+	m.editingNote = note
 	m.mode = NotesModeEditor
-	// Task 4 will populate editorLines, cursorRow, cursorCol, etc.
+	m.editorLines = strings.Split(note.Content, "\n")
+	if len(m.editorLines) == 0 {
+		m.editorLines = []string{""}
+	}
+	// Place cursor at end
+	m.cursorRow = len(m.editorLines) - 1
+	m.cursorCol = len(m.editorLines[m.cursorRow])
+	m.scrollOffset = 0
+	m.statusMessage = ""
+}
+
+// saveEditorContent saves the current editor content back to the note.
+func (m *NotesEditorModel) saveEditorContent() {
+	if m.editingNote == nil {
+		return
+	}
+	m.editingNote.Content = strings.Join(m.editorLines, "\n")
+	m.editingNote.UpdatedAt = time.Now()
+	m.saveCharacter()
+}
+
+// exitEditorMode saves content and returns to list mode.
+func (m *NotesEditorModel) exitEditorMode() {
+	m.saveEditorContent()
+	m.editingNote = nil
+	m.editorLines = nil
+	m.mode = NotesModeList
+	m.updateSortedDocs()
 }
 
 // updateSortedDocs rebuilds the sorted document index list.
@@ -403,13 +599,74 @@ func (m *NotesEditorModel) View() string {
 	}
 }
 
-// viewEditorMode renders the editor mode view (Task 4 stub).
+// viewEditorMode renders the full-screen text editor view.
 func (m *NotesEditorModel) viewEditorMode() string {
+	width := m.width
+	if width == 0 {
+		width = 80
+	}
+	height := m.height
+	if height == 0 {
+		height = 24
+	}
+
 	title := ""
 	if m.editingNote != nil {
 		title = m.editingNote.Title
 	}
-	return fmt.Sprintf("Editor mode: %s (not yet implemented — press Esc to go back)", title)
+
+	// Calculate visible content area (total height minus title bar, footer, borders)
+	visibleHeight := height - 4
+	if visibleHeight < 1 {
+		visibleHeight = 1
+	}
+
+	// Ensure scroll offset keeps cursor visible
+	m.ensureCursorVisible()
+
+	// Build content lines with cursor rendering
+	var contentLines []string
+	endRow := m.scrollOffset + visibleHeight
+	if endRow > len(m.editorLines) {
+		endRow = len(m.editorLines)
+	}
+	for row := m.scrollOffset; row < endRow; row++ {
+		line := m.editorLines[row]
+		if row == m.cursorRow {
+			// Render cursor at position
+			if m.cursorCol >= len(line) {
+				line = line + "█"
+			} else {
+				line = line[:m.cursorCol] + "█" + line[m.cursorCol+1:]
+			}
+		}
+		contentLines = append(contentLines, line)
+	}
+
+	// Pad with empty lines to fill visible height
+	for len(contentLines) < visibleHeight {
+		contentLines = append(contentLines, "")
+	}
+
+	content := strings.Join(contentLines, "\n")
+
+	// Footer
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+	footer := helpStyle.Render("Esc: save & back to list | PgUp/PgDn: scroll")
+
+	// Build final view with border
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
+	titleBar := titleStyle.Render(fmt.Sprintf("──── %s ", title))
+
+	result := titleBar + "\n" + content + "\n" + footer
+
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("99")).
+		Padding(0, 1).
+		Width(width - 2)
+
+	return boxStyle.Render(result)
 }
 
 // viewListMode renders the document list mode view.

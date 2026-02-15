@@ -1,6 +1,8 @@
 package views
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -327,4 +329,197 @@ func TestNotesEditor_DeleteAdjustsCursor(t *testing.T) {
 	// Cursor should be adjusted
 	assert.Equal(t, 1, m.listCursor)
 	assert.Equal(t, 2, len(m.sortedDocs))
+}
+
+func TestNotesEditor_EditorTyping(t *testing.T) {
+	m := newTestNotesModel(t)
+	note := m.character.Personality.AddNote("Test Note")
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+	assert.Equal(t, NotesModeEditor, m.mode)
+
+	// Type "Hello"
+	for _, r := range "Hello" {
+		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+	}
+	assert.Equal(t, "Hello", m.editorLines[0])
+
+	// Enter for newline
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	assert.Equal(t, 2, len(m.editorLines))
+	assert.Equal(t, "Hello", m.editorLines[0])
+
+	// Type on second line
+	for _, r := range "World" {
+		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+	}
+	assert.Equal(t, "World", m.editorLines[1])
+}
+
+func TestNotesEditor_EditorBackspace(t *testing.T) {
+	m := newTestNotesModel(t)
+	note := m.character.Personality.AddNote("Test")
+	note.Content = "Hello\nWorld"
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+
+	// Move to start of line 2
+	m.cursorRow = 1
+	m.cursorCol = 0
+
+	// Backspace should merge with previous line
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	assert.Equal(t, 1, len(m.editorLines))
+	assert.Equal(t, "HelloWorld", m.editorLines[0])
+}
+
+func TestNotesEditor_EditorSaveOnEsc(t *testing.T) {
+	m := newTestNotesModel(t)
+	note := m.character.Personality.AddNote("Test")
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+
+	for _, r := range "Saved content" {
+		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+	}
+
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	assert.Equal(t, NotesModeList, m.mode)
+	assert.Equal(t, "Saved content", m.character.Personality.Documents[0].Content)
+}
+
+func TestNotesEditor_PageUpDown(t *testing.T) {
+	m := newTestNotesModel(t)
+	m.height = 10
+	note := m.character.Personality.AddNote("Test")
+	lines := make([]string, 20)
+	for i := range lines {
+		lines[i] = fmt.Sprintf("Line %d", i+1)
+	}
+	note.Content = strings.Join(lines, "\n")
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+
+	assert.Equal(t, 19, m.cursorRow) // cursor at end
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyPgUp})
+	assert.Less(t, m.cursorRow, 19)
+}
+
+func TestNotesEditor_ArrowNavigation(t *testing.T) {
+	m := newTestNotesModel(t)
+	note := m.character.Personality.AddNote("Test")
+	note.Content = "Hello\nWorld"
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+
+	// Start at end: row 1, col 5
+	assert.Equal(t, 1, m.cursorRow)
+	assert.Equal(t, 5, m.cursorCol)
+
+	// Arrow left 5 times to start of line
+	for i := 0; i < 5; i++ {
+		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	}
+	assert.Equal(t, 1, m.cursorRow)
+	assert.Equal(t, 0, m.cursorCol)
+
+	// Arrow left once more wraps to end of previous line
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	assert.Equal(t, 0, m.cursorRow)
+	assert.Equal(t, 5, m.cursorCol)
+
+	// Arrow up at row 0 stays at row 0
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	assert.Equal(t, 0, m.cursorRow)
+}
+
+func TestNotesEditor_DeleteKey(t *testing.T) {
+	m := newTestNotesModel(t)
+	note := m.character.Personality.AddNote("Test")
+	note.Content = "Hello\nWorld"
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+
+	// Move to start of first line
+	m.cursorRow = 0
+	m.cursorCol = 0
+
+	// Delete first character
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDelete})
+	assert.Equal(t, "ello", m.editorLines[0])
+
+	// Move to end of first line
+	m.cursorCol = len(m.editorLines[0])
+
+	// Delete at end of line merges with next line
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDelete})
+	assert.Equal(t, 1, len(m.editorLines))
+	assert.Equal(t, "elloWorld", m.editorLines[0])
+}
+
+func TestNotesEditor_HomeEnd(t *testing.T) {
+	m := newTestNotesModel(t)
+	note := m.character.Personality.AddNote("Test")
+	note.Content = "Hello World"
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+
+	// Cursor at end
+	assert.Equal(t, 11, m.cursorCol)
+
+	// Home goes to start
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyHome})
+	assert.Equal(t, 0, m.cursorCol)
+
+	// End goes back to end
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnd})
+	assert.Equal(t, 11, m.cursorCol)
+}
+
+func TestNotesEditor_ArrowRightWraps(t *testing.T) {
+	m := newTestNotesModel(t)
+	note := m.character.Personality.AddNote("Test")
+	note.Content = "AB\nCD"
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+
+	// Start at row 0, col 0
+	m.cursorRow = 0
+	m.cursorCol = 2 // end of "AB"
+
+	// Arrow right wraps to start of next line
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	assert.Equal(t, 1, m.cursorRow)
+	assert.Equal(t, 0, m.cursorCol)
+}
+
+func TestNotesEditor_EditorViewRendering(t *testing.T) {
+	m := newTestNotesModel(t)
+	m.width = 80
+	m.height = 24
+	note := m.character.Personality.AddNote("My Note")
+	note.Content = "Line 1\nLine 2"
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+
+	view := m.viewEditorMode()
+	assert.Contains(t, view, "My Note")
+	assert.Contains(t, view, "Line 1")
+	assert.Contains(t, view, "Esc: save & back to list")
+}
+
+func TestNotesEditor_EditorRunesDontTriggerListCommands(t *testing.T) {
+	m := newTestNotesModel(t)
+	note := m.character.Personality.AddNote("Test")
+	m.updateSortedDocs()
+	m.enterEditorModeByID(note.ID)
+
+	// Type 'a', 'd', 's', 'r' - these should insert as text, not trigger list commands
+	for _, r := range "adsr" {
+		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+	}
+	assert.Equal(t, NotesModeEditor, m.mode)
+	assert.Equal(t, "adsr", m.editorLines[0])
+	assert.False(t, m.inputMode)
+	assert.False(t, m.confirmingDelete)
 }
