@@ -9,6 +9,7 @@ import (
 	"github.com/Domo929/sheet/internal/domain"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
+	"github.com/Domo929/sheet/internal/ui/components"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -51,6 +52,10 @@ type MainSheetModel struct {
 	restHitDice    int    // Number of hit dice to spend on short rest
 	restConfirming bool   // Confirming long rest
 	restResult     string // Result summary to display
+
+	// Skill and save cursors for rolling
+	skillCursor int // 0 = Luck, 1-18 = the 18 skills (Acrobatics..Survival)
+	saveCursor  int // 0-5 = STR..CHA saving throws
 }
 
 // HPInputMode represents the current HP modification mode.
@@ -197,6 +202,9 @@ type mainSheetKeyMap struct {
 	AddXP          key.Binding
 	LevelUp        key.Binding
 	Notes          key.Binding
+	Luck           key.Binding // backtick
+	CustomRoll     key.Binding // /
+	HistoryToggle  key.Binding // H (capital)
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -293,6 +301,18 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 			key.WithKeys("n"),
 			key.WithHelp("n", "notes"),
 		),
+		Luck: key.NewBinding(
+			key.WithKeys("`"),
+			key.WithHelp("`", "luck"),
+		),
+		CustomRoll: key.NewBinding(
+			key.WithKeys("/"),
+			key.WithHelp("/", "custom roll"),
+		),
+		HistoryToggle: key.NewBinding(
+			key.WithKeys("H"),
+			key.WithHelp("H", "roll history"),
+		),
 	}
 }
 
@@ -362,6 +382,43 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			return m.handleRestInput(msg)
 		}
 
+		// Handle save navigation when Abilities/Saves are focused
+		if m.focusArea == FocusAbilitiesAndSaves {
+			switch msg.Type {
+			case tea.KeyUp:
+				if m.saveCursor > 0 {
+					m.saveCursor--
+				}
+				return m, nil
+			case tea.KeyDown:
+				if m.saveCursor < 5 {
+					m.saveCursor++
+				}
+				return m, nil
+			case tea.KeyEnter:
+				return m.handleSaveRoll()
+			}
+		}
+
+		// Handle skill navigation when Skills are focused
+		if m.focusArea == FocusSkills {
+			switch msg.Type {
+			case tea.KeyUp:
+				if m.skillCursor > 0 {
+					m.skillCursor--
+				}
+				return m, nil
+			case tea.KeyDown:
+				// 0 = Luck, 1-18 = 18 skills
+				if m.skillCursor < 18 {
+					m.skillCursor++
+				}
+				return m, nil
+			case tea.KeyEnter:
+				return m.handleSkillRoll()
+			}
+		}
+
 		// Handle action navigation when Actions are focused
 		if m.focusArea == FocusActions {
 			switch msg.Type {
@@ -409,6 +466,17 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			return m, func() tea.Msg { return OpenCharacterInfoMsg{} }
 		case key.Matches(msg, m.keys.Notes):
 			return m, func() tea.Msg { return OpenNotesMsg{ReturnTo: "sheet"} }
+		case key.Matches(msg, m.keys.Luck):
+			// Force luck roll regardless of current focus
+			saved := m.skillCursor
+			m.skillCursor = 0
+			result, cmd := m.handleSkillRoll()
+			result.skillCursor = saved
+			return result, cmd
+		case key.Matches(msg, m.keys.CustomRoll):
+			return m, func() tea.Msg { return components.OpenCustomRollMsg{} }
+		case key.Matches(msg, m.keys.HistoryToggle):
+			return m, func() tea.Msg { return components.ToggleRollHistoryMsg{} }
 		case key.Matches(msg, m.keys.Combat):
 			m.statusMessage = "Combat tracker coming soon..."
 			return m, nil
@@ -1178,7 +1246,7 @@ func (m *MainSheetModel) renderAbilitiesAndSaves(width int) string {
 	headerLine := fmt.Sprintf("%-12s %5s %4s %5s", "Ability", "Score", "Mod", "Save")
 	lines = append(lines, headerStyle.Render(headerLine))
 
-	for _, a := range abilities {
+	for i, a := range abilities {
 		mod := a.score.Modifier()
 		modStr := formatModifier(mod)
 		saveMod := char.GetSavingThrowModifier(a.ability)
@@ -1189,8 +1257,14 @@ func (m *MainSheetModel) renderAbilitiesAndSaves(width int) string {
 			icon = profIcon
 		}
 
-		// Format with fixed widths: name(12) score(5) mod(4) icon+save(5)
-		line := fmt.Sprintf("%-12s %5d %4s %s%4s",
+		cursor := "  "
+		if m.focusArea == FocusAbilitiesAndSaves && m.saveCursor == i {
+			cursor = "> "
+		}
+
+		// Format with fixed widths: cursor name(12) score(5) mod(4) icon+save(5)
+		line := fmt.Sprintf("%s%-12s %5d %4s %s%4s",
+			cursor,
 			a.name,
 			a.score.Total(),
 			modStr,
@@ -1362,18 +1436,28 @@ func (m *MainSheetModel) renderSkills(width int) string {
 	var lines []string
 	lines = append(lines, titleStyle.Render("Skills"))
 
+	// Add Luck entry at top
+	luckStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("99"))
+	luckCursor := "  "
+	if m.focusArea == FocusSkills && m.skillCursor == 0 {
+		luckCursor = "> "
+	}
+	luckLine := luckCursor + luckStyle.Render("🎲 Luck")
+	lines = append(lines, luckLine)
+	lines = append(lines, "") // separator
+
 	// Passive skills - Perception, Investigation, Insight (aligned numbers)
 	passivePerception := 10 + char.GetSkillModifier(models.SkillPerception)
 	passiveInvestigation := 10 + char.GetSkillModifier(models.SkillInvestigation)
 	passiveInsight := 10 + char.GetSkillModifier(models.SkillInsight)
-	
+
 	// Format passives with plain strings first
 	lines = append(lines, labelStyle.Render(fmt.Sprintf("Passive Perception:    %2d", passivePerception)))
 	lines = append(lines, labelStyle.Render(fmt.Sprintf("Passive Investigation: %2d", passiveInvestigation)))
 	lines = append(lines, labelStyle.Render(fmt.Sprintf("Passive Insight:       %2d", passiveInsight)))
 	lines = append(lines, "")
 
-	for _, skillName := range models.AllSkills() {
+	for i, skillName := range models.AllSkills() {
 		skill := char.Skills.Get(skillName)
 		ability := models.GetSkillAbility(skillName)
 		mod := char.GetSkillModifier(skillName)
@@ -1389,8 +1473,14 @@ func (m *MainSheetModel) renderSkills(width int) string {
 		displayName := skillNames[skillName]
 		abilityAbbr := skillAbilityAbbr[ability]
 
-		// Format: icon name modifier (ability) - modifier between name and ability
-		line := fmt.Sprintf("%s %-15s %3s %s",
+		cursor := "  "
+		if m.focusArea == FocusSkills && m.skillCursor == i+1 {
+			cursor = "> "
+		}
+
+		// Format: cursor icon name modifier (ability)
+		line := fmt.Sprintf("%s%s %-15s %3s %s",
+			cursor,
 			icon,
 			displayName,
 			modStr,
@@ -2409,7 +2499,7 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Foreground(lipgloss.Color("244")).
 		Width(width)
 
-	help := "tab/shift+tab: navigate panels • i: inventory • s: spellbook • c: char info • n: notes • x: add XP • L: level up • r: rest • esc: back • q: quit"
+	help := "tab: panels • i: inventory • s: spellbook • c: char info • n: notes • /: roll dice • `: luck • H: history • r: rest • esc: back • q: quit"
 
 	// Show condition selection if in condition mode
 	if m.conditionMode {
@@ -2764,6 +2854,28 @@ func (m *MainSheetModel) getAvailableCastLevels(spellLevel int) []int {
 	}
 
 	return available
+}
+
+func (m *MainSheetModel) handleSkillRoll() (*MainSheetModel, tea.Cmd) {
+	if m.skillCursor == 0 {
+		// Luck roll
+		m.statusMessage = "Luck roll (dice integration coming...)"
+		return m, nil
+	}
+	skills := models.AllSkills()
+	if m.skillCursor-1 < len(skills) {
+		skillName := skills[m.skillCursor-1]
+		m.statusMessage = fmt.Sprintf("Roll %s check (dice integration coming...)", skillName)
+	}
+	return m, nil
+}
+
+func (m *MainSheetModel) handleSaveRoll() (*MainSheetModel, tea.Cmd) {
+	abilityNames := []string{"STR", "DEX", "CON", "INT", "WIS", "CHA"}
+	if m.saveCursor < len(abilityNames) {
+		m.statusMessage = fmt.Sprintf("Roll %s saving throw (dice integration coming...)", abilityNames[m.saveCursor])
+	}
+	return m, nil
 }
 
 // formatModifier formats an integer as a modifier string (e.g., +2 or -1).
