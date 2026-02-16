@@ -671,25 +671,50 @@ func (m *MainSheetModel) handleActionSelection() (*MainSheetModel, tea.Cmd) {
 		return m, nil
 
 	case ActionItemWeapon:
-		// For weapons, show detailed attack info
 		if selectedItem.Weapon != nil {
 			w := selectedItem.Weapon
 			attackBonus := m.getWeaponAttackBonus(*w)
 			damageMod := m.getWeaponDamageMod(*w)
 
-			damageStr := w.Damage
-			if damageMod != 0 {
-				damageStr = fmt.Sprintf("%s%s", w.Damage, formatModifier(damageMod))
+			damageExpr := w.Damage
+			if damageExpr == "" {
+				damageExpr = "1d4" // fallback
 			}
-			damageStr += " " + string(w.DamageType)
 
-			m.statusMessage = fmt.Sprintf("⚔ %s: Hit %s, Dmg %s", w.Name, formatModifier(attackBonus), damageStr)
-		} else {
-			// Unarmed strike
-			m.statusMessage = fmt.Sprintf("⚔ Unarmed Strike: Hit %s, Dmg 1 bludgeoning",
-				formatModifier(m.character.AbilityScores.Strength.Modifier()))
+			return m, func() tea.Msg {
+				return components.RequestRollMsg{
+					Label:     w.Name + " Attack",
+					DiceExpr:  "1d20",
+					Modifier:  attackBonus,
+					RollType:  components.RollAttack,
+					AdvPrompt: true,
+					FollowUp: &components.RequestRollMsg{
+						Label:    w.Name + " Damage (" + string(w.DamageType) + ")",
+						DiceExpr: damageExpr,
+						Modifier: damageMod,
+						RollType: components.RollDamage,
+					},
+				}
+			}
 		}
-		return m, nil
+		// Unarmed strike
+		strMod := m.character.AbilityScores.Strength.Modifier()
+		profBonus := m.character.GetProficiencyBonus()
+		return m, func() tea.Msg {
+			return components.RequestRollMsg{
+				Label:     "Unarmed Strike Attack",
+				DiceExpr:  "1d20",
+				Modifier:  strMod + profBonus,
+				RollType:  components.RollAttack,
+				AdvPrompt: true,
+				FollowUp: &components.RequestRollMsg{
+					Label:    "Unarmed Strike Damage (bludgeoning)",
+					DiceExpr: "1d1",
+					Modifier: strMod,
+					RollType: components.RollDamage,
+				},
+			}
+		}
 
 	case ActionItemStandard:
 		// For standard actions, show the description
