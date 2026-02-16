@@ -52,6 +52,7 @@ type MainSheetModel struct {
 	restHitDice    int    // Number of hit dice to spend on short rest
 	restConfirming bool   // Confirming long rest
 	restResult     string // Result summary to display
+	restRollPrompt bool   // true when showing roll/average prompt
 
 	// Skill and save cursors for rolling
 	skillCursor int // 0 = Luck, 1-18 = the 18 skills (Acrobatics..Survival)
@@ -357,6 +358,41 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		return m, nil
+
+	case components.RollCompleteMsg:
+		if msg.Entry.RollType == components.RollHitDice {
+			// Apply healing from hit dice roll
+			hp := &m.character.CombatStats.HitPoints
+			oldHP := hp.Current
+			healing := msg.Entry.Total
+			if healing < 1 {
+				healing = 1
+			}
+			hp.Heal(healing)
+
+			// Call short rest for other effects (warlock slots, etc)
+			m.character.ShortRest()
+			m.saveCharacter()
+
+			// Build result summary
+			var result strings.Builder
+			result.WriteString("SHORT REST COMPLETE\n\n")
+			result.WriteString(fmt.Sprintf("Hit Dice Rolled: %s\n", msg.Entry.Expression))
+			result.WriteString(fmt.Sprintf("Individual Rolls: %v\n", msg.Entry.Rolls))
+			conMod := m.character.AbilityScores.Constitution.Modifier()
+			result.WriteString(fmt.Sprintf("CON Modifier: %+d per die\n\n", conMod))
+			result.WriteString(fmt.Sprintf("Total Healing: %d HP\n", healing))
+			result.WriteString(fmt.Sprintf("HP: %d → %d\n", oldHP, hp.Current))
+			result.WriteString(fmt.Sprintf("\nHit Dice Remaining: %d/%d",
+				m.character.CombatStats.HitDice.Remaining,
+				m.character.CombatStats.HitDice.Total))
+
+			m.restResult = result.String()
+			m.restMode = RestModeResult
+			m.restHitDice = 0
+			return m, nil
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -939,10 +975,33 @@ func (m *MainSheetModel) handleRestInput(msg tea.KeyMsg) (*MainSheetModel, tea.C
 			}
 			return m, nil
 		case "enter":
-			// Perform short rest with hit dice spending
-			m.performShortRest()
-			return m, nil
+			if m.restHitDice > 0 && !m.restRollPrompt {
+				// Show roll/average prompt before performing rest
+				m.restRollPrompt = true
+				return m, nil
+			} else if m.restHitDice == 0 {
+				// No dice to spend, just do the rest
+				m.performShortRest()
+				return m, nil
+			}
+		case "r":
+			if m.restRollPrompt {
+				// User chose to roll
+				m.restRollPrompt = false
+				return m.performShortRestRolling()
+			}
+		case "a":
+			if m.restRollPrompt {
+				// User chose average
+				m.restRollPrompt = false
+				m.performShortRest() // existing average-based method
+				return m, nil
+			}
 		case "esc":
+			if m.restRollPrompt {
+				m.restRollPrompt = false
+				return m, nil
+			}
 			m.restMode = RestModeMenu
 			m.restHitDice = 0
 			return m, nil
@@ -1024,6 +1083,44 @@ func (m *MainSheetModel) performShortRest() {
 
 	m.restResult = result.String()
 	m.restMode = RestModeResult
+}
+
+// performShortRestRolling executes a short rest with actual dice rolling for hit dice.
+func (m *MainSheetModel) performShortRestRolling() (*MainSheetModel, tea.Cmd) {
+	hd := &m.character.CombatStats.HitDice
+	conMod := m.character.AbilityScores.Constitution.Modifier()
+
+	numDice := m.restHitDice
+	if numDice > hd.Remaining {
+		numDice = hd.Remaining
+	}
+	if numDice <= 0 {
+		m.performShortRest() // fallback to average
+		return m, nil
+	}
+
+	// Consume hit dice now
+	for i := 0; i < numDice; i++ {
+		hd.Use()
+	}
+
+	// Build dice expression: e.g., "3d8" for 3 hit dice of d8
+	diceExpr := fmt.Sprintf("%dd%d", numDice, hd.DieType)
+
+	// Total modifier is CON mod per die
+	totalMod := conMod * numDice
+
+	// Save the number of dice being rolled for the result handler
+	m.restHitDice = numDice // keep track for result processing
+
+	return m, func() tea.Msg {
+		return components.RequestRollMsg{
+			Label:    fmt.Sprintf("Short Rest (%dd%d)", numDice, hd.DieType),
+			DiceExpr: diceExpr,
+			Modifier: totalMod,
+			RollType: components.RollHitDice,
+		}
+	}
 }
 
 // performLongRest executes a long rest.
@@ -2261,7 +2358,14 @@ func (m *MainSheetModel) renderRestOverlay(width int) string {
 			))
 		}
 		lines = append(lines, "")
-		lines = append(lines, dimStyle.Render("↑/↓: Adjust hit dice • Enter: Confirm • Esc: Back"))
+		if m.restRollPrompt {
+			promptStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
+			lines = append(lines, promptStyle.Render("Roll or Take Average?"))
+			lines = append(lines, "")
+			lines = append(lines, valueStyle.Render("[R]oll")+"  "+valueStyle.Render("[A]verage")+"  "+dimStyle.Render("Esc: cancel"))
+		} else {
+			lines = append(lines, dimStyle.Render("↑/↓: Adjust hit dice • Enter: Confirm • Esc: Back"))
+		}
 
 	case RestModeLong:
 		hp := m.character.CombatStats.HitPoints

@@ -574,6 +574,12 @@ func TestShortRestExecution(t *testing.T) {
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp}) // 2 hit dice
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
+	// Now we should be at the roll/average prompt
+	assert.True(t, model.restRollPrompt, "expected roll prompt to be shown")
+
+	// Choose average
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+
 	// After confirming, rest transitions to result screen first
 	assert.Equal(t, RestModeResult, model.restMode, "expected rest mode RestModeResult after confirming")
 
