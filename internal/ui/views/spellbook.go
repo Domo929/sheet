@@ -8,6 +8,7 @@ import (
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
+	"github.com/Domo929/sheet/internal/ui/components"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -224,7 +225,12 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 					}
 					// Cast with selected slot level
 					m.mode = ModeSpellList
-					return m.castSpellAtLevel(m.castingSpell, selectedLevel), m.saveCharacter()
+					result, rollCmd := m.castSpellAtLevel(m.castingSpell, selectedLevel)
+					saveCmd := m.saveCharacter()
+					if rollCmd != nil {
+						return result, tea.Batch(saveCmd, rollCmd)
+					}
+					return result, saveCmd
 				} else {
 					// No slots available (shouldn't reach here)
 					m.statusMessage = "No spell slots available"
@@ -1356,9 +1362,10 @@ func (m *SpellbookModel) getAvailableCastLevels(spellLevel int) []int {
 }
 
 // castSpellAtLevel casts the spell using the specified slot level.
-func (m *SpellbookModel) castSpellAtLevel(spell *models.KnownSpell, slotLevel int) *SpellbookModel {
+// Returns the updated model and an optional tea.Cmd for dice rolls.
+func (m *SpellbookModel) castSpellAtLevel(spell *models.KnownSpell, slotLevel int) (*SpellbookModel, tea.Cmd) {
 	if m.character == nil || m.character.Spellcasting == nil {
-		return m
+		return m, nil
 	}
 
 	sc := m.character.Spellcasting
@@ -1374,7 +1381,7 @@ func (m *SpellbookModel) castSpellAtLevel(spell *models.KnownSpell, slotLevel in
 			m.mode = ModeSpellList
 			m.castingSpell = nil
 			m.availableCastLevels = nil
-			return m
+			return m, m.spellRollCmd(spell)
 		}
 	}
 
@@ -1388,11 +1395,63 @@ func (m *SpellbookModel) castSpellAtLevel(spell *models.KnownSpell, slotLevel in
 		m.mode = ModeSpellList
 		m.castingSpell = nil
 		m.availableCastLevels = nil
-		return m
+		return m, m.spellRollCmd(spell)
 	}
 
 	m.statusMessage = fmt.Sprintf("Failed to use spell slot")
-	return m
+	return m, nil
+}
+
+// spellRollCmd returns a tea.Cmd for dice rolls triggered by casting a damage spell.
+// It looks up full spell data from the spell database to get damage info.
+func (m *SpellbookModel) spellRollCmd(spell *models.KnownSpell) tea.Cmd {
+	// Look up full spell data for damage info
+	var fullSpell *data.SpellData
+	if m.spellDatabase != nil {
+		for i := range m.spellDatabase.Spells {
+			if m.spellDatabase.Spells[i].Name == spell.Name {
+				fullSpell = &m.spellDatabase.Spells[i]
+				break
+			}
+		}
+	}
+
+	if fullSpell == nil || fullSpell.Damage == "" {
+		return nil
+	}
+
+	if fullSpell.SavingThrow == "" {
+		// Spell attack roll + damage follow-up
+		attackBonus := m.character.GetSpellAttackBonus()
+		damageExpr := fullSpell.Damage
+		return func() tea.Msg {
+			return components.RequestRollMsg{
+				Label:     fullSpell.Name + " Attack",
+				DiceExpr:  "1d20",
+				Modifier:  attackBonus,
+				RollType:  components.RollAttack,
+				AdvPrompt: true,
+				FollowUp: &components.RequestRollMsg{
+					Label:    fullSpell.Name + " Damage (" + string(fullSpell.DamageType) + ")",
+					DiceExpr: damageExpr,
+					Modifier: 0,
+					RollType: components.RollDamage,
+				},
+			}
+		}
+	}
+
+	// Save-based spell — just roll damage, show DC in label
+	saveDC := m.getSpellSaveDC()
+	damageExpr := fullSpell.Damage
+	return func() tea.Msg {
+		return components.RequestRollMsg{
+			Label:    fmt.Sprintf("%s Damage (DC %d %s)", fullSpell.Name, saveDC, fullSpell.SavingThrow),
+			DiceExpr: damageExpr,
+			Modifier: 0,
+			RollType: components.RollDamage,
+		}
+	}
 }
 
 // handleCastLevelInput handles keyboard input in cast level selection mode.
@@ -1408,7 +1467,12 @@ func (m *SpellbookModel) handleCastLevelInput(msg tea.KeyMsg) (*SpellbookModel, 
 	case "enter":
 		if m.castingSpell != nil && len(m.availableCastLevels) > 0 && m.castLevelCursor < len(m.availableCastLevels) {
 			selectedLevel := m.availableCastLevels[m.castLevelCursor]
-			return m.castSpellAtLevel(m.castingSpell, selectedLevel), m.saveCharacter()
+			result, rollCmd := m.castSpellAtLevel(m.castingSpell, selectedLevel)
+			saveCmd := m.saveCharacter()
+			if rollCmd != nil {
+				return result, tea.Batch(saveCmd, rollCmd)
+			}
+			return result, saveCmd
 		}
 		return m, nil
 

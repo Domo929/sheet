@@ -882,8 +882,8 @@ func (m *MainSheetModel) handleCastingInput(msg tea.KeyMsg) (*MainSheetModel, te
 		// Cast with spell slot
 		if len(m.availableCastLevels) > 0 && m.castLevelCursor < len(m.availableCastLevels) {
 			selectedLevel := m.availableCastLevels[m.castLevelCursor]
-			m.castSpellAtLevel(m.castingSpell, selectedLevel)
-			return m, nil
+			cmd := m.castSpellAtLevel(m.castingSpell, selectedLevel)
+			return m, cmd
 		}
 
 		return m, nil
@@ -2504,9 +2504,10 @@ func (m *MainSheetModel) renderCastConfirmationModal() string {
 }
 
 // castSpellAtLevel casts a spell at the given slot level, consuming the appropriate resource.
-func (m *MainSheetModel) castSpellAtLevel(spell *data.SpellData, slotLevel int) {
+// Returns a tea.Cmd to trigger dice rolls for spells that deal damage.
+func (m *MainSheetModel) castSpellAtLevel(spell *data.SpellData, slotLevel int) tea.Cmd {
 	if m.character == nil || m.character.Spellcasting == nil {
-		return
+		return nil
 	}
 
 	sc := m.character.Spellcasting
@@ -2522,7 +2523,7 @@ func (m *MainSheetModel) castSpellAtLevel(spell *data.SpellData, slotLevel int) 
 			m.castingSpell = nil
 			m.availableCastLevels = nil
 			m.saveCharacter()
-			return
+			return m.spellRollCmd(spell)
 		}
 	}
 
@@ -2536,10 +2537,51 @@ func (m *MainSheetModel) castSpellAtLevel(spell *data.SpellData, slotLevel int) 
 		m.castingSpell = nil
 		m.availableCastLevels = nil
 		m.saveCharacter()
-		return
+		return m.spellRollCmd(spell)
 	}
 
 	m.statusMessage = "Failed to use spell slot"
+	return nil
+}
+
+// spellRollCmd returns a tea.Cmd for dice rolls triggered by casting a damage spell.
+func (m *MainSheetModel) spellRollCmd(spell *data.SpellData) tea.Cmd {
+	if spell.Damage == "" {
+		return nil
+	}
+
+	if spell.SavingThrow == "" {
+		// Spell attack roll + damage follow-up
+		attackBonus := m.character.GetSpellAttackBonus()
+		damageExpr := spell.Damage
+		return func() tea.Msg {
+			return components.RequestRollMsg{
+				Label:     spell.Name + " Attack",
+				DiceExpr:  "1d20",
+				Modifier:  attackBonus,
+				RollType:  components.RollAttack,
+				AdvPrompt: true,
+				FollowUp: &components.RequestRollMsg{
+					Label:    spell.Name + " Damage (" + string(spell.DamageType) + ")",
+					DiceExpr: damageExpr,
+					Modifier: 0,
+					RollType: components.RollDamage,
+				},
+			}
+		}
+	}
+
+	// Save-based spell — just roll damage, show DC in label
+	saveDC := m.getSpellSaveDC()
+	damageExpr := spell.Damage
+	return func() tea.Msg {
+		return components.RequestRollMsg{
+			Label:    fmt.Sprintf("%s Damage (DC %d %s)", spell.Name, saveDC, spell.SavingThrow),
+			DiceExpr: damageExpr,
+			Modifier: 0,
+			RollType: components.RollDamage,
+		}
+	}
 }
 
 func (m *MainSheetModel) renderFooter(width int) string {
