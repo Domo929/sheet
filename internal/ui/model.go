@@ -4,8 +4,10 @@ import (
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
+	"github.com/Domo929/sheet/internal/ui/components"
 	"github.com/Domo929/sheet/internal/ui/views"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // ViewType represents the different views in the application.
@@ -44,6 +46,10 @@ type Model struct {
 	levelUpModel            *views.LevelUpModel
 	notesEditorModel        *views.NotesEditorModel
 	characterInfoModel      *views.CharacterInfoModel
+
+	// Roll engine and history (shared across views)
+	rollEngine  *components.RollEngine
+	rollHistory *components.RollHistory
 }
 
 // NewModel creates a new application model.
@@ -65,6 +71,8 @@ func NewModel() (Model, error) {
 		storage:                 store,
 		loader:                  loader,
 		characterSelectionModel: charSelectionModel,
+		rollEngine:              components.NewRollEngine(),
+		rollHistory:             components.NewRollHistory(),
 	}, nil
 }
 
@@ -78,6 +86,14 @@ func (m Model) Init() tea.Cmd {
 
 // Update handles messages and updates the model (required by Bubble Tea).
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// If roll engine is active, it handles all keys
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		if m.rollEngine != nil && m.rollEngine.IsActive() {
+			cmd := m.rollEngine.Update(keyMsg)
+			return m, cmd
+		}
+	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -256,6 +272,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ErrorMsg:
 		m.err = msg.Err
 		return m, nil
+
+	case components.RequestRollMsg:
+		// Forward to roll engine
+		cmd := m.rollEngine.Update(msg)
+		return m, cmd
+
+	case components.RollCompleteMsg:
+		// Roll finished — add to history, then let views handle
+		if m.rollHistory != nil {
+			m.rollHistory.Add(msg.Entry)
+		}
+		return m.updateCurrentView(msg)
+
+	case components.RollTickMsg:
+		// Animation tick — forward to roll engine
+		cmd := m.rollEngine.Update(msg)
+		return m, cmd
+
+	case components.OpenCustomRollMsg:
+		if m.rollEngine != nil {
+			m.rollEngine.OpenCustomRoll()
+		}
+		return m, nil
+
+	case components.ToggleRollHistoryMsg:
+		if m.rollHistory != nil {
+			m.rollHistory.Toggle()
+		}
+		return m, nil
 	}
 
 	// Route to appropriate view handler
@@ -348,11 +393,11 @@ func (m Model) View() string {
 	case ViewCharacterCreation:
 		return m.renderCharacterCreation()
 	case ViewMainSheet:
-		return m.renderMainSheet()
+		return m.compositeWithRollUI(m.renderMainSheet())
 	case ViewInventory:
 		return m.renderInventory()
 	case ViewSpellbook:
-		return m.renderSpellbook()
+		return m.compositeWithRollUI(m.renderSpellbook())
 	case ViewCharacterInfo:
 		return m.renderCharacterInfo()
 	case ViewLevelUp:
@@ -366,6 +411,25 @@ func (m Model) View() string {
 	default:
 		return "Unknown view"
 	}
+}
+
+// compositeWithRollUI adds the roll history column and roll engine overlay to view content.
+func (m Model) compositeWithRollUI(viewContent string) string {
+	// Add roll history column if visible
+	if m.rollHistory != nil && m.rollHistory.Visible && m.width >= 80 {
+		historyWidth := 27
+		historyCol := m.rollHistory.Render(historyWidth, m.height)
+		if historyCol != "" {
+			viewContent = lipgloss.JoinHorizontal(lipgloss.Top, viewContent, historyCol)
+		}
+	}
+
+	// Overlay roll engine modal if active
+	if m.rollEngine != nil && m.rollEngine.IsActive() {
+		return m.rollEngine.View(m.width, m.height)
+	}
+
+	return viewContent
 }
 
 // View rendering stubs (will be implemented in future phases)
