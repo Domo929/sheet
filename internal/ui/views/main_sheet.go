@@ -56,6 +56,10 @@ type MainSheetModel struct {
 	// Skill and save cursors for rolling
 	skillCursor int // 0 = Luck, 1-18 = the 18 skills (Acrobatics..Survival)
 	saveCursor  int // 0-5 = STR..CHA saving throws
+
+	// Roll history layout integration
+	rollHistoryVisible bool
+	rollHistoryWidth   int // width reserved for history column (0 if hidden)
 }
 
 // HPInputMode represents the current HP modification mode.
@@ -328,6 +332,17 @@ func NewMainSheetModel(character *models.Character, storage *storage.CharacterSt
 		spellDatabase: spellDB,
 		focusArea:     FocusAbilitiesAndSaves,
 		keys:          defaultMainSheetKeyMap(),
+	}
+}
+
+// SetRollHistoryState updates the roll history layout fields so View() can
+// shrink its right column to make room for the history panel.
+func (m *MainSheetModel) SetRollHistoryState(visible bool, width int) {
+	m.rollHistoryVisible = visible
+	if visible {
+		m.rollHistoryWidth = width
+	} else {
+		m.rollHistoryWidth = 0
 	}
 }
 
@@ -1055,7 +1070,11 @@ func (m *MainSheetModel) View() string {
 	// Skills: icon (1) + mod (4) + name (15) + ability (5) + padding/border (6) = ~33
 	// Use the wider of the two, plus a small margin
 	leftWidth := 38
-	rightWidth := width - leftWidth - 4  // 4 for gap between columns
+	historyReserved := 0
+	if m.rollHistoryVisible {
+		historyReserved = m.rollHistoryWidth
+	}
+	rightWidth := width - leftWidth - 4 - historyReserved // 4 for gap between columns
 
 	// Ensure minimum width for right column
 	if rightWidth < 45 {

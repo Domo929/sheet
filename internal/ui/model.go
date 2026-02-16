@@ -98,6 +98,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		// Update main sheet's roll history layout state
+		if m.mainSheetModel != nil && m.rollHistory != nil {
+			historyWidth := 0
+			if m.rollHistory.Visible && m.width >= 80 {
+				historyWidth = 27
+			}
+			m.mainSheetModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
+		}
 		// Forward to current view
 		return m.updateCurrentView(msg)
 
@@ -299,6 +307,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case components.ToggleRollHistoryMsg:
 		if m.rollHistory != nil {
 			m.rollHistory.Toggle()
+			// Update main sheet's layout to accommodate history column
+			if m.mainSheetModel != nil {
+				historyWidth := 0
+				if m.rollHistory.Visible && m.width >= 80 {
+					historyWidth = 27
+				}
+				m.mainSheetModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
+			}
 		}
 		return m, nil
 	}
