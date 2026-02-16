@@ -106,6 +106,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.mainSheetModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
 		}
+		// Update spellbook's roll history layout state
+		if m.spellbookModel != nil && m.rollHistory != nil {
+			historyWidth := 0
+			if m.rollHistory.Visible && m.width >= 80 {
+				historyWidth = 27
+			}
+			m.spellbookModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
+		}
 		// Forward to current view
 		return m.updateCurrentView(msg)
 
@@ -314,6 +322,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					historyWidth = 27
 				}
 				m.mainSheetModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
+			}
+			// Update spellbook's layout to accommodate history column
+			if m.spellbookModel != nil {
+				historyWidth := 0
+				if m.rollHistory.Visible && m.width >= 80 {
+					historyWidth = 27
+				}
+				m.spellbookModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
 			}
 		}
 		return m, nil

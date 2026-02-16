@@ -62,22 +62,28 @@ type SpellbookModel struct {
 	castLevelCursor   int                // Cursor for slot level selection
 	availableCastLevels []int            // Available slot levels for upcasting
 
+	// Roll history layout
+	rollHistoryVisible bool
+	rollHistoryWidth   int
+
 	// Spell data cache
 	spellDatabase *data.SpellDatabase
 }
 
 type spellbookKeyMap struct {
-	Quit      key.Binding
-	ForceQuit key.Binding
-	Up        key.Binding
-	Down      key.Binding
-	Enter     key.Binding
-	Back      key.Binding
-	Prepare   key.Binding
-	Cast      key.Binding
-	Add       key.Binding
-	Remove    key.Binding
-	Filter    key.Binding
+	Quit          key.Binding
+	ForceQuit     key.Binding
+	Up            key.Binding
+	Down          key.Binding
+	Enter         key.Binding
+	Back          key.Binding
+	Prepare       key.Binding
+	Cast          key.Binding
+	Add           key.Binding
+	Remove        key.Binding
+	Filter        key.Binding
+	CustomRoll    key.Binding
+	HistoryToggle key.Binding
 }
 
 func defaultSpellbookKeyMap() spellbookKeyMap {
@@ -92,8 +98,16 @@ func defaultSpellbookKeyMap() spellbookKeyMap {
 		Cast:      key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "cast spell")),
 		Add:       key.NewBinding(key.WithKeys("a", "+"), key.WithHelp("a/+", "add spell")),
 		Remove:    key.NewBinding(key.WithKeys("x", "delete"), key.WithHelp("x", "remove spell")),
-		Filter:    key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "filter level")),
+		Filter:        key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "filter level")),
+		CustomRoll:    key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "roll dice")),
+		HistoryToggle: key.NewBinding(key.WithKeys("H"), key.WithHelp("H", "history")),
 	}
+}
+
+// SetRollHistoryState updates the spellbook's knowledge of roll history visibility.
+func (m *SpellbookModel) SetRollHistoryState(visible bool, width int) {
+	m.rollHistoryVisible = visible
+	m.rollHistoryWidth = width
 }
 
 // NewSpellbookModel creates a new spellbook model.
@@ -311,6 +325,10 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 			return m, nil
 		case key.Matches(msg, m.keys.Filter):
 			return m.handleFilterToggle(), nil
+		case key.Matches(msg, m.keys.CustomRoll):
+			return m, func() tea.Msg { return components.OpenCustomRollMsg{} }
+		case key.Matches(msg, m.keys.HistoryToggle):
+			return m, func() tea.Msg { return components.ToggleRollHistoryMsg{} }
 		}
 	}
 
@@ -693,6 +711,8 @@ func (m *SpellbookModel) renderFooter() string {
 
 	helps = append(helps, "a: add spell")
 	helps = append(helps, "f: filter")
+	helps = append(helps, "/: roll dice")
+	helps = append(helps, "H: history")
 	helps = append(helps, "q: quit")
 
 	return lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(strings.Join(helps, " | "))
