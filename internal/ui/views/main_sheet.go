@@ -482,12 +482,16 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Notes):
 			return m, func() tea.Msg { return OpenNotesMsg{ReturnTo: "sheet"} }
 		case key.Matches(msg, m.keys.Luck):
-			// Force luck roll regardless of current focus
-			saved := m.skillCursor
-			m.skillCursor = 0
-			result, cmd := m.handleSkillRoll()
-			result.skillCursor = saved
-			return result, cmd
+			// Force luck roll regardless of current skill cursor
+			return m, func() tea.Msg {
+				return components.RequestRollMsg{
+					Label:     "Luck",
+					DiceExpr:  "1d20",
+					Modifier:  0,
+					RollType:  components.RollLuck,
+					AdvPrompt: false,
+				}
+			}
 		case key.Matches(msg, m.keys.CustomRoll):
 			return m, func() tea.Msg { return components.OpenCustomRollMsg{} }
 		case key.Matches(msg, m.keys.HistoryToggle):
@@ -2877,24 +2881,59 @@ func (m *MainSheetModel) getAvailableCastLevels(spellLevel int) []int {
 
 func (m *MainSheetModel) handleSkillRoll() (*MainSheetModel, tea.Cmd) {
 	if m.skillCursor == 0 {
-		// Luck roll
-		m.statusMessage = "Luck roll (dice integration coming...)"
+		// Luck: d20, no modifier, no advantage prompt
+		return m, func() tea.Msg {
+			return components.RequestRollMsg{
+				Label:     "Luck",
+				DiceExpr:  "1d20",
+				Modifier:  0,
+				RollType:  components.RollLuck,
+				AdvPrompt: false,
+			}
+		}
+	}
+
+	skills := models.AllSkills()
+	if m.skillCursor-1 >= len(skills) {
 		return m, nil
 	}
-	skills := models.AllSkills()
-	if m.skillCursor-1 < len(skills) {
-		skillName := skills[m.skillCursor-1]
-		m.statusMessage = fmt.Sprintf("Roll %s check (dice integration coming...)", skillName)
+	skillName := skills[m.skillCursor-1]
+	mod := m.character.GetSkillModifier(skillName)
+
+	return m, func() tea.Msg {
+		return components.RequestRollMsg{
+			Label:     string(skillName) + " Check",
+			DiceExpr:  "1d20",
+			Modifier:  mod,
+			RollType:  components.RollSkillCheck,
+			AdvPrompt: true,
+		}
 	}
-	return m, nil
 }
 
 func (m *MainSheetModel) handleSaveRoll() (*MainSheetModel, tea.Cmd) {
-	abilityNames := []string{"STR", "DEX", "CON", "INT", "WIS", "CHA"}
-	if m.saveCursor < len(abilityNames) {
-		m.statusMessage = fmt.Sprintf("Roll %s saving throw (dice integration coming...)", abilityNames[m.saveCursor])
+	abilities := []models.Ability{
+		models.AbilityStrength, models.AbilityDexterity, models.AbilityConstitution,
+		models.AbilityIntelligence, models.AbilityWisdom, models.AbilityCharisma,
 	}
-	return m, nil
+	abilityNames := []string{"STR", "DEX", "CON", "INT", "WIS", "CHA"}
+
+	if m.saveCursor >= len(abilities) {
+		return m, nil
+	}
+
+	ability := abilities[m.saveCursor]
+	mod := m.character.GetSavingThrowModifier(ability)
+
+	return m, func() tea.Msg {
+		return components.RequestRollMsg{
+			Label:     abilityNames[m.saveCursor] + " Saving Throw",
+			DiceExpr:  "1d20",
+			Modifier:  mod,
+			RollType:  components.RollSavingThrow,
+			AdvPrompt: true,
+		}
+	}
 }
 
 // formatModifier formats an integer as a modifier string (e.g., +2 or -1).
