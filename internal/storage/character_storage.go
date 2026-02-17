@@ -72,7 +72,7 @@ func (cs *CharacterStorage) getCharacterPath(characterName string) string {
 	return filepath.Join(cs.baseDir, filename)
 }
 
-// Save saves a character to disk.
+// Save saves a character to disk using atomic write (temp file + rename).
 // Returns the path where the character was saved.
 func (cs *CharacterStorage) Save(character *models.Character) (string, error) {
 	if character == nil {
@@ -85,16 +85,35 @@ func (cs *CharacterStorage) Save(character *models.Character) (string, error) {
 
 	path := cs.getCharacterPath(character.Info.Name)
 
-	// Create file
-	file, err := os.Create(path)
+	// Write to a unique temp file in the same directory to avoid collisions
+	file, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".tmp.*")
 	if err != nil {
-		return "", fmt.Errorf("failed to create character file: %w", err)
+		return "", fmt.Errorf("failed to create temp character file: %w", err)
 	}
-	defer file.Close()
+	tempPath := file.Name()
 
-	// Write character to file using encoder
 	if err := character.WriteTo(file); err != nil {
+		file.Close()
+		os.Remove(tempPath)
 		return "", fmt.Errorf("failed to write character: %w", err)
+	}
+
+	// Sync to ensure data is flushed to disk before rename
+	if err := file.Sync(); err != nil {
+		file.Close()
+		os.Remove(tempPath)
+		return "", fmt.Errorf("failed to sync temp character file: %w", err)
+	}
+
+	if err := file.Close(); err != nil {
+		os.Remove(tempPath)
+		return "", fmt.Errorf("failed to close temp character file: %w", err)
+	}
+
+	// Atomically replace the original file
+	if err := os.Rename(tempPath, path); err != nil {
+		os.Remove(tempPath)
+		return "", fmt.Errorf("failed to finalize character save: %w", err)
 	}
 
 	return path, nil

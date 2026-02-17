@@ -334,6 +334,24 @@ func TestLoadByPath(t *testing.T) {
 	assert.Equal(t, ErrCharacterNotFound, err)
 }
 
+func TestSaveAtomicity(t *testing.T) {
+	store, _ := createTestStorage(t)
+	char := createTestCharacter("AtomicHero", "Human", "Fighter")
+
+	// First save
+	path, err := store.Save(char)
+	require.NoError(t, err)
+
+	// Verify no temp files remain after successful save
+	matches, _ := filepath.Glob(path + ".tmp.*")
+	assert.Empty(t, matches, "temp files should not exist after successful save")
+
+	// Verify the saved file has valid content
+	loaded, err := store.Load(char.Info.Name)
+	require.NoError(t, err)
+	assert.Equal(t, char.Info.Name, loaded.Info.Name)
+}
+
 func TestCharacterInfoList(t *testing.T) {
 	storage, _ := createTestStorage(t)
 
