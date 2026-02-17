@@ -2,7 +2,7 @@ package components
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 	"time"
 
@@ -89,6 +89,9 @@ type RollEngine struct {
 	rollEntry    RollHistoryEntry
 	advantage    bool
 	disadvantage bool
+
+	// Error display
+	lastError string
 
 	// Follow-up
 	followUp *RequestRollMsg
@@ -255,8 +258,15 @@ func (e *RollEngine) executeAndAnimate(expr string, modifier int, adv, disadv bo
 
 	result, err := e.executeRoll(expr, modifier, adv, disadv)
 	if err != nil {
-		// On error, just reset — in a real app we might show an error
-		e.resetToIdle()
+		// Show error in the roll engine as a status display
+		e.lastError = fmt.Sprintf("Roll error: %v", err)
+		e.state = rollStateShowing
+		// Create a minimal result so we can display something
+		e.finalResult = &roll.Result{Expression: expr}
+		e.rollEntry = RollHistoryEntry{
+			Label:      e.pendingRoll.Label,
+			Expression: expr,
+		}
 		return nil
 	}
 
@@ -277,7 +287,7 @@ func (e *RollEngine) executeAndAnimate(expr string, modifier int, adv, disadv bo
 
 	e.displayVals = make([]int, numDice)
 	for i := range e.displayVals {
-		e.displayVals[i] = rand.Intn(sides) + 1
+		e.displayVals[i] = rand.IntN(sides) + 1
 	}
 
 	e.displayColors = make([]string, numDice)
@@ -322,7 +332,7 @@ func (e *RollEngine) handleTick() tea.Cmd {
 			e.displayColors[i] = "10" // green
 		} else {
 			// Still tumbling: random value, cycling color
-			e.displayVals[i] = rand.Intn(sides) + 1
+			e.displayVals[i] = rand.IntN(sides) + 1
 			e.displayColors[i] = animColors[e.colorIndex]
 		}
 	}
@@ -437,6 +447,7 @@ func (e *RollEngine) resetToIdle() {
 	e.pendingRoll = nil
 	e.finalResult = nil
 	e.followUp = nil
+	e.lastError = ""
 	e.currentFrame = 0
 	e.displayVals = nil
 	e.displayColors = nil
@@ -534,6 +545,17 @@ func (e *RollEngine) renderShowing(width, height int) string {
 		content.WriteString(titleStyle.Render(label))
 		content.WriteString("\n")
 	}
+
+	if e.lastError != "" {
+		// Show error instead of result
+		errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
+		content.WriteString("\n")
+		content.WriteString("  " + errorStyle.Render(e.lastError))
+		content.WriteString("\n\n")
+		content.WriteString(promptStyle.Render("  Press any key to dismiss"))
+		return e.renderModal(content.String(), width, height)
+	}
+
 	content.WriteString("\n")
 	content.WriteString(e.renderDiceRow(maxVisibleDice))
 	content.WriteString("\n\n")

@@ -98,22 +98,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		// Update main sheet's roll history layout state
-		if m.mainSheetModel != nil && m.rollHistory != nil {
-			historyWidth := 0
-			if m.rollHistory.Visible && m.width >= 80 {
-				historyWidth = 27
-			}
-			m.mainSheetModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
-		}
-		// Update spellbook's roll history layout state
-		if m.spellbookModel != nil && m.rollHistory != nil {
-			historyWidth := 0
-			if m.rollHistory.Visible && m.width >= 80 {
-				historyWidth = 27
-			}
-			m.spellbookModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
-		}
+		m.syncRollHistoryLayout()
 		// Forward to current view
 		return m.updateCurrentView(msg)
 
@@ -315,28 +300,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case components.ToggleRollHistoryMsg:
 		if m.rollHistory != nil {
 			m.rollHistory.Toggle()
-			// Update main sheet's layout to accommodate history column
-			if m.mainSheetModel != nil {
-				historyWidth := 0
-				if m.rollHistory.Visible && m.width >= 80 {
-					historyWidth = 27
-				}
-				m.mainSheetModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
-			}
-			// Update spellbook's layout to accommodate history column
-			if m.spellbookModel != nil {
-				historyWidth := 0
-				if m.rollHistory.Visible && m.width >= 80 {
-					historyWidth = 27
-				}
-				m.spellbookModel.SetRollHistoryState(m.rollHistory.Visible && m.width >= 80, historyWidth)
-			}
+			m.syncRollHistoryLayout()
 		}
 		return m, nil
 	}
 
 	// Route to appropriate view handler
 	return m.updateCurrentView(msg)
+}
+
+// syncRollHistoryLayout updates all view models with current roll history visibility.
+func (m *Model) syncRollHistoryLayout() {
+	if m.rollHistory == nil {
+		return
+	}
+	visible := m.rollHistory.Visible && m.width >= 80
+	width := 0
+	if visible {
+		width = components.RollHistoryColumnWidth
+	}
+	if m.mainSheetModel != nil {
+		m.mainSheetModel.SetRollHistoryState(visible, width)
+	}
+	if m.spellbookModel != nil {
+		m.spellbookModel.SetRollHistoryState(visible, width)
+	}
 }
 
 // updateCurrentView routes the message to the current view's update function.
@@ -449,7 +437,7 @@ func (m Model) View() string {
 func (m Model) compositeWithRollUI(viewContent string) string {
 	// Add roll history column if visible
 	if m.rollHistory != nil && m.rollHistory.Visible && m.width >= 80 {
-		historyWidth := 27
+		historyWidth := components.RollHistoryColumnWidth
 		historyCol := m.rollHistory.Render(historyWidth, m.height)
 		if historyCol != "" {
 			viewContent = lipgloss.JoinHorizontal(lipgloss.Top, viewContent, historyCol)

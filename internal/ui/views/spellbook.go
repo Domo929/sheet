@@ -1435,43 +1435,13 @@ func (m *SpellbookModel) spellRollCmd(spell *models.KnownSpell) tea.Cmd {
 			}
 		}
 	}
-
-	if fullSpell == nil || fullSpell.Damage == "" {
+	if fullSpell == nil {
 		return nil
 	}
-
-	if fullSpell.SavingThrow == "" {
-		// Spell attack roll + damage follow-up
-		attackBonus := m.character.GetSpellAttackBonus()
-		damageExpr := fullSpell.Damage
-		return func() tea.Msg {
-			return components.RequestRollMsg{
-				Label:     fullSpell.Name + " Attack",
-				DiceExpr:  "1d20",
-				Modifier:  attackBonus,
-				RollType:  components.RollAttack,
-				AdvPrompt: true,
-				FollowUp: &components.RequestRollMsg{
-					Label:    fullSpell.Name + " Damage (" + string(fullSpell.DamageType) + ")",
-					DiceExpr: damageExpr,
-					Modifier: 0,
-					RollType: components.RollDamage,
-				},
-			}
-		}
-	}
-
-	// Save-based spell — just roll damage, show DC in label
-	saveDC := m.getSpellSaveDC()
-	damageExpr := fullSpell.Damage
-	return func() tea.Msg {
-		return components.RequestRollMsg{
-			Label:    fmt.Sprintf("%s Damage (DC %d %s)", fullSpell.Name, saveDC, fullSpell.SavingThrow),
-			DiceExpr: damageExpr,
-			Modifier: 0,
-			RollType: components.RollDamage,
-		}
-	}
+	return components.BuildSpellRollCmd(
+		fullSpell.Name, fullSpell.Damage, string(fullSpell.DamageType), fullSpell.SavingThrow,
+		m.character.GetSpellAttackBonus(), m.getSpellSaveDC(),
+	)
 }
 
 // handleCastLevelInput handles keyboard input in cast level selection mode.

@@ -40,11 +40,14 @@ type RollHistoryEntry struct {
 
 const maxHistoryEntries = 50
 
+// RollHistoryColumnWidth is the standard width for the roll history column.
+const RollHistoryColumnWidth = 27
+
 // RollHistory stores a capped list of recent dice rolls.
 type RollHistory struct {
 	Entries   []RollHistoryEntry
 	Visible   bool // whether the history column is shown
-	ScrollPos int  // scroll position for viewing history
+	ScrollPos int  // TODO: implement scroll support for viewing older entries
 }
 
 // NewRollHistory creates an empty roll history.

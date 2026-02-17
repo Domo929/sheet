@@ -2650,42 +2650,10 @@ func (m *MainSheetModel) castSpellAtLevel(spell *data.SpellData, slotLevel int) 
 
 // spellRollCmd returns a tea.Cmd for dice rolls triggered by casting a damage spell.
 func (m *MainSheetModel) spellRollCmd(spell *data.SpellData) tea.Cmd {
-	if spell.Damage == "" {
-		return nil
-	}
-
-	if spell.SavingThrow == "" {
-		// Spell attack roll + damage follow-up
-		attackBonus := m.character.GetSpellAttackBonus()
-		damageExpr := spell.Damage
-		return func() tea.Msg {
-			return components.RequestRollMsg{
-				Label:     spell.Name + " Attack",
-				DiceExpr:  "1d20",
-				Modifier:  attackBonus,
-				RollType:  components.RollAttack,
-				AdvPrompt: true,
-				FollowUp: &components.RequestRollMsg{
-					Label:    spell.Name + " Damage (" + string(spell.DamageType) + ")",
-					DiceExpr: damageExpr,
-					Modifier: 0,
-					RollType: components.RollDamage,
-				},
-			}
-		}
-	}
-
-	// Save-based spell — just roll damage, show DC in label
-	saveDC := m.getSpellSaveDC()
-	damageExpr := spell.Damage
-	return func() tea.Msg {
-		return components.RequestRollMsg{
-			Label:    fmt.Sprintf("%s Damage (DC %d %s)", spell.Name, saveDC, spell.SavingThrow),
-			DiceExpr: damageExpr,
-			Modifier: 0,
-			RollType: components.RollDamage,
-		}
-	}
+	return components.BuildSpellRollCmd(
+		spell.Name, spell.Damage, string(spell.DamageType), spell.SavingThrow,
+		m.character.GetSpellAttackBonus(), m.getSpellSaveDC(),
+	)
 }
 
 func (m *MainSheetModel) renderFooter(width int) string {
