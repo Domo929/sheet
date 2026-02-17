@@ -489,7 +489,17 @@ func (l *Loader) GetEquipment() (*Equipment, error) {
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	return l.equipment, l.loadEquipmentUnsafe()
+
+	// Double-check after acquiring write lock
+	if l.equipment != nil {
+		return l.equipment, nil
+	}
+
+	if err := l.loadEquipmentUnsafe(); err != nil {
+		return nil, err
+	}
+
+	return l.equipment, nil
 }
 
 // loadEquipmentUnsafe loads equipment data without acquiring locks.
