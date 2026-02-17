@@ -165,6 +165,43 @@ func TestSkillNameToKey(t *testing.T) {
 	}
 }
 
+func TestSkillNameToKeyEmptyString(t *testing.T) {
+	// Should not panic on empty or whitespace-only strings
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"empty string", ""},
+		{"single space", " "},
+		{"multiple spaces", "   "},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.NotPanics(t, func() {
+				result := skillNameToKey(tt.input)
+				assert.Equal(t, models.SkillAcrobatics, result, "should return default")
+			})
+		})
+	}
+}
+
+func TestSkillNameToKeyValidSkills(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected models.SkillName
+	}{
+		{"Acrobatics", models.SkillAcrobatics},
+		{"Animal Handling", models.SkillAnimalHandling},
+		{"Sleight Of Hand", models.SkillSleightOfHand},
+		{"Stealth", models.SkillStealth},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			assert.Equal(t, tt.expected, skillNameToKey(tt.input))
+		})
+	}
+}
+
 func TestGetSelectedMethods(t *testing.T) {
 	class := &data.Class{
 		SkillChoices: data.SkillChoices{

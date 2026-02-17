@@ -355,6 +355,9 @@ func normalizeSkillNames(skills []string) []string {
 func skillNameToKey(name string) models.SkillName {
 	// Normalize the name by removing spaces and converting to camelCase
 	normalized := strings.ReplaceAll(name, " ", "")
+	if normalized == "" {
+		return models.SkillAcrobatics // default fallback for empty/whitespace-only input
+	}
 	normalized = strings.ToLower(normalized[:1]) + normalized[1:]
 
 	switch normalized {
