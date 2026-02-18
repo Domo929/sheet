@@ -26,6 +26,9 @@ const (
 	ViewNotes
 )
 
+// minRollHistoryWidth is the minimum terminal width required to show the roll history column.
+const minRollHistoryWidth = 80
+
 // Model is the main application model that manages view routing.
 type Model struct {
 	currentView ViewType
@@ -76,6 +79,14 @@ func NewModel() (Model, error) {
 	}, nil
 }
 
+// sizeMsg returns a WindowSizeMsg if the model has known dimensions, nil otherwise.
+func (m *Model) sizeMsg() *tea.WindowSizeMsg {
+	if m.width > 0 && m.height > 0 {
+		return &tea.WindowSizeMsg{Width: m.width, Height: m.height}
+	}
+	return nil
+}
+
 // Init initializes the model (required by Bubble Tea).
 func (m Model) Init() tea.Cmd {
 	if m.characterSelectionModel != nil {
@@ -106,11 +117,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Create and initialize character creation model
 		m.characterCreationModel = views.NewCharacterCreationModel(m.storage, m.loader)
 		// Pass current window size to the new model
-		if m.width > 0 && m.height > 0 {
-			m.characterCreationModel, _ = m.characterCreationModel.Update(tea.WindowSizeMsg{
-				Width:  m.width,
-				Height: m.height,
-			})
+		if msg := m.sizeMsg(); msg != nil {
+			m.characterCreationModel, _ = m.characterCreationModel.Update(*msg)
 		}
 		m.currentView = ViewCharacterCreation
 		return m, m.characterCreationModel.Init()
@@ -155,11 +163,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case views.OpenInventoryMsg:
 		// Navigate to inventory view
 		m.inventoryModel = views.NewInventoryModel(m.character, m.storage)
-		if m.width > 0 && m.height > 0 {
-			m.inventoryModel, _ = m.inventoryModel.Update(tea.WindowSizeMsg{
-				Width:  m.width,
-				Height: m.height,
-			})
+		if msg := m.sizeMsg(); msg != nil {
+			m.inventoryModel, _ = m.inventoryModel.Update(*msg)
 		}
 		m.currentView = ViewInventory
 		return m, m.inventoryModel.Init()
@@ -167,11 +172,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case views.OpenSpellbookMsg:
 		// Navigate to spellbook view
 		m.spellbookModel = views.NewSpellbookModel(m.character, m.storage, m.loader)
-		if m.width > 0 && m.height > 0 {
-			m.spellbookModel, _ = m.spellbookModel.Update(tea.WindowSizeMsg{
-				Width:  m.width,
-				Height: m.height,
-			})
+		if msg := m.sizeMsg(); msg != nil {
+			m.spellbookModel, _ = m.spellbookModel.Update(*msg)
 		}
 		m.currentView = ViewSpellbook
 		return m, m.spellbookModel.Init()
@@ -179,33 +181,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case views.OpenLevelUpMsg:
 		// Navigate to level-up wizard
 		m.levelUpModel = views.NewLevelUpModel(m.character, m.storage, m.loader)
-		if m.width > 0 && m.height > 0 {
-			m.levelUpModel, _ = m.levelUpModel.Update(tea.WindowSizeMsg{
-				Width:  m.width,
-				Height: m.height,
-			})
+		if msg := m.sizeMsg(); msg != nil {
+			m.levelUpModel, _ = m.levelUpModel.Update(*msg)
 		}
 		m.currentView = ViewLevelUp
 		return m, m.levelUpModel.Init()
 
 	case views.OpenNotesMsg:
 		m.notesEditorModel = views.NewNotesEditorModel(m.character, m.storage, msg.ReturnTo)
-		if m.width > 0 && m.height > 0 {
-			m.notesEditorModel, _ = m.notesEditorModel.Update(tea.WindowSizeMsg{
-				Width:  m.width,
-				Height: m.height,
-			})
+		if msg := m.sizeMsg(); msg != nil {
+			m.notesEditorModel, _ = m.notesEditorModel.Update(*msg)
 		}
 		m.currentView = ViewNotes
 		return m, m.notesEditorModel.Init()
 
 	case views.OpenCharacterInfoMsg:
 		m.characterInfoModel = views.NewCharacterInfoModel(m.character, m.storage)
-		if m.width > 0 && m.height > 0 {
-			m.characterInfoModel, _ = m.characterInfoModel.Update(tea.WindowSizeMsg{
-				Width:  m.width,
-				Height: m.height,
-			})
+		if msg := m.sizeMsg(); msg != nil {
+			m.characterInfoModel, _ = m.characterInfoModel.Update(*msg)
 		}
 		m.currentView = ViewCharacterInfo
 		return m, m.characterInfoModel.Init()
@@ -220,11 +213,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.currentView = ViewMainSheet
 		m.levelUpModel = nil
 		m.mainSheetModel = views.NewMainSheetModel(m.character, m.storage)
-		if m.width > 0 && m.height > 0 {
-			m.mainSheetModel, _ = m.mainSheetModel.Update(tea.WindowSizeMsg{
-				Width:  m.width,
-				Height: m.height,
-			})
+		if msg := m.sizeMsg(); msg != nil {
+			m.mainSheetModel, _ = m.mainSheetModel.Update(*msg)
 		}
 		return m, m.mainSheetModel.Init()
 
@@ -238,11 +228,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.character = char
 		m.mainSheetModel = views.NewMainSheetModel(char, m.storage)
 		// Pass current window size to the new model
-		if m.width > 0 && m.height > 0 {
-			m.mainSheetModel, _ = m.mainSheetModel.Update(tea.WindowSizeMsg{
-				Width:  m.width,
-				Height: m.height,
-			})
+		if msg := m.sizeMsg(); msg != nil {
+			m.mainSheetModel, _ = m.mainSheetModel.Update(*msg)
 		}
 		m.currentView = ViewMainSheet
 		return m, m.mainSheetModel.Init()
@@ -261,11 +248,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.character = char
 		m.mainSheetModel = views.NewMainSheetModel(char, m.storage)
 		// Pass current window size to the new model
-		if m.width > 0 && m.height > 0 {
-			m.mainSheetModel, _ = m.mainSheetModel.Update(tea.WindowSizeMsg{
-				Width:  m.width,
-				Height: m.height,
-			})
+		if msg := m.sizeMsg(); msg != nil {
+			m.mainSheetModel, _ = m.mainSheetModel.Update(*msg)
 		}
 		m.currentView = ViewMainSheet
 		return m, m.mainSheetModel.Init()
@@ -314,7 +298,7 @@ func (m *Model) syncRollHistoryLayout() {
 	if m.rollHistory == nil {
 		return
 	}
-	visible := m.rollHistory.Visible && m.width >= 80
+	visible := m.rollHistory.Visible && m.width >= minRollHistoryWidth
 	width := 0
 	if visible {
 		width = components.RollHistoryColumnWidth
@@ -436,7 +420,7 @@ func (m Model) View() string {
 // compositeWithRollUI adds the roll history column and roll engine overlay to view content.
 func (m Model) compositeWithRollUI(viewContent string) string {
 	// Add roll history column if visible
-	if m.rollHistory != nil && m.rollHistory.Visible && m.width >= 80 {
+	if m.rollHistory != nil && m.rollHistory.Visible && m.width >= minRollHistoryWidth {
 		historyWidth := components.RollHistoryColumnWidth
 		historyCol := m.rollHistory.Render(historyWidth, m.height)
 		if historyCol != "" {
@@ -457,14 +441,14 @@ func (m Model) renderCharacterSelection() string {
 	if m.characterSelectionModel != nil {
 		return m.characterSelectionModel.View()
 	}
-	return "Character Selection View (TODO)\n\nPress q to quit."
+	return "Loading character selection..."
 }
 
 func (m Model) renderCharacterCreation() string {
 	if m.characterCreationModel != nil {
 		return m.characterCreationModel.View()
 	}
-	return "Character Creation View (TODO)\n\nPress q to quit."
+	return "Loading character creation..."
 }
 
 func (m Model) renderMainSheet() string {
@@ -506,11 +490,11 @@ func (m Model) renderLevelUp() string {
 }
 
 func (m Model) renderCombat() string {
-	return "Combat View (TODO)\n\nPress q to quit."
+	return "Combat View — coming soon"
 }
 
 func (m Model) renderRest() string {
-	return "Rest View (TODO)\n\nPress q to quit."
+	return "Rest View — coming soon"
 }
 
 func (m Model) renderNotes() string {
