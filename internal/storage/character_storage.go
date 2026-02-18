@@ -93,7 +93,7 @@ func (cs *CharacterStorage) Save(character *models.Character) (string, error) {
 	}
 	tempPath := file.Name()
 
-	if err := character.WriteTo(file); err != nil {
+	if _, err := character.WriteTo(file); err != nil {
 		file.Close()
 		os.Remove(tempPath)
 		return "", fmt.Errorf("failed to write character: %w", err)

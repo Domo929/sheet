@@ -212,7 +212,7 @@ func TestCharacterWriteTo(t *testing.T) {
 
 	// Write to buffer
 	var buf bytes.Buffer
-	err := c.WriteTo(&buf)
+	_, err := c.WriteTo(&buf)
 	require.NoError(t, err, "WriteTo()")
 
 	// Verify we got JSON output
@@ -233,7 +233,7 @@ func TestCharacterReadFrom(t *testing.T) {
 
 	// Write to buffer
 	var buf bytes.Buffer
-	err := original.WriteTo(&buf)
+	_, err := original.WriteTo(&buf)
 	require.NoError(t, err, "WriteTo()")
 
 	// Read back from buffer
@@ -262,7 +262,7 @@ func TestCharacterWriteToReadFromRoundTrip(t *testing.T) {
 
 	// Write to buffer
 	var buf bytes.Buffer
-	err := original.WriteTo(&buf)
+	_, err := original.WriteTo(&buf)
 	require.NoError(t, err, "WriteTo()")
 
 	// Read back

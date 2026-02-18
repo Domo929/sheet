@@ -184,10 +184,15 @@ func FromJSON(data []byte) (*Character, error) {
 }
 
 // WriteTo writes the character as JSON to an io.Writer.
-func (c *Character) WriteTo(w io.Writer) error {
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(c)
+// Implements io.WriterTo.
+func (c *Character) WriteTo(w io.Writer) (int64, error) {
+	data, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return 0, err
+	}
+	data = append(data, '\n') // match json.Encoder behavior
+	n, err := w.Write(data)
+	return int64(n), err
 }
 
 // ReadFrom reads a character from JSON in an io.Reader.
