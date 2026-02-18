@@ -11,7 +11,7 @@ import (
 type ListItem struct {
 	Title       string
 	Description string
-	Value       interface{}
+	Value       any
 }
 
 // List is a selectable list component.
