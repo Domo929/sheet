@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -242,7 +243,7 @@ func (cs *CharacterStorage) List() ([]CharacterInfo, error) {
 		// Read and parse the file to get basic info
 		data, err := os.ReadFile(path)
 		if err != nil {
-			// Skip files we can't read
+			log.Printf("warning: skipping unreadable character file %s: %v", path, err)
 			continue
 		}
 
@@ -251,7 +252,7 @@ func (cs *CharacterStorage) List() ([]CharacterInfo, error) {
 			Info models.CharacterInfo `json:"info"`
 		}
 		if err := json.Unmarshal(data, &partialCharacter); err != nil {
-			// Skip files we can't parse
+			log.Printf("warning: skipping unparseable character file %s: %v", path, err)
 			continue
 		}
 
