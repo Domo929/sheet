@@ -915,9 +915,43 @@ func (m *InventoryModel) View() string {
 	header := m.renderHeader(width)
 
 	// Three-column layout: Equipment | Items | Currency
-	equipWidth := 30
-	currencyWidth := 25
+	// Use proportional widths with minimums
+	const compactBreakpoint = 80
+
+	if width < compactBreakpoint {
+		// Compact layout: stack panels vertically
+		panelWidth := width - 4
+
+		var sections []string
+		sections = append(sections, m.renderEquipment(panelWidth))
+		sections = append(sections, m.renderItems(panelWidth))
+		sections = append(sections, m.renderCurrency(panelWidth))
+
+		columns := lipgloss.JoinVertical(lipgloss.Left, sections...)
+
+		// Add item overlay
+		if m.addingItem {
+			overlay := m.renderAddItemOverlay(width)
+			columns = lipgloss.JoinVertical(lipgloss.Left, columns, "", overlay)
+		}
+
+		footer := m.renderFooter(width)
+		return lipgloss.JoinVertical(lipgloss.Left, header, "", columns, "", footer)
+	}
+
+	// Standard layout: three columns with proportional widths
+	equipWidth := width * 25 / 100 // 25%
+	if equipWidth < 24 {
+		equipWidth = 24
+	}
+	currencyWidth := width * 20 / 100 // 20%
+	if currencyWidth < 20 {
+		currencyWidth = 20
+	}
 	itemsWidth := width - equipWidth - currencyWidth - 6 // borders and padding
+	if itemsWidth < 20 {
+		itemsWidth = 20
+	}
 
 	equipment := m.renderEquipment(equipWidth)
 	items := m.renderItems(itemsWidth)
