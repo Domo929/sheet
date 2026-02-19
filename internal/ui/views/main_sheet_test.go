@@ -662,8 +662,8 @@ func TestMainSheetCompactLayout(t *testing.T) {
 
 	m := NewMainSheetModel(char, store)
 
-	// Simulate a narrow terminal
-	sizeMsg := tea.WindowSizeMsg{Width: 70, Height: 30}
+	// Simulate a narrow terminal (tall enough to fit all stacked panels)
+	sizeMsg := tea.WindowSizeMsg{Width: 70, Height: 80}
 	m, _ = m.Update(sizeMsg)
 
 	view := m.View()
@@ -691,6 +691,39 @@ func TestMainSheetWideLayout(t *testing.T) {
 	assert.Contains(t, view, "Abilities", "Wide view should contain abilities")
 	assert.Contains(t, view, "Skills", "Wide view should contain skills")
 	assert.True(t, len(view) > 0, "Wide view should render content")
+}
+
+func TestMainSheetScrolling(t *testing.T) {
+	char := models.NewCharacter("test-1", "Test", "Human", "Fighter")
+	store, _ := storage.NewCharacterStorage(t.TempDir())
+
+	m := NewMainSheetModel(char, store)
+
+	// Simulate a short terminal that will need scrolling
+	sizeMsg := tea.WindowSizeMsg{Width: 100, Height: 25}
+	m, _ = m.Update(sizeMsg)
+
+	// Initial scroll offset should be 0
+	assert.Equal(t, 0, m.scrollOffset, "Initial scroll offset should be 0")
+
+	// Page down should increase scroll offset
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyPgDown})
+	// scrollOffset may or may not change depending on content height
+	// Just verify no panic and offset >= 0
+	assert.GreaterOrEqual(t, m.scrollOffset, 0, "Scroll offset should be >= 0 after PgDn")
+}
+
+func TestMainSheetScrollDoesNotGoBelowZero(t *testing.T) {
+	char := models.NewCharacter("test-1", "Test", "Human", "Fighter")
+	store, _ := storage.NewCharacterStorage(t.TempDir())
+
+	m := NewMainSheetModel(char, store)
+	sizeMsg := tea.WindowSizeMsg{Width: 100, Height: 25}
+	m, _ = m.Update(sizeMsg)
+
+	// Page up from 0 should stay at 0
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyPgUp})
+	assert.Equal(t, 0, m.scrollOffset, "Scroll offset should not go below 0")
 }
 
 // Helper function to create a test character

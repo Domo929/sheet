@@ -61,6 +61,9 @@ type MainSheetModel struct {
 	// Roll history layout integration
 	rollHistoryVisible bool
 	rollHistoryWidth   int // width reserved for history column (0 if hidden)
+
+	// Scroll offset for main content area
+	scrollOffset int
 }
 
 // HPInputMode represents the current HP modification mode.
@@ -210,6 +213,8 @@ type mainSheetKeyMap struct {
 	Luck           key.Binding // backtick
 	CustomRoll     key.Binding // /
 	HistoryToggle  key.Binding // H (capital)
+	PageDown       key.Binding
+	PageUp         key.Binding
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -317,6 +322,14 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		HistoryToggle: key.NewBinding(
 			key.WithKeys("H"),
 			key.WithHelp("H", "roll history"),
+		),
+		PageDown: key.NewBinding(
+			key.WithKeys("pgdown", "ctrl+d"),
+			key.WithHelp("PgDn", "scroll down"),
+		),
+		PageUp: key.NewBinding(
+			key.WithKeys("pgup", "ctrl+u"),
+			key.WithHelp("PgUp", "scroll up"),
 		),
 	}
 }
@@ -532,6 +545,15 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			return m, func() tea.Msg { return components.OpenCustomRollMsg{} }
 		case key.Matches(msg, m.keys.HistoryToggle):
 			return m, func() tea.Msg { return components.ToggleRollHistoryMsg{} }
+		case key.Matches(msg, m.keys.PageDown):
+			m.scrollOffset += 10
+			return m, nil
+		case key.Matches(msg, m.keys.PageUp):
+			m.scrollOffset -= 10
+			if m.scrollOffset < 0 {
+				m.scrollOffset = 0
+			}
+			return m, nil
 		case key.Matches(msg, m.keys.Combat):
 			m.statusMessage = "Combat tracker coming soon..."
 			return m, nil
@@ -1275,6 +1297,33 @@ func (m *MainSheetModel) View() string {
 			restOverlay,
 			footer,
 		)
+	}
+
+	// Apply vertical scrolling to main content
+	contentLines := strings.Split(mainContent, "\n")
+	headerHeight := lipgloss.Height(header)
+	footerHeight := lipgloss.Height(footer)
+	availableHeight := height - headerHeight - footerHeight
+
+	if availableHeight > 0 && len(contentLines) > availableHeight {
+		// Clamp scroll offset
+		maxScroll := len(contentLines) - availableHeight
+		if maxScroll < 0 {
+			maxScroll = 0
+		}
+		if m.scrollOffset > maxScroll {
+			m.scrollOffset = maxScroll
+		}
+
+		// Crop to visible window
+		endIdx := m.scrollOffset + availableHeight
+		if endIdx > len(contentLines) {
+			endIdx = len(contentLines)
+		}
+		mainContent = strings.Join(contentLines[m.scrollOffset:endIdx], "\n")
+	} else {
+		// Content fits, reset scroll
+		m.scrollOffset = 0
 	}
 
 	// Join all sections vertically
