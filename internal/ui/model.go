@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
@@ -28,6 +30,12 @@ const (
 
 // minRollHistoryWidth is the minimum terminal width required to show the roll history column.
 const minRollHistoryWidth = 80
+
+// Minimum terminal dimensions for usable display.
+const (
+	minTerminalWidth  = 60
+	minTerminalHeight = 20
+)
 
 // Model is the main application model that manages view routing.
 type Model struct {
@@ -388,6 +396,14 @@ func (m Model) View() string {
 
 	if m.err != nil {
 		return "Error: " + m.err.Error() + "\n\nPress q to quit."
+	}
+
+	// Minimum terminal size guard
+	if m.width > 0 && m.height > 0 && (m.width < minTerminalWidth || m.height < minTerminalHeight) {
+		return fmt.Sprintf(
+			"Terminal too small (%dx%d).\n\nMinimum size: %dx%d\nPlease resize your terminal.",
+			m.width, m.height, minTerminalWidth, minTerminalHeight,
+		)
 	}
 
 	// Route to appropriate view renderer

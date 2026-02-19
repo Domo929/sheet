@@ -61,6 +61,29 @@ func TestMainSheetCtrlCQuit(t *testing.T) {
 	assert.True(t, ok, "Expected tea.QuitMsg, got %T", msg)
 }
 
+func TestModelViewTooSmallTerminal(t *testing.T) {
+	// Create a minimal model for testing
+	m := Model{
+		width:  50,
+		height: 15,
+	}
+
+	view := m.View()
+	assert.Contains(t, view, "Terminal too small", "Should show too-small message for 50x15")
+	assert.Contains(t, view, "60", "Should mention minimum width")
+	assert.Contains(t, view, "20", "Should mention minimum height")
+}
+
+func TestModelViewMinimumSizeOK(t *testing.T) {
+	m := Model{
+		width:  60,
+		height: 20,
+	}
+
+	view := m.View()
+	assert.NotContains(t, view, "Terminal too small", "Should NOT show too-small message at 60x20")
+}
+
 func TestCancelCharacterCreation(t *testing.T) {
 	m, err := NewModel()
 	require.NoError(t, err, "Failed to create model")
