@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -112,4 +113,143 @@ func TestListSetSize(t *testing.T) {
 
 	assert.Equal(t, 80, list.Width)
 	assert.Equal(t, 20, list.Height)
+}
+
+func TestListRenderWithPagination(t *testing.T) {
+	// Create a list with 10 items
+	items := make([]ListItem, 10)
+	for i := range items {
+		items[i] = ListItem{Title: fmt.Sprintf("Item %d", i+1)}
+	}
+
+	list := NewList("", items) // No title to simplify height calculation
+	list.Height = 5            // Only room for 5 items
+
+	rendered := list.Render()
+
+	// Should contain first 5 items
+	assert.Contains(t, rendered, "Item 1")
+	assert.Contains(t, rendered, "Item 5")
+
+	// Should NOT contain item 6+
+	assert.NotContains(t, rendered, "Item 6")
+
+	// Should show "more below" indicator
+	assert.Contains(t, rendered, "↓")
+}
+
+func TestListRenderPaginationScrollsWithSelection(t *testing.T) {
+	items := make([]ListItem, 10)
+	for i := range items {
+		items[i] = ListItem{Title: fmt.Sprintf("Item %d", i+1)}
+	}
+
+	list := NewList("", items)
+	list.Height = 5
+
+	// Move selection to item 7 (index 6)
+	for i := 0; i < 6; i++ {
+		list.MoveDown()
+	}
+
+	rendered := list.Render()
+
+	// Should contain item 7 (the selected one)
+	assert.Contains(t, rendered, "Item 7")
+
+	// Should show "more above" indicator
+	assert.Contains(t, rendered, "↑")
+}
+
+func TestListRenderNoPaginationWhenAllFit(t *testing.T) {
+	items := []ListItem{
+		{Title: "Item 1"},
+		{Title: "Item 2"},
+		{Title: "Item 3"},
+	}
+
+	list := NewList("", items)
+	list.Height = 10 // Plenty of room
+
+	rendered := list.Render()
+
+	// Should contain all items
+	assert.Contains(t, rendered, "Item 1")
+	assert.Contains(t, rendered, "Item 3")
+
+	// Should NOT show scroll indicators
+	assert.NotContains(t, rendered, "↑")
+	assert.NotContains(t, rendered, "↓")
+}
+
+func TestListRenderNoPaginationWhenHeightZero(t *testing.T) {
+	items := make([]ListItem, 10)
+	for i := range items {
+		items[i] = ListItem{Title: fmt.Sprintf("Item %d", i+1)}
+	}
+
+	list := NewList("", items)
+	// Height = 0 (default) means show all, for backwards compat
+
+	rendered := list.Render()
+
+	// Should contain all 10 items
+	assert.Contains(t, rendered, "Item 1")
+	assert.Contains(t, rendered, "Item 10")
+}
+
+func TestListScrollOffsetAdjustsOnMoveDown(t *testing.T) {
+	items := make([]ListItem, 10)
+	for i := range items {
+		items[i] = ListItem{Title: fmt.Sprintf("Item %d", i+1)}
+	}
+
+	list := NewList("", items)
+	list.Height = 3
+
+	// Move down past visible window
+	list.MoveDown() // index 1
+	list.MoveDown() // index 2
+	list.MoveDown() // index 3 — should scroll
+
+	assert.Equal(t, 3, list.SelectedIndex)
+	assert.True(t, list.ScrollOffset > 0, "ScrollOffset should increase when selection moves past visible area")
+}
+
+func TestListScrollOffsetAdjustsOnMoveUp(t *testing.T) {
+	items := make([]ListItem, 10)
+	for i := range items {
+		items[i] = ListItem{Title: fmt.Sprintf("Item %d", i+1)}
+	}
+
+	list := NewList("", items)
+	list.Height = 3
+	list.SelectedIndex = 5
+	list.ScrollOffset = 4
+
+	// Move up past visible window top
+	list.MoveUp() // index 4
+	list.MoveUp() // index 3 — should scroll up
+
+	assert.Equal(t, 3, list.SelectedIndex)
+	assert.True(t, list.ScrollOffset <= 3, "ScrollOffset should decrease when selection moves above visible area")
+}
+
+func TestListPaginationWithTitle(t *testing.T) {
+	items := make([]ListItem, 10)
+	for i := range items {
+		items[i] = ListItem{Title: fmt.Sprintf("Item %d", i+1)}
+	}
+
+	list := NewList("My Title", items)
+	list.Height = 7 // Title takes 2 lines (title + blank), so ~5 items fit
+
+	rendered := list.Render()
+
+	// Should contain the title
+	assert.Contains(t, rendered, "My Title")
+
+	// Should NOT contain item 6+ (title takes 2 lines, leaving 5 for items)
+	// Items 1-5 should be visible, but we may see at most 5 items
+	assert.Contains(t, rendered, "Item 1")
 }

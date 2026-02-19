@@ -18,6 +18,7 @@ type ListItem struct {
 type List struct {
 	Items         []ListItem
 	SelectedIndex int
+	ScrollOffset  int
 	Width         int
 	Height        int
 	Title         string
@@ -36,6 +37,7 @@ func NewList(title string, items []ListItem) List {
 func (l *List) MoveUp() {
 	if l.SelectedIndex > 0 {
 		l.SelectedIndex--
+		l.ensureVisible()
 	}
 }
 
@@ -43,6 +45,7 @@ func (l *List) MoveUp() {
 func (l *List) MoveDown() {
 	if l.SelectedIndex < len(l.Items)-1 {
 		l.SelectedIndex++
+		l.ensureVisible()
 	}
 }
 
@@ -54,11 +57,70 @@ func (l *List) Selected() *ListItem {
 	return &l.Items[l.SelectedIndex]
 }
 
+// visibleItemCount returns how many items can be displayed given the current Height.
+// Returns len(Items) if Height is 0 (no pagination).
+func (l *List) visibleItemCount() int {
+	if l.Height <= 0 {
+		return len(l.Items)
+	}
+
+	available := l.Height
+
+	// Title takes 2 lines (title text + blank line)
+	if l.Title != "" {
+		available -= 2
+	}
+
+	if available < 1 {
+		available = 1
+	}
+
+	if available > len(l.Items) {
+		available = len(l.Items)
+	}
+
+	return available
+}
+
+// ensureVisible adjusts ScrollOffset so that SelectedIndex is within the visible window.
+func (l *List) ensureVisible() {
+	if l.Height <= 0 {
+		return
+	}
+
+	visible := l.visibleItemCount()
+
+	// If selected is above the visible window, scroll up
+	if l.SelectedIndex < l.ScrollOffset {
+		l.ScrollOffset = l.SelectedIndex
+	}
+
+	// If selected is below the visible window, scroll down
+	if l.SelectedIndex >= l.ScrollOffset+visible {
+		l.ScrollOffset = l.SelectedIndex - visible + 1
+	}
+
+	// Clamp scroll offset
+	maxOffset := len(l.Items) - visible
+	if maxOffset < 0 {
+		maxOffset = 0
+	}
+	if l.ScrollOffset > maxOffset {
+		l.ScrollOffset = maxOffset
+	}
+	if l.ScrollOffset < 0 {
+		l.ScrollOffset = 0
+	}
+}
+
 // Render renders the list as a string.
 func (l List) Render() string {
 	if len(l.Items) == 0 {
 		return "No items"
 	}
+
+	// ensureVisible on a copy since Render has a value receiver
+	l.ensureVisible()
 
 	var b strings.Builder
 
@@ -78,7 +140,25 @@ func (l List) Render() string {
 	normalStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240"))
 
-	for i, item := range l.Items {
+	indicatorStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("244"))
+
+	// Determine visible range
+	visibleCount := l.visibleItemCount()
+	startIdx := l.ScrollOffset
+	endIdx := startIdx + visibleCount
+	if endIdx > len(l.Items) {
+		endIdx = len(l.Items)
+	}
+
+	// "More above" indicator
+	if startIdx > 0 {
+		b.WriteString(indicatorStyle.Render(fmt.Sprintf("  ↑ %d more", startIdx)))
+		b.WriteString("\n")
+	}
+
+	for i := startIdx; i < endIdx; i++ {
+		item := l.Items[i]
 		cursor := "  "
 		style := normalStyle
 
@@ -93,6 +173,12 @@ func (l List) Render() string {
 		}
 
 		b.WriteString(style.Render(line))
+		b.WriteString("\n")
+	}
+
+	// "More below" indicator
+	if endIdx < len(l.Items) {
+		b.WriteString(indicatorStyle.Render(fmt.Sprintf("  ↓ %d more", len(l.Items)-endIdx)))
 		b.WriteString("\n")
 	}
 
