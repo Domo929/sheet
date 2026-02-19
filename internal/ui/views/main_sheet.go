@@ -1188,43 +1188,69 @@ func (m *MainSheetModel) View() string {
 	// Render sections
 	header := m.renderHeader(width)
 	
-	// Two-column layout with vertical stacking
-	// Left column is sized to content (abilities table + skills list)
-	// Right column gets remaining space
-	
-	// Left column width: "Constitution" (12) + score (3) + mod (4) + save icon+mod (6) + padding/border (6) = ~35
-	// Skills: icon (1) + mod (4) + name (15) + ability (5) + padding/border (6) = ~33
-	// Use the wider of the two, plus a small margin
-	leftWidth := 38
-	historyReserved := 0
-	if m.rollHistoryVisible {
-		historyReserved = m.rollHistoryWidth
+	// Width breakpoint: compact (<80) vs standard (≥80)
+	const compactBreakpoint = 80
+
+	var mainContent string
+
+	if width < compactBreakpoint {
+		// Compact layout: single column, all panels stacked vertically
+		panelWidth := width - 2 // Leave small margin
+
+		abilitiesAndSaves := m.renderAbilitiesAndSaves(panelWidth)
+		combat := m.renderCombatStats(panelWidth)
+		skills := m.renderSkills(panelWidth)
+		proficiencies := m.renderProficiencies(panelWidth)
+		actions := m.renderActions(panelWidth)
+
+		mainContent = lipgloss.JoinVertical(lipgloss.Left,
+			abilitiesAndSaves,
+			combat,
+			skills,
+			proficiencies,
+			actions,
+		)
+	} else {
+		// Standard two-column layout
+		// Left column: proportional, capped at 38
+		leftWidth := width / 3
+		if leftWidth > 38 {
+			leftWidth = 38
+		}
+		if leftWidth < 28 {
+			leftWidth = 28
+		}
+
+		historyReserved := 0
+		if m.rollHistoryVisible {
+			historyReserved = m.rollHistoryWidth
+		}
+		rightWidth := width - leftWidth - 4 - historyReserved // 4 for gap
+
+		// Ensure minimum right column width
+		if rightWidth < 35 {
+			rightWidth = 35
+		}
+
+		// Left column: Abilities/Saves on top, Proficiencies, then Skills below
+		abilitiesAndSaves := m.renderAbilitiesAndSaves(leftWidth)
+		proficiencies := m.renderProficiencies(leftWidth)
+		skills := m.renderSkills(leftWidth)
+		leftColumn := lipgloss.JoinVertical(lipgloss.Left, abilitiesAndSaves, proficiencies, skills)
+
+		// Right column: Combat on top, Actions below
+		combat := m.renderCombatStats(rightWidth)
+		actions := m.renderActions(rightWidth)
+		rightColumn := lipgloss.JoinVertical(lipgloss.Left, combat, actions)
+
+		// Join columns horizontally
+		mainContent = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			leftColumn,
+			"  ",
+			rightColumn,
+		)
 	}
-	rightWidth := width - leftWidth - 4 - historyReserved // 4 for gap between columns
-
-	// Ensure minimum width for right column
-	if rightWidth < 45 {
-		rightWidth = 45
-	}
-
-	// Left column: Abilities/Saves on top, Proficiencies, then Skills below
-	abilitiesAndSaves := m.renderAbilitiesAndSaves(leftWidth)
-	proficiencies := m.renderProficiencies(leftWidth)
-	skills := m.renderSkills(leftWidth)
-	leftColumn := lipgloss.JoinVertical(lipgloss.Left, abilitiesAndSaves, proficiencies, skills)
-
-	// Right column: Combat on top, Actions below
-	combat := m.renderCombatStats(rightWidth)
-	actions := m.renderActions(rightWidth)
-	rightColumn := lipgloss.JoinVertical(lipgloss.Left, combat, actions)
-
-	// Join columns horizontally
-	mainContent := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		leftColumn,
-		"  ",
-		rightColumn,
-	)
 
 	// Footer with navigation help
 	footer := m.renderFooter(width)
@@ -1252,7 +1278,6 @@ func (m *MainSheetModel) View() string {
 	}
 
 	// Join all sections vertically
-	// TODO: Make view more dynamic based on terminal height to avoid overflow
 	fullView := lipgloss.JoinVertical(
 		lipgloss.Left,
 		header,

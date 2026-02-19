@@ -6,6 +6,7 @@ import (
 
 	"github.com/Domo929/sheet/internal/domain"
 	"github.com/Domo929/sheet/internal/models"
+	"github.com/Domo929/sheet/internal/storage"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -653,6 +654,43 @@ func TestRestOverlayRendering(t *testing.T) {
 	model.restMode = RestModeLong
 	view = model.View()
 	assert.Contains(t, view, "Long Rest", "expected long rest screen to show 'Long Rest'")
+}
+
+func TestMainSheetCompactLayout(t *testing.T) {
+	char := models.NewCharacter("test-1", "Test", "Human", "Fighter")
+	store, _ := storage.NewCharacterStorage(t.TempDir())
+
+	m := NewMainSheetModel(char, store)
+
+	// Simulate a narrow terminal
+	sizeMsg := tea.WindowSizeMsg{Width: 70, Height: 30}
+	m, _ = m.Update(sizeMsg)
+
+	view := m.View()
+
+	// In compact mode, all panels should still render
+	assert.Contains(t, view, "Abilities", "Compact view should contain abilities")
+	assert.Contains(t, view, "Skills", "Compact view should contain skills")
+	// View should be non-empty and not panic
+	assert.True(t, len(view) > 0, "Compact view should render content")
+}
+
+func TestMainSheetWideLayout(t *testing.T) {
+	char := models.NewCharacter("test-1", "Test", "Human", "Fighter")
+	store, _ := storage.NewCharacterStorage(t.TempDir())
+
+	m := NewMainSheetModel(char, store)
+
+	// Simulate a wide terminal
+	sizeMsg := tea.WindowSizeMsg{Width: 140, Height: 40}
+	m, _ = m.Update(sizeMsg)
+
+	view := m.View()
+
+	// Wide view should render normally
+	assert.Contains(t, view, "Abilities", "Wide view should contain abilities")
+	assert.Contains(t, view, "Skills", "Wide view should contain skills")
+	assert.True(t, len(view) > 0, "Wide view should render content")
 }
 
 // Helper function to create a test character
