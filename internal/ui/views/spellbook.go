@@ -355,31 +355,67 @@ func (m *SpellbookModel) View() string {
 	// Build spell slots panel
 	spellSlots := m.renderSpellSlots()
 
-	// Layout: Header at top, then three panels (list | details | slots)
-	listWidth := m.width / 3
-	detailsWidth := m.width / 3
-	slotsWidth := m.width - listWidth - detailsWidth
+	const compactBreakpoint = 90
 
-	spellListStyled := lipgloss.NewStyle().
-		Width(listWidth).
-		Height(m.height - lipgloss.Height(header) - 2).
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("12")).
-		Render(spellList)
+	// Subtract roll history width if visible
+	availableWidth := m.width
+	if m.rollHistoryVisible {
+		availableWidth -= m.rollHistoryWidth
+	}
 
-	spellDetailsStyled := lipgloss.NewStyle().
-		Width(detailsWidth).
-		Height(m.height - lipgloss.Height(header) - 2).
-		Border(lipgloss.RoundedBorder()).
-		Render(spellDetails)
+	panelHeight := m.height - lipgloss.Height(header) - 2
 
-	spellSlotsStyled := lipgloss.NewStyle().
-		Width(slotsWidth).
-		Height(m.height - lipgloss.Height(header) - 2).
-		Border(lipgloss.RoundedBorder()).
-		Render(spellSlots)
+	var panels string
 
-	panels := lipgloss.JoinHorizontal(lipgloss.Top, spellListStyled, spellDetailsStyled, spellSlotsStyled)
+	if availableWidth < compactBreakpoint {
+		// Compact: two panels (list + details), spell slots hidden
+		listWidth := availableWidth * 40 / 100 // 40%
+		if listWidth < 25 {
+			listWidth = 25
+		}
+		detailsWidth := availableWidth - listWidth
+
+		spellListStyled := lipgloss.NewStyle().
+			Width(listWidth).
+			Height(panelHeight).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("12")).
+			Render(spellList)
+
+		spellDetailsStyled := lipgloss.NewStyle().
+			Width(detailsWidth).
+			Height(panelHeight).
+			Border(lipgloss.RoundedBorder()).
+			Render(spellDetails)
+
+		panels = lipgloss.JoinHorizontal(lipgloss.Top, spellListStyled, spellDetailsStyled)
+	} else {
+		// Standard: three panels (list | details | slots)
+		listWidth := availableWidth / 3
+		detailsWidth := availableWidth / 3
+		slotsWidth := availableWidth - listWidth - detailsWidth
+
+		spellListStyled := lipgloss.NewStyle().
+			Width(listWidth).
+			Height(panelHeight).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("12")).
+			Render(spellList)
+
+		spellDetailsStyled := lipgloss.NewStyle().
+			Width(detailsWidth).
+			Height(panelHeight).
+			Border(lipgloss.RoundedBorder()).
+			Render(spellDetails)
+
+		spellSlotsStyled := lipgloss.NewStyle().
+			Width(slotsWidth).
+			Height(panelHeight).
+			Border(lipgloss.RoundedBorder()).
+			Render(spellSlots)
+
+		panels = lipgloss.JoinHorizontal(lipgloss.Top, spellListStyled, spellDetailsStyled, spellSlotsStyled)
+	}
 
 	// Build footer
 	footer := m.renderFooter()
@@ -621,8 +657,9 @@ func (m *SpellbookModel) renderSpellDetails() string {
 
 	lines = append(lines, "")
 
-	// Word wrap description
-	descLines := m.wordWrap(spell.Description, m.width/3-4)
+	// Word wrap description based on available width
+	detailsWrapWidth := m.detailsPanelWidth() - 4
+	descLines := m.wordWrap(spell.Description, detailsWrapWidth)
 	lines = append(lines, descLines...)
 
 	return strings.Join(lines, "\n")
@@ -1200,6 +1237,27 @@ func (m *SpellbookModel) saveCharacter() tea.Cmd {
 		}
 		return nil
 	}
+}
+
+// detailsPanelWidth returns the width of the details panel based on current layout mode.
+func (m *SpellbookModel) detailsPanelWidth() int {
+	const compactBreakpoint = 90
+
+	availableWidth := m.width
+	if m.rollHistoryVisible {
+		availableWidth -= m.rollHistoryWidth
+	}
+
+	if availableWidth < compactBreakpoint {
+		// Compact mode: details gets 60% of available width
+		listWidth := availableWidth * 40 / 100
+		if listWidth < 25 {
+			listWidth = 25
+		}
+		return availableWidth - listWidth
+	}
+	// Standard mode: details gets 1/3 of available width
+	return availableWidth / 3
 }
 
 func (m *SpellbookModel) wordWrap(text string, width int) []string {

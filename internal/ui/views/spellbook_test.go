@@ -644,3 +644,114 @@ func TestSpellbookModel_CastRitualSpellWithSlot(t *testing.T) {
 	slot := sc.SpellSlots.GetSlot(1)
 	assert.Equal(t, 1, slot.Remaining, "Should consume slot when casting with slot")
 }
+
+func TestSpellbookCompactLayout(t *testing.T) {
+	char := models.NewCharacter("test-1", "Test", "Elf", "Wizard")
+	sc := models.NewSpellcasting(models.AbilityIntelligence)
+	char.Spellcasting = &sc
+
+	store, err := storage.NewCharacterStorage(t.TempDir())
+	require.NoError(t, err)
+	loader := data.NewLoader("../../../data")
+
+	model := NewSpellbookModel(char, store, loader)
+
+	// Load spell database so View() doesn't return early
+	db, loadErr := loader.GetSpells()
+	require.NoError(t, loadErr)
+	model.spellDatabase = db
+
+	// Simulate a narrow terminal (below compact breakpoint of 90)
+	sizeMsg := tea.WindowSizeMsg{Width: 70, Height: 30}
+	model, _ = model.Update(sizeMsg)
+
+	view := model.View()
+
+	// Should render without panic
+	assert.True(t, len(view) > 0, "Compact spellbook should render")
+	assert.Contains(t, view, "Spellbook", "Should contain spellbook header")
+}
+
+func TestSpellbookStandardLayout(t *testing.T) {
+	char := models.NewCharacter("test-2", "Test", "Elf", "Wizard")
+	sc := models.NewSpellcasting(models.AbilityIntelligence)
+	char.Spellcasting = &sc
+
+	store, err := storage.NewCharacterStorage(t.TempDir())
+	require.NoError(t, err)
+	loader := data.NewLoader("../../../data")
+
+	model := NewSpellbookModel(char, store, loader)
+
+	// Load spell database
+	db, loadErr := loader.GetSpells()
+	require.NoError(t, loadErr)
+	model.spellDatabase = db
+
+	// Simulate a wide terminal (above compact breakpoint of 90)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 30}
+	model, _ = model.Update(sizeMsg)
+
+	view := model.View()
+
+	// Should render without panic and include spell slots panel
+	assert.True(t, len(view) > 0, "Standard spellbook should render")
+	assert.Contains(t, view, "Spellbook", "Should contain spellbook header")
+	assert.Contains(t, view, "Spell Slots", "Standard layout should include spell slots panel")
+}
+
+func TestSpellbookCompactLayoutHidesSlots(t *testing.T) {
+	char := models.NewCharacter("test-3", "Test", "Elf", "Wizard")
+	sc := models.NewSpellcasting(models.AbilityIntelligence)
+	sc.SpellSlots.SetSlots(1, 4) // Add some slots so "Spell Slots" would appear
+	char.Spellcasting = &sc
+
+	store, err := storage.NewCharacterStorage(t.TempDir())
+	require.NoError(t, err)
+	loader := data.NewLoader("../../../data")
+
+	model := NewSpellbookModel(char, store, loader)
+
+	// Load spell database
+	db, loadErr := loader.GetSpells()
+	require.NoError(t, loadErr)
+	model.spellDatabase = db
+
+	// Simulate a narrow terminal
+	sizeMsg := tea.WindowSizeMsg{Width: 70, Height: 30}
+	model, _ = model.Update(sizeMsg)
+
+	view := model.View()
+
+	// Compact mode should hide the spell slots panel
+	assert.NotContains(t, view, "Spell Slots", "Compact layout should hide spell slots panel")
+}
+
+func TestSpellbookCompactWithRollHistory(t *testing.T) {
+	char := models.NewCharacter("test-4", "Test", "Elf", "Wizard")
+	sc := models.NewSpellcasting(models.AbilityIntelligence)
+	char.Spellcasting = &sc
+
+	store, err := storage.NewCharacterStorage(t.TempDir())
+	require.NoError(t, err)
+	loader := data.NewLoader("../../../data")
+
+	model := NewSpellbookModel(char, store, loader)
+
+	// Load spell database
+	db, loadErr := loader.GetSpells()
+	require.NoError(t, loadErr)
+	model.spellDatabase = db
+
+	// Set a wide terminal but with roll history taking space
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 30}
+	model, _ = model.Update(sizeMsg)
+	model.SetRollHistoryState(true, 40) // 40 cols for roll history, leaving 80 available
+
+	view := model.View()
+
+	// With roll history visible, available width is 80 which is < 90 breakpoint
+	// So it should use compact mode (no spell slots)
+	assert.True(t, len(view) > 0, "Should render with roll history")
+	assert.NotContains(t, view, "Spell Slots", "Should use compact layout when roll history reduces available width below breakpoint")
+}
