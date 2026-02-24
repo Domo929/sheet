@@ -1056,8 +1056,8 @@ func (m *SpellbookModel) handleAddSpellInput(msg tea.KeyPressMsg) (*SpellbookMod
 
 	default:
 		// Add character to search term
-		if len(msg.String()) == 1 {
-			m.spellSearchTerm += msg.String()
+		if msg.Text != "" {
+			m.spellSearchTerm += msg.Text
 			m.updateSearchResults()
 		}
 		return m, nil
