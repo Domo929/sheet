@@ -387,11 +387,27 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// windowTitle returns a dynamic window title based on the current view and character.
+func (m Model) windowTitle() string {
+	switch m.currentView {
+	case ViewCharacterSelection:
+		return "D&D 5e Character Sheet"
+	case ViewCharacterCreation:
+		return "D&D 5e — New Character"
+	default:
+		if m.character != nil {
+			return fmt.Sprintf("D&D 5e — %s", m.character.Info.Name)
+		}
+		return "D&D 5e Character Sheet"
+	}
+}
+
 // newView wraps a content string in a tea.View with declarative screen settings.
 func (m Model) newView(content string) tea.View {
 	v := tea.NewView(content)
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
+	v.WindowTitle = m.windowTitle()
 	return v
 }
 
