@@ -6,9 +6,9 @@ import (
 
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // OpenCharacterInfoMsg signals to open the character info view.
@@ -137,7 +137,7 @@ func (m *CharacterInfoModel) Update(msg tea.Msg) (*CharacterInfoModel, tea.Cmd) 
 		m.height = msg.Height
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Ctrl+C always quits
 		if key.Matches(msg, m.keys.Quit) {
 			return m, tea.Quit
@@ -273,11 +273,11 @@ func (m *CharacterInfoModel) handleSelect() (*CharacterInfoModel, tea.Cmd) {
 }
 
 // handleEditMode handles key input when in edit mode.
-func (m *CharacterInfoModel) handleEditMode(msg tea.KeyMsg) (*CharacterInfoModel, tea.Cmd) {
+func (m *CharacterInfoModel) handleEditMode(msg tea.KeyPressMsg) (*CharacterInfoModel, tea.Cmd) {
 	if m.editSection == PersonalitySectionBackstory {
 		// Multiline editing
-		switch msg.Type {
-		case tea.KeyEsc:
+		switch msg.Code {
+		case tea.KeyEscape:
 			m.editMode = false
 			return m, nil
 		case tea.KeyEnter:
@@ -288,10 +288,11 @@ func (m *CharacterInfoModel) handleEditMode(msg tea.KeyMsg) (*CharacterInfoModel
 				m.editBuffer = m.editBuffer[:len(m.editBuffer)-1]
 			}
 			return m, nil
-		case tea.KeyRunes:
-			m.editBuffer += string(msg.Runes)
-			return m, nil
 		default:
+			if msg.Text != "" {
+				m.editBuffer += msg.Text
+				return m, nil
+			}
 			// Handle ctrl+s for save
 			if msg.String() == "ctrl+s" {
 				m.applyEdit()
@@ -302,8 +303,8 @@ func (m *CharacterInfoModel) handleEditMode(msg tea.KeyMsg) (*CharacterInfoModel
 	}
 
 	// Single-line editing
-	switch msg.Type {
-	case tea.KeyEsc:
+	switch msg.Code {
+	case tea.KeyEscape:
 		m.editMode = false
 		return m, nil
 	case tea.KeyEnter:
@@ -315,22 +316,24 @@ func (m *CharacterInfoModel) handleEditMode(msg tea.KeyMsg) (*CharacterInfoModel
 			m.editBuffer = m.editBuffer[:len(m.editBuffer)-1]
 		}
 		return m, nil
-	case tea.KeyRunes:
-		m.editBuffer += string(msg.Runes)
-		return m, nil
+	default:
+		if msg.Text != "" {
+			m.editBuffer += msg.Text
+			return m, nil
+		}
 	}
 	return m, nil
 }
 
 // handleConfirmDelete handles key input during delete confirmation.
-func (m *CharacterInfoModel) handleConfirmDelete(msg tea.KeyMsg) (*CharacterInfoModel, tea.Cmd) {
+func (m *CharacterInfoModel) handleConfirmDelete(msg tea.KeyPressMsg) (*CharacterInfoModel, tea.Cmd) {
 	switch {
-	case msg.Type == tea.KeyRunes && len(msg.Runes) > 0 && msg.Runes[0] == 'y':
+	case msg.Text == "y":
 		m.deleteCurrentItem()
 		m.confirmingDelete = false
 		return m, nil
-	case msg.Type == tea.KeyRunes && len(msg.Runes) > 0 && msg.Runes[0] == 'n',
-		msg.Type == tea.KeyEsc:
+	case msg.Text == "n",
+		msg.Code == tea.KeyEscape:
 		m.confirmingDelete = false
 		return m, nil
 	}
@@ -720,7 +723,7 @@ func (m *CharacterInfoModel) View() string {
 		modal := m.renderEditModal(width, height)
 		base = lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, modal,
 			lipgloss.WithWhitespaceChars(" "),
-			lipgloss.WithWhitespaceForeground(lipgloss.Color("236")),
+			lipgloss.WithWhitespaceStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("236"))),
 		)
 	}
 
@@ -734,7 +737,7 @@ func (m *CharacterInfoModel) View() string {
 		confirmModal := m.renderConfirmDeleteModal(width, height, sectionLabel)
 		base = lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, confirmModal,
 			lipgloss.WithWhitespaceChars(" "),
-			lipgloss.WithWhitespaceForeground(lipgloss.Color("236")),
+			lipgloss.WithWhitespaceStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("236"))),
 		)
 	}
 

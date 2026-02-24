@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func TestMainSheetQuitKey(t *testing.T) {
@@ -27,7 +27,7 @@ func TestMainSheetQuitKey(t *testing.T) {
 	m.currentView = ViewMainSheet
 
 	// Send 'q' key
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 'q', Text: "q"})
 
 	// Should return tea.Quit command
 	require.NotNil(t, cmd, "Expected quit command, got nil")
@@ -52,7 +52,7 @@ func TestMainSheetCtrlCQuit(t *testing.T) {
 	m.currentView = ViewMainSheet
 
 	// Send Ctrl+C
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
 
 	require.NotNil(t, cmd, "Expected quit command, got nil")
 
@@ -68,10 +68,10 @@ func TestModelViewTooSmallTerminal(t *testing.T) {
 		height: 15,
 	}
 
-	view := m.View()
-	assert.Contains(t, view, "Terminal too small", "Should show too-small message for 50x15")
-	assert.Contains(t, view, "60", "Should mention minimum width")
-	assert.Contains(t, view, "20", "Should mention minimum height")
+	v := m.View()
+	assert.Contains(t, v.Content, "Terminal too small", "Should show too-small message for 50x15")
+	assert.Contains(t, v.Content, "60", "Should mention minimum width")
+	assert.Contains(t, v.Content, "20", "Should mention minimum height")
 }
 
 func TestModelViewMinimumSizeOK(t *testing.T) {
@@ -80,8 +80,8 @@ func TestModelViewMinimumSizeOK(t *testing.T) {
 		height: 20,
 	}
 
-	view := m.View()
-	assert.NotContains(t, view, "Terminal too small", "Should NOT show too-small message at 60x20")
+	v := m.View()
+	assert.NotContains(t, v.Content, "Terminal too small", "Should NOT show too-small message at 60x20")
 }
 
 func TestCancelCharacterCreation(t *testing.T) {

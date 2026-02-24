@@ -8,8 +8,8 @@ import (
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/components"
 	"github.com/Domo929/sheet/internal/ui/views"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // ViewType represents the different views in the application.
@@ -106,7 +106,7 @@ func (m Model) Init() tea.Cmd {
 // Update handles messages and updates the model (required by Bubble Tea).
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// If roll engine is active, it handles all keys
-	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+	if keyMsg, ok := msg.(tea.KeyPressMsg); ok {
 		if m.rollEngine != nil && m.rollEngine.IsActive() {
 			cmd := m.rollEngine.Update(keyMsg)
 			return m, cmd
@@ -343,7 +343,7 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = c
 
 			// Check for navigation back to selection
-			if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			if keyMsg, ok := msg.(tea.KeyPressMsg); ok {
 				if keyMsg.String() == "q" || keyMsg.String() == "ctrl+c" {
 					m.quitting = true
 					return m, tea.Quit
@@ -387,49 +387,57 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// newView wraps a content string in a tea.View with declarative screen settings.
+func (m Model) newView(content string) tea.View {
+	v := tea.NewView(content)
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
+}
+
 // View renders the current view (required by Bubble Tea).
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	// Return empty view when quitting to avoid flashing content
 	if m.quitting {
-		return ""
+		return m.newView("")
 	}
 
 	if m.err != nil {
-		return "Error: " + m.err.Error() + "\n\nPress q to quit."
+		return m.newView("Error: " + m.err.Error() + "\n\nPress q to quit.")
 	}
 
 	// Minimum terminal size guard
 	if m.width > 0 && m.height > 0 && (m.width < minTerminalWidth || m.height < minTerminalHeight) {
-		return fmt.Sprintf(
+		return m.newView(fmt.Sprintf(
 			"Terminal too small (%dx%d).\n\nMinimum size: %dx%d\nPlease resize your terminal.",
 			m.width, m.height, minTerminalWidth, minTerminalHeight,
-		)
+		))
 	}
 
 	// Route to appropriate view renderer
 	switch m.currentView {
 	case ViewCharacterSelection:
-		return m.renderCharacterSelection()
+		return m.newView(m.renderCharacterSelection())
 	case ViewCharacterCreation:
-		return m.renderCharacterCreation()
+		return m.newView(m.renderCharacterCreation())
 	case ViewMainSheet:
-		return m.compositeWithRollUI(m.renderMainSheet())
+		return m.newView(m.compositeWithRollUI(m.renderMainSheet()))
 	case ViewInventory:
-		return m.renderInventory()
+		return m.newView(m.renderInventory())
 	case ViewSpellbook:
-		return m.compositeWithRollUI(m.renderSpellbook())
+		return m.newView(m.compositeWithRollUI(m.renderSpellbook()))
 	case ViewCharacterInfo:
-		return m.renderCharacterInfo()
+		return m.newView(m.renderCharacterInfo())
 	case ViewLevelUp:
-		return m.renderLevelUp()
+		return m.newView(m.renderLevelUp())
 	case ViewCombat:
-		return m.renderCombat()
+		return m.newView(m.renderCombat())
 	case ViewRest:
-		return m.renderRest()
+		return m.newView(m.renderRest())
 	case ViewNotes:
-		return m.renderNotes()
+		return m.newView(m.renderNotes())
 	default:
-		return "Unknown view"
+		return m.newView("Unknown view")
 	}
 }
 

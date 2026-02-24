@@ -6,8 +6,8 @@ import (
 
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/components"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // CharacterSelectionModel manages the character selection screen.
@@ -120,7 +120,7 @@ func (m *CharacterSelectionModel) Update(msg tea.Msg) (*CharacterSelectionModel,
 		// Reload character list after deletion
 		return m, LoadCharacterListCmd(m.storage)
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// If confirming delete, handle y/n
 		if m.confirmingDelete {
 			switch msg.String() {

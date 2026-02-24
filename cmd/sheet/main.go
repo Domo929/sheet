@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/Domo929/sheet/internal/ui"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func main() {
@@ -16,12 +16,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create and run the Bubble Tea program with alternate screen
-	p := tea.NewProgram(
-		model,
-		tea.WithAltScreen(),       // Use alternate screen buffer
-		tea.WithMouseCellMotion(), // Enable mouse support
-	)
+	// Create and run the Bubble Tea program
+	p := tea.NewProgram(model)
 
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running application: %v\n", err)

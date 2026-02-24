@@ -7,7 +7,7 @@ import (
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,8 +48,8 @@ func containsStep(steps []LevelUpStep, target LevelUpStep) bool {
 }
 
 // pressKey sends a key message and returns the updated model.
-func pressKey(m *LevelUpModel, keyType tea.KeyType) *LevelUpModel {
-	updated, _ := m.Update(tea.KeyMsg{Type: keyType})
+func pressKey(m *LevelUpModel, code rune) *LevelUpModel {
+	updated, _ := m.Update(tea.KeyPressMsg{Code: code})
 	return updated
 }
 
@@ -258,7 +258,7 @@ func TestLevelUpModel_CancelDoesNotApply(t *testing.T) {
 	require.Equal(t, LevelUpStepHP, model.currentStep)
 
 	// Press Esc immediately on HP step (not rolled yet — triggers cancel)
-	_, cmd := model.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	_, cmd := model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 
 	// Verify cancel produces a BackToSheetMsg command
 	require.NotNil(t, cmd, "Esc on HP step should return a command")
@@ -293,7 +293,7 @@ func TestLevelUpModel_ConfirmAppliesChanges(t *testing.T) {
 	require.Equal(t, LevelUpStepConfirm, model.currentStep, "should be on Confirm step")
 
 	// Confirm
-	model, cmd := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, cmd := model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// Verify a LevelUpCompleteMsg was produced
 	require.NotNil(t, cmd, "confirming level-up should return a command")
@@ -400,7 +400,7 @@ func TestLevelUpModel_HPStepReroll(t *testing.T) {
 	firstResult := model.stagedHPIncrease
 
 	// Press Esc to re-roll (goes back to method selection)
-	model = pressKey(model, tea.KeyEsc)
+	model = pressKey(model, tea.KeyEscape)
 	assert.False(t, model.hpRolled, "hpRolled should be false after Esc to re-roll")
 	assert.Equal(t, 0, model.stagedHPIncrease, "stagedHPIncrease should reset to 0")
 
@@ -430,7 +430,7 @@ func TestLevelUpModel_SubclassStepBackRetreat(t *testing.T) {
 	require.Equal(t, LevelUpStepSubclass, model.currentStep)
 
 	// Press Esc on subclass step — should go back to HP
-	model = pressKey(model, tea.KeyEsc)
+	model = pressKey(model, tea.KeyEscape)
 	assert.Equal(t, LevelUpStepHP, model.currentStep,
 		"Esc on Subclass should retreat to HP step")
 }
@@ -598,7 +598,7 @@ func TestLevelUpModel_ConfirmStepBackRetreats(t *testing.T) {
 	prevStepIndex := model.stepIndex
 
 	// Press Esc to go back
-	model = pressKey(model, tea.KeyEsc)
+	model = pressKey(model, tea.KeyEscape)
 	assert.Less(t, model.stepIndex, prevStepIndex,
 		"stepIndex should decrease when pressing Esc on Confirm step")
 }

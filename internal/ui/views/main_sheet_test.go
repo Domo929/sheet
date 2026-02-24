@@ -7,7 +7,8 @@ import (
 	"github.com/Domo929/sheet/internal/domain"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,19 +49,19 @@ func TestMainSheetModelTabNavigation(t *testing.T) {
 	assert.Equal(t, FocusAbilitiesAndSaves, model.focusArea, "expected initial focus to be FocusAbilitiesAndSaves (0)")
 
 	// Tab to next panel
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	assert.Equal(t, FocusSkills, model.focusArea, "expected focus to be FocusSkills (1) after tab")
 
 	// Tab again
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	assert.Equal(t, FocusCombat, model.focusArea, "expected focus to be FocusCombat (2) after tab")
 
 	// Tab to Actions
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	assert.Equal(t, FocusActions, model.focusArea, "expected focus to be FocusActions (3) after tab")
 
 	// Tab wraps around
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	assert.Equal(t, FocusAbilitiesAndSaves, model.focusArea, "expected focus to wrap to FocusAbilitiesAndSaves (0)")
 }
 
@@ -72,11 +73,11 @@ func TestMainSheetModelShiftTabNavigation(t *testing.T) {
 	model.focusArea = FocusSkills
 
 	// Shift+Tab to previous panel
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift})
 	assert.Equal(t, FocusAbilitiesAndSaves, model.focusArea, "expected focus to be FocusAbilitiesAndSaves (0) after shift+tab")
 
 	// Shift+Tab wraps around from 0 to 3 (Actions)
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift})
 	assert.Equal(t, FocusActions, model.focusArea, "expected focus to wrap to FocusActions (3)")
 }
 
@@ -86,7 +87,7 @@ func TestMainSheetModelView(t *testing.T) {
 	model.width = 120
 	model.height = 40
 
-	view := model.View()
+	view := ansi.Strip(model.View())
 
 	// Check that character name is displayed
 	assert.Contains(t, view, char.Info.Name, "view should contain character name")
@@ -269,15 +270,15 @@ func TestMainSheetModelHPInputMode(t *testing.T) {
 	model.focusArea = FocusCombat
 
 	// Test entering damage mode
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	assert.Equal(t, HPInputDamage, model.hpInputMode, "expected HPInputDamage mode")
 
 	// Test entering numbers
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1', '0'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '1', Text: "10"})
 	assert.Equal(t, "10", model.hpInputBuffer, "expected buffer '10'")
 
 	// Test applying damage
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Equal(t, 35, model.character.CombatStats.HitPoints.Current, "expected HP 35 after 10 damage")
 	assert.Equal(t, HPInputNone, model.hpInputMode, "expected to exit input mode after enter")
 }
@@ -291,9 +292,9 @@ func TestMainSheetModelHPHeal(t *testing.T) {
 	model.focusArea = FocusCombat
 
 	// Enter heal mode and heal 10
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1', '0'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'h', Text: "h"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '1', Text: "10"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	assert.Equal(t, 40, model.character.CombatStats.HitPoints.Current, "expected HP 40 after healing 10")
 }
@@ -308,9 +309,9 @@ func TestMainSheetModelHPTempHP(t *testing.T) {
 	model.focusArea = FocusCombat
 
 	// Enter temp HP mode and add 5
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'5'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 't', Text: "t"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '5', Text: "5"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	assert.Equal(t, 5, model.character.CombatStats.HitPoints.Temporary, "expected temp HP 5")
 }
@@ -321,11 +322,11 @@ func TestMainSheetModelHPInputCancel(t *testing.T) {
 	model.focusArea = FocusCombat
 
 	// Enter damage mode
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1', '0'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '1', Text: "10"})
 
 	// Cancel with escape
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 
 	assert.Equal(t, HPInputNone, model.hpInputMode, "expected to exit input mode on escape")
 	assert.Empty(t, model.hpInputBuffer, "expected buffer to be cleared on escape")
@@ -354,15 +355,15 @@ func TestMainSheetModelDeathSaves(t *testing.T) {
 	model.focusArea = FocusCombat
 
 	// Test adding death save success
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '1', Text: "1"})
 	assert.Equal(t, 1, char.CombatStats.DeathSaves.Successes, "expected 1 success")
 
 	// Test adding death save failure
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '2', Text: "2"})
 	assert.Equal(t, 1, char.CombatStats.DeathSaves.Failures, "expected 1 failure")
 
 	// Test reset
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '0', Text: "0"})
 	assert.Equal(t, 0, char.CombatStats.DeathSaves.Successes, "expected death saves successes to be reset")
 	assert.Equal(t, 0, char.CombatStats.DeathSaves.Failures, "expected death saves failures to be reset")
 }
@@ -387,11 +388,11 @@ func TestMainSheetModelConditionAdd(t *testing.T) {
 	model.focusArea = FocusCombat
 
 	// Enter condition add mode
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'+'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '+', Text: "+"})
 	assert.True(t, model.conditionMode && model.conditionAdding, "expected to be in condition add mode")
 
 	// Select and add first condition
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Len(t, char.CombatStats.Conditions, 1, "expected 1 condition")
 	assert.False(t, model.conditionMode, "expected to exit condition mode after adding")
 }
@@ -405,11 +406,11 @@ func TestMainSheetModelConditionRemove(t *testing.T) {
 	model.focusArea = FocusCombat
 
 	// Enter condition remove mode
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'-'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '-', Text: "-"})
 	assert.True(t, model.conditionMode && !model.conditionAdding, "expected to be in condition remove mode")
 
 	// Remove first condition
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Len(t, char.CombatStats.Conditions, 1, "expected 1 condition after removal")
 }
 
@@ -419,18 +420,18 @@ func TestMainSheetModelConditionNavigation(t *testing.T) {
 	model.focusArea = FocusCombat
 
 	// Enter condition add mode
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'+'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '+', Text: "+"})
 
 	// Navigate down
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, model.conditionCursor, "expected cursor at 1")
 
 	// Navigate up
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 0, model.conditionCursor, "expected cursor at 0")
 
 	// Cancel
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.False(t, model.conditionMode, "expected to exit condition mode on escape")
 }
 
@@ -502,27 +503,27 @@ func TestRestModeTransitions(t *testing.T) {
 	assert.Equal(t, RestModeNone, model.restMode, "expected initial rest mode to be RestModeNone")
 
 	// Press 'r' to enter rest menu
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'r', Text: "r"})
 	assert.Equal(t, RestModeMenu, model.restMode, "expected rest mode RestModeMenu after 'r'")
 
 	// Press 's' to go to short rest
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
 	assert.Equal(t, RestModeShort, model.restMode, "expected rest mode RestModeShort after 's'")
 
 	// Press Esc to go back to menu
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.Equal(t, RestModeMenu, model.restMode, "expected rest mode RestModeMenu after Esc")
 
 	// Press 'l' to go to long rest
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'l', Text: "l"})
 	assert.Equal(t, RestModeLong, model.restMode, "expected rest mode RestModeLong after 'l'")
 
 	// Press Esc to go back to menu
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.Equal(t, RestModeMenu, model.restMode, "expected rest mode RestModeMenu after Esc")
 
 	// Press Esc again to exit rest mode
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEscape})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.Equal(t, RestModeNone, model.restMode, "expected rest mode RestModeNone after second Esc")
 }
 
@@ -532,30 +533,30 @@ func TestShortRestHitDiceAdjustment(t *testing.T) {
 	model := NewMainSheetModel(char, nil)
 
 	// Enter short rest mode
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'r', Text: "r"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
 
 	assert.Equal(t, 0, model.restHitDice, "expected initial restHitDice 0")
 
 	// Increase hit dice to spend
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 1, model.restHitDice, "expected restHitDice 1 after up")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 2, model.restHitDice, "expected restHitDice 2 after second up")
 
 	// Decrease hit dice
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, model.restHitDice, "expected restHitDice 1 after down")
 
 	// Can't go below 0
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyDown})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 0, model.restHitDice, "expected restHitDice 0 (can't go negative)")
 
 	// Can't exceed remaining hit dice
 	model.restHitDice = 3
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 3, model.restHitDice, "expected restHitDice 3 (can't exceed remaining)")
 }
 
@@ -569,17 +570,17 @@ func TestShortRestExecution(t *testing.T) {
 	model := NewMainSheetModel(char, nil)
 
 	// Enter short rest and spend hit dice
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp}) // 1 hit die
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyUp}) // 2 hit dice
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'r', Text: "r"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyUp}) // 1 hit die
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyUp}) // 2 hit dice
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// Now we should be at the roll/average prompt
 	assert.True(t, model.restRollPrompt, "expected roll prompt to be shown")
 
 	// Choose average
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 
 	// After confirming, rest transitions to result screen first
 	assert.Equal(t, RestModeResult, model.restMode, "expected rest mode RestModeResult after confirming")
@@ -594,7 +595,7 @@ func TestShortRestExecution(t *testing.T) {
 	assert.Equal(t, 3, char.CombatStats.HitDice.Remaining, "expected 3 remaining hit dice")
 
 	// Dismiss the result screen
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	assert.Equal(t, RestModeNone, model.restMode, "expected rest mode RestModeNone after dismissing result")
 }
@@ -608,9 +609,9 @@ func TestLongRestExecution(t *testing.T) {
 	model := NewMainSheetModel(char, nil)
 
 	// Enter long rest and confirm
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'r', Text: "r"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'l', Text: "l"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// After confirming, rest transitions to result screen first
 	assert.Equal(t, RestModeResult, model.restMode, "expected rest mode RestModeResult after confirming")
@@ -625,7 +626,7 @@ func TestLongRestExecution(t *testing.T) {
 	assert.GreaterOrEqual(t, char.CombatStats.HitDice.Remaining, 4, "expected at least 4 hit dice after recovery")
 
 	// Dismiss the result screen
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	assert.Equal(t, RestModeNone, model.restMode, "expected rest mode RestModeNone after dismissing result")
 }
@@ -707,7 +708,7 @@ func TestMainSheetScrolling(t *testing.T) {
 	assert.Equal(t, 0, m.scrollOffset, "Initial scroll offset should be 0")
 
 	// Page down should increase scroll offset
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyPgDown})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyPgDown})
 	// scrollOffset may or may not change depending on content height
 	// Just verify no panic and offset >= 0
 	assert.GreaterOrEqual(t, m.scrollOffset, 0, "Scroll offset should be >= 0 after PgDn")
@@ -722,7 +723,7 @@ func TestMainSheetScrollDoesNotGoBelowZero(t *testing.T) {
 	m, _ = m.Update(sizeMsg)
 
 	// Page up from 0 should stay at 0
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyPgUp})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyPgUp})
 	assert.Equal(t, 0, m.scrollOffset, "Scroll offset should not go below 0")
 }
 

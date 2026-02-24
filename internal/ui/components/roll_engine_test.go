@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,7 +43,7 @@ func TestRollEngine_AdvPromptNormal(t *testing.T) {
 	e := NewRollEngine()
 	e.Update(RequestRollMsg{DiceExpr: "1d20", AdvPrompt: true})
 
-	e.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	e.Update(tea.KeyPressMsg{Code: 'n', Text: "n"})
 
 	assert.Equal(t, rollStateAnimating, e.state)
 }
@@ -52,7 +52,7 @@ func TestRollEngine_AdvPromptAdvantage(t *testing.T) {
 	e := NewRollEngine()
 	e.Update(RequestRollMsg{DiceExpr: "1d20", AdvPrompt: true})
 
-	e.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	e.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 
 	assert.Equal(t, rollStateAnimating, e.state)
 	assert.True(t, e.advantage)
@@ -62,7 +62,7 @@ func TestRollEngine_AdvPromptDisadvantage(t *testing.T) {
 	e := NewRollEngine()
 	e.Update(RequestRollMsg{DiceExpr: "1d20", AdvPrompt: true})
 
-	e.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	e.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 
 	assert.Equal(t, rollStateAnimating, e.state)
 	assert.True(t, e.disadvantage)
@@ -72,7 +72,7 @@ func TestRollEngine_AdvPromptEsc(t *testing.T) {
 	e := NewRollEngine()
 	e.Update(RequestRollMsg{DiceExpr: "1d20", AdvPrompt: true})
 
-	e.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 
 	assert.Equal(t, rollStateIdle, e.state)
 	assert.False(t, e.IsActive())
@@ -93,7 +93,7 @@ func TestRollEngine_ShowingDismiss(t *testing.T) {
 	advanceToShowing(t, e)
 
 	// No follow-up set, any key dismisses
-	cmd := e.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	cmd := e.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	assert.Equal(t, rollStateIdle, e.state)
 	assert.NotNil(t, cmd)
@@ -110,7 +110,7 @@ func TestRollEngine_ShowingWithFollowUp(t *testing.T) {
 	advanceToShowing(t, e)
 
 	// Press Enter to trigger follow-up
-	cmd := e.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	cmd := e.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.NotNil(t, cmd)
 
 	msg := cmd()
@@ -132,7 +132,7 @@ func TestRollEngine_ShowingSkipFollowUp(t *testing.T) {
 	advanceToShowing(t, e)
 
 	// Press Esc to skip follow-up
-	cmd := e.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	cmd := e.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 
 	assert.Equal(t, rollStateIdle, e.state)
 	assert.NotNil(t, cmd)
@@ -151,19 +151,19 @@ func TestRollEngine_CustomRollNavigation(t *testing.T) {
 	assert.Equal(t, 1, e.quantity)
 
 	// Right → selectedDie == 1
-	e.Update(tea.KeyMsg{Type: tea.KeyRight})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	assert.Equal(t, 1, e.selectedDie)
 
 	// Left → selectedDie == 0
-	e.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 	assert.Equal(t, 0, e.selectedDie)
 
 	// Up → quantity == 2
-	e.Update(tea.KeyMsg{Type: tea.KeyUp})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 2, e.quantity)
 
 	// Down → quantity == 1
-	e.Update(tea.KeyMsg{Type: tea.KeyDown})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, e.quantity)
 }
 
@@ -172,17 +172,17 @@ func TestRollEngine_CustomRollEnter(t *testing.T) {
 	e.OpenCustomRoll()
 
 	// Select d8 (index 2): Right, Right
-	e.Update(tea.KeyMsg{Type: tea.KeyRight})
-	e.Update(tea.KeyMsg{Type: tea.KeyRight})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	assert.Equal(t, 2, e.selectedDie)
 
 	// Set quantity to 3: Up, Up
-	e.Update(tea.KeyMsg{Type: tea.KeyUp})
-	e.Update(tea.KeyMsg{Type: tea.KeyUp})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyUp})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 3, e.quantity)
 
 	// Press Enter to roll
-	cmd := e.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	cmd := e.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Equal(t, rollStateAnimating, e.state, "Custom roll should start animating")
 	assert.NotNil(t, cmd)
 }
@@ -191,7 +191,7 @@ func TestRollEngine_CustomRollEsc(t *testing.T) {
 	e := NewRollEngine()
 	e.OpenCustomRoll()
 
-	e.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.Equal(t, rollStateIdle, e.state)
 }
 
@@ -200,12 +200,12 @@ func TestRollEngine_CustomRollQuantityBounds(t *testing.T) {
 	e.OpenCustomRoll()
 
 	// Down from 1 should stay at 1 (minimum)
-	e.Update(tea.KeyMsg{Type: tea.KeyDown})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, e.quantity, "Quantity should not go below 1")
 
 	// Set quantity to max by pressing up many times
 	for i := 0; i < 110; i++ {
-		e.Update(tea.KeyMsg{Type: tea.KeyUp})
+		e.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	}
 	assert.Equal(t, customRollMaxQty, e.quantity, "Quantity should not exceed max (100)")
 }
@@ -218,7 +218,7 @@ func TestRollEngine_IsActive(t *testing.T) {
 	assert.True(t, e.IsActive(), "Engine should be active in custom roll state")
 
 	// Reset to idle via Esc
-	e.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	e.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.False(t, e.IsActive(), "Engine should be idle after Esc")
 }
 

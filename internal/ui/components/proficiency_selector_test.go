@@ -3,7 +3,7 @@ package components
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,27 +26,27 @@ func TestProficiencySelectorNavigation(t *testing.T) {
 	assert.Equal(t, 0, ps.cursor, "initial cursor position")
 
 	// Move down
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyDown})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, ps.cursor, "cursor after down")
 
 	// Move down again
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyDown})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 2, ps.cursor, "cursor after second down")
 
 	// Try to move beyond end
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyDown})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 2, ps.cursor, "cursor should stay at 2 at bottom")
 
 	// Move up
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyUp})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 1, ps.cursor, "cursor after up")
 
 	// Move to top
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyUp})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 0, ps.cursor, "cursor after second up")
 
 	// Try to move beyond start
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyUp})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 0, ps.cursor, "cursor should stay at 0 at top")
 }
 
@@ -55,23 +55,23 @@ func TestProficiencySelectorSelection(t *testing.T) {
 	ps := NewProficiencySelector("Test", options, 2)
 
 	// Select first option
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeySpace})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 	assert.Equal(t, 1, ps.SelectedCount())
 	assert.True(t, ps.selected[0], "expected option 0 to be selected")
 
 	// Move to second and select
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyDown})
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeySpace})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyDown})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 	assert.Equal(t, 2, ps.SelectedCount())
 
 	// Try to select a third (should not work, maxSelect is 2)
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyDown})
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeySpace})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyDown})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 	assert.Equal(t, 2, ps.SelectedCount(), "expected 2 selections (maxed out)")
 
 	// Deselect first option
 	ps.cursor = 0
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeySpace})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 	assert.Equal(t, 1, ps.SelectedCount(), "expected 1 selection after deselect")
 	assert.False(t, ps.selected[0], "expected option 0 to be deselected")
 }
@@ -81,9 +81,9 @@ func TestProficiencySelectorGetters(t *testing.T) {
 	ps := NewProficiencySelector("Test", options, 2)
 
 	// Select options 0 and 2
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeySpace})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 	ps.cursor = 2
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeySpace})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 
 	// Test GetSelectedIndices
 	indices := ps.GetSelectedIndices()
@@ -118,12 +118,12 @@ func TestProficiencySelectorIsComplete(t *testing.T) {
 	assert.False(t, ps.IsComplete(), "selector should not be complete initially")
 
 	// Select one
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeySpace})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 	assert.False(t, ps.IsComplete(), "selector should not be complete with 1/2 selected")
 
 	// Select second
 	ps.cursor = 1
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeySpace})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 	assert.True(t, ps.IsComplete(), "selector should be complete with 2/2 selected")
 }
 
@@ -138,14 +138,14 @@ func TestProficiencySelectorFocus(t *testing.T) {
 
 	// When unfocused, keys should not work
 	initialCursor := ps.cursor
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyDown})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, initialCursor, ps.cursor, "cursor should not move when unfocused")
 
 	// Re-focus
 	ps.SetFocused(true)
 	assert.True(t, ps.IsFocused(), "selector should be focused after SetFocused(true)")
 
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyDown})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.NotEqual(t, initialCursor, ps.cursor, "cursor should move when focused")
 }
 
@@ -154,11 +154,11 @@ func TestProficiencySelectorViKeys(t *testing.T) {
 	ps := NewProficiencySelector("Test", options, 2)
 
 	// Test 'j' for down
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: 'j', Text: "j"})
 	assert.Equal(t, 1, ps.cursor, "cursor with 'j'")
 
 	// Test 'k' for up
-	ps, _ = ps.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}})
+	ps, _ = ps.Update(tea.KeyPressMsg{Code: 'k', Text: "k"})
 	assert.Equal(t, 0, ps.cursor, "cursor with 'k'")
 }
 

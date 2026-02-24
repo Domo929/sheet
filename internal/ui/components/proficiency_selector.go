@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // ProficiencySelector is a component for selecting proficiencies from a list.
@@ -80,7 +80,7 @@ func (ps *ProficiencySelector) Update(msg tea.Msg) (ProficiencySelector, tea.Cmd
 		}
 		ps.height = height
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "up", "k":
 			if ps.cursor > 0 {
@@ -90,7 +90,7 @@ func (ps *ProficiencySelector) Update(msg tea.Msg) (ProficiencySelector, tea.Cmd
 			if ps.cursor < len(ps.options)-1 {
 				ps.cursor++
 			}
-		case " ":
+		case "space":
 			// Toggle selection with space (but not for locked items)
 			if ps.locked[ps.cursor] {
 				// Cannot toggle locked items

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
@@ -242,7 +242,7 @@ func (m *CharacterCreationModel) Update(msg tea.Msg) (*CharacterCreationModel, t
 		m.backgroundList = components.NewList("Available Backgrounds", msg.Items)
 		return m, nil
 		
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.handleKey(msg)
 	}
 	
@@ -250,7 +250,7 @@ func (m *CharacterCreationModel) Update(msg tea.Msg) (*CharacterCreationModel, t
 }
 
 // handleKey processes keyboard input based on current step.
-func (m *CharacterCreationModel) handleKey(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handleKey(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 	switch msg.String() {
 	case "ctrl+c":
 		m.quitting = true
@@ -282,7 +282,7 @@ func (m *CharacterCreationModel) handleKey(msg tea.KeyMsg) (*CharacterCreationMo
 }
 
 // handleBasicInfoKeys handles keys for the basic info step.
-func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 	switch msg.String() {
 	case "tab":
 		m.focusedField = (m.focusedField + 1) % 3
@@ -386,7 +386,7 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 		}
 		return m, nil
 		
-	case " ":
+	case "space":
 		// Handle space in text input fields
 		if m.focusedField == 0 {
 			m.nameInput.Value += " "
@@ -397,8 +397,8 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 	}
 	
 	// Handle text input - only process actual character runes
-	if msg.Type == tea.KeyRunes && (m.focusedField == 0 || m.focusedField == 1) {
-		char := string(msg.Runes)
+	if msg.Text != "" && (m.focusedField == 0 || m.focusedField == 1) {
+		char := msg.Text
 		if m.focusedField == 0 {
 			m.nameInput.Value += char
 		} else if m.focusedField == 1 {
@@ -409,24 +409,24 @@ func (m *CharacterCreationModel) handleBasicInfoKeys(msg tea.KeyMsg) (*Character
 }
 
 // handleRaceKeys handles keys for the race selection step.
-func (m *CharacterCreationModel) handleRaceKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handleRaceKeys(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 	return m.handleListSelectionKeys(msg, &m.raceList, m.selectCurrentRace, StepBasicInfo, StepClass)
 }
 
 // handleClassKeys handles keys for the class selection step.
-func (m *CharacterCreationModel) handleClassKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handleClassKeys(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 	return m.handleListSelectionKeys(msg, &m.classList, m.selectCurrentClass, StepRace, StepBackground)
 }
 
 // handleBackgroundKeys handles keys for the background selection step.
-func (m *CharacterCreationModel) handleBackgroundKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handleBackgroundKeys(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 	return m.handleListSelectionKeys(msg, &m.backgroundList, func() bool {
 		return m.selectCurrentBackground()
 	}, StepClass, StepAbilities)
 }
 
 // handleAbilityKeys handles keys for the ability score assignment step.
-func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 	hasBackgroundBonuses := m.selectedBackground != nil && len(m.selectedBackground.AbilityScores.Options) > 0
 	
 	switch msg.String() {
@@ -554,7 +554,7 @@ func (m *CharacterCreationModel) handleAbilityKeys(msg tea.KeyMsg) (*CharacterCr
 }
 
 // handleProficiencyKeys handles keys for the proficiency selection step.
-func (m *CharacterCreationModel) handleProficiencyKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handleProficiencyKeys(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 switch msg.String() {
 case "enter":
 // If proficiencies are complete, continue to equipment
@@ -601,7 +601,7 @@ func (m *CharacterCreationModel) renderProficiencySelection() string {
 }
 
 // handleEquipmentKeys handles keys for the starting equipment step.
-func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 	if m.selectedClass == nil || len(m.selectedClass.StartingEquipment) == 0 {
 		// No equipment to select
 		switch msg.String() {
@@ -628,7 +628,7 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 				m.focusedSubItem++
 			}
 			return m, nil
-		case " ", "enter":
+		case "space", "enter":
 			// Select this specific item (space or enter)
 			if m.equipmentSubSelections == nil {
 				m.equipmentSubSelections = make(map[int]string)
@@ -659,7 +659,7 @@ func (m *CharacterCreationModel) handleEquipmentKeys(msg tea.KeyMsg) (*Character
 		m.navigateEquipmentDown()
 		return m, nil
 		
-	case " ":
+	case "space":
 		// Spacebar: Select current option and enter sub-selection if needed
 		currentEquip := m.selectedClass.StartingEquipment[m.focusedEquipmentChoice]
 		if currentEquip.Type == data.EquipmentChoiceSelect {
@@ -956,7 +956,7 @@ func (m *CharacterCreationModel) getSelectedEquipment() []data.EquipmentItem {
 }
 
 // handleReviewKeys handles keys for the review step.
-func (m *CharacterCreationModel) handleReviewKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handleReviewKeys(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 	switch msg.String() {
 	case "enter":
 		// Save character
@@ -971,10 +971,10 @@ func (m *CharacterCreationModel) handleReviewKeys(msg tea.KeyMsg) (*CharacterCre
 }
 
 // handlePersonalityKeys handles keys for the personality step.
-func (m *CharacterCreationModel) handlePersonalityKeys(msg tea.KeyMsg) (*CharacterCreationModel, tea.Cmd) {
+func (m *CharacterCreationModel) handlePersonalityKeys(msg tea.KeyPressMsg) (*CharacterCreationModel, tea.Cmd) {
 	// If editing an entry, handle text input
 	if m.personalityEditing {
-		switch msg.Type {
+		switch msg.Code {
 		case tea.KeyEnter:
 			if m.personalityFocusField == 4 {
 				// Backstory: Enter inserts newline
@@ -985,7 +985,7 @@ func (m *CharacterCreationModel) handlePersonalityKeys(msg tea.KeyMsg) (*Charact
 			m.savePersonalityEdit()
 			m.personalityEditing = false
 			return m, nil
-		case tea.KeyEsc:
+		case tea.KeyEscape:
 			m.personalityEditing = false
 			return m, nil
 		case tea.KeyBackspace:
@@ -993,11 +993,12 @@ func (m *CharacterCreationModel) handlePersonalityKeys(msg tea.KeyMsg) (*Charact
 				m.personalityEditBuffer = m.personalityEditBuffer[:len(m.personalityEditBuffer)-1]
 			}
 			return m, nil
-		case tea.KeyRunes:
-			m.personalityEditBuffer += string(msg.Runes)
+		default:
+			if msg.Text != "" {
+				m.personalityEditBuffer += msg.Text
+			}
 			return m, nil
 		}
-		return m, nil
 	}
 
 	switch msg.String() {
@@ -1053,17 +1054,17 @@ func (m *CharacterCreationModel) handlePersonalityKeys(msg tea.KeyMsg) (*Charact
 	}
 
 	// If on backstory and not editing, capture runes to start editing
-	if m.personalityFocusField == 4 && msg.Type == tea.KeyRunes {
+	if m.personalityFocusField == 4 && msg.Text != "" {
 		m.personalityEditing = true
-		m.personalityEditBuffer = m.personalityBackstory + string(msg.Runes)
+		m.personalityEditBuffer = m.personalityBackstory + msg.Text
 		return m, nil
 	}
 
 	// If on a list item, capture runes to start editing
 	items := m.getPersonalityFieldItems()
-	if m.personalityFocusField < 4 && m.personalityItemCursor < len(items) && msg.Type == tea.KeyRunes {
+	if m.personalityFocusField < 4 && m.personalityItemCursor < len(items) && msg.Text != "" {
 		m.personalityEditing = true
-		m.personalityEditBuffer = items[m.personalityItemCursor] + string(msg.Runes)
+		m.personalityEditBuffer = items[m.personalityItemCursor] + msg.Text
 		return m, nil
 	}
 
@@ -1219,7 +1220,7 @@ func (m *CharacterCreationModel) adjustBackgroundBonus(increase bool) *Character
 
 // handleListSelectionKeys is a generic handler for list-based selection steps (race, class, background).
 func (m *CharacterCreationModel) handleListSelectionKeys(
-	msg tea.KeyMsg,
+	msg tea.KeyPressMsg,
 	list *components.List,
 	selectFunc func() bool,
 	previousStep CreationStep,

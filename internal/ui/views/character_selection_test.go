@@ -5,7 +5,7 @@ import (
 
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -89,12 +89,12 @@ func TestCharacterSelectionNavigation(t *testing.T) {
 	initialSelection := model.list.SelectedIndex
 
 	// Move down
-	model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	model.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.NotEqual(t, initialSelection, model.list.SelectedIndex, "Expected selection to move down")
 
 	// Move up
 	prevSelection := model.list.SelectedIndex
-	model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	model.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.NotEqual(t, prevSelection, model.list.SelectedIndex, "Expected selection to move up")
 }
 
@@ -121,7 +121,7 @@ func TestCharacterSelectionLoadAction(t *testing.T) {
 	model.updateList()
 
 	// Press enter to load selected character
-	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	updatedModel, cmd := model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	model = updatedModel
 
 	require.NotNil(t, cmd, "Expected command to be returned for loading character")
@@ -157,7 +157,7 @@ func TestCharacterSelectionDeleteAction(t *testing.T) {
 	model.updateList()
 
 	// Press 'd' to initiate delete
-	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	updatedModel, cmd := model.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	model = updatedModel
 
 	// Should be in confirmation mode
@@ -165,7 +165,7 @@ func TestCharacterSelectionDeleteAction(t *testing.T) {
 	assert.Equal(t, "Test Hero", model.deleteTarget, "Expected delete target 'Test Hero'")
 
 	// Press 'y' to confirm
-	updatedModel, cmd = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	updatedModel, cmd = model.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 	model = updatedModel
 
 	require.NotNil(t, cmd, "Expected command to be returned for deleting character")
@@ -199,13 +199,13 @@ func TestCharacterSelectionCancelDelete(t *testing.T) {
 	model.updateList()
 
 	// Press 'd' to initiate delete
-	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	updatedModel, _ := model.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	model = updatedModel
 
 	assert.True(t, model.confirmingDelete, "Expected model to be in delete confirmation state")
 
 	// Press 'n' to cancel
-	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	updatedModel, cmd := model.Update(tea.KeyPressMsg{Code: 'n', Text: "n"})
 	model = updatedModel
 
 	assert.False(t, model.confirmingDelete, "Expected model to exit delete confirmation state")
@@ -219,13 +219,13 @@ func TestCharacterSelectionQuitAction(t *testing.T) {
 	model.loading = false
 
 	// Press 'q' to initiate quit - should show confirmation
-	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	updatedModel, cmd := model.Update(tea.KeyPressMsg{Code: 'q', Text: "q"})
 
 	assert.Nil(t, cmd, "Expected no command yet, should be confirming")
 	require.True(t, updatedModel.confirmingQuit, "Expected to be in quit confirmation mode")
 
 	// Press 'y' to confirm quit
-	_, cmd = updatedModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	_, cmd = updatedModel.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 
 	require.NotNil(t, cmd, "Expected quit command to be returned")
 
@@ -240,7 +240,7 @@ func TestCharacterSelectionNewCharacterKey(t *testing.T) {
 	model.loading = false
 
 	// Press 'n' to create new character
-	_, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	_, cmd := model.Update(tea.KeyPressMsg{Code: 'n', Text: "n"})
 
 	require.NotNil(t, cmd, "Expected command for starting character creation")
 
@@ -255,13 +255,13 @@ func TestCharacterSelectionQuitKey(t *testing.T) {
 	model := NewCharacterSelectionModel(store)
 
 	// Press 'q' key - should show confirmation
-	updatedModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	updatedModel, cmd := model.Update(tea.KeyPressMsg{Code: 'q', Text: "q"})
 
 	assert.Nil(t, cmd, "Expected no command yet, should be confirming")
 	require.True(t, updatedModel.confirmingQuit, "Expected to be in quit confirmation mode")
 
 	// Press 'y' to confirm quit
-	_, cmd = updatedModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	_, cmd = updatedModel.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 
 	require.NotNil(t, cmd, "Expected quit command")
 
@@ -311,14 +311,14 @@ func TestCharacterSelectionErrorHandling(t *testing.T) {
 	model.loading = false
 
 	// Test load with no characters - press enter
-	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	updatedModel, _ := model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	model = updatedModel
 
 	assert.NotNil(t, model.err, "Expected error when loading with no characters")
 
 	// Test delete with no characters - press 'd'
 	model.err = nil
-	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	updatedModel, _ = model.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	model = updatedModel
 
 	assert.NotNil(t, model.err, "Expected error when deleting with no characters")

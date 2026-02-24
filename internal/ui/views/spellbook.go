@@ -9,9 +9,9 @@ import (
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/components"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // SpellbookMode represents the current mode of the spellbook.
@@ -158,7 +158,7 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 		m.height = msg.Height
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle quit confirmation
 		if m.confirmingQuit {
 			switch msg.String() {
@@ -1008,7 +1008,7 @@ func (m *SpellbookModel) handleFilterToggle() *SpellbookModel {
 	return m
 }
 
-func (m *SpellbookModel) handleAddSpellInput(msg tea.KeyMsg) (*SpellbookModel, tea.Cmd) {
+func (m *SpellbookModel) handleAddSpellInput(msg tea.KeyPressMsg) (*SpellbookModel, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
 		m.mode = m.getPreviousMode()
@@ -1503,7 +1503,7 @@ func (m *SpellbookModel) spellRollCmd(spell *models.KnownSpell) tea.Cmd {
 }
 
 // handleCastLevelInput handles keyboard input in cast level selection mode.
-func (m *SpellbookModel) handleCastLevelInput(msg tea.KeyMsg) (*SpellbookModel, tea.Cmd) {
+func (m *SpellbookModel) handleCastLevelInput(msg tea.KeyPressMsg) (*SpellbookModel, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
 		m.mode = ModeSpellList

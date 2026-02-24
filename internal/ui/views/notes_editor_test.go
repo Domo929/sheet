@@ -8,7 +8,7 @@ import (
 
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,24 +39,24 @@ func TestNotesEditor_CreateNote(t *testing.T) {
 	m := newTestNotesModel(t)
 
 	// Press 'a' to start creating
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 	assert.True(t, m.inputMode)
 	assert.Equal(t, "new", m.inputAction)
 
 	// Type a title
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'S'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'i'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'S', Text: "S"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'e', Text: "e"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'i', Text: "i"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'o', Text: "o"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'n', Text: "n"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
+	m, _ = m.Update(tea.KeyPressMsg{Code: '1', Text: "1"})
 	assert.Equal(t, "Session 1", m.inputBuffer)
 
 	// Press Enter to confirm
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.False(t, m.inputMode)
 
 	// Should have created the document and entered editor mode
@@ -86,14 +86,14 @@ func TestNotesEditor_SortToggle(t *testing.T) {
 	assert.Equal(t, "Zebra Notes", docs[m.sortedDocs[2]].Title)
 
 	// Press 's' to toggle to alphabetical
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
 	assert.Equal(t, NotesSortAlphabetical, m.sortOrder)
 	assert.Equal(t, "Alpha Notes", docs[m.sortedDocs[0]].Title)
 	assert.Equal(t, "Middle Notes", docs[m.sortedDocs[1]].Title)
 	assert.Equal(t, "Zebra Notes", docs[m.sortedDocs[2]].Title)
 
 	// Press 's' again to toggle back to last edited
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
 	assert.Equal(t, NotesSortLastEdited, m.sortOrder)
 	assert.Equal(t, "Middle Notes", docs[m.sortedDocs[0]].Title)
 }
@@ -107,13 +107,13 @@ func TestNotesEditor_DeleteNote(t *testing.T) {
 	assert.Equal(t, 1, len(m.sortedDocs))
 
 	// Press 'd' to start delete
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	assert.True(t, m.confirmingDelete)
 	assert.Contains(t, m.statusMessage, "Delete")
 	assert.Contains(t, m.statusMessage, "To Delete")
 
 	// Press 'y' to confirm
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 	assert.False(t, m.confirmingDelete)
 	assert.Equal(t, 0, len(m.character.Personality.Documents))
 	assert.Equal(t, 0, len(m.sortedDocs))
@@ -128,11 +128,11 @@ func TestNotesEditor_DeleteCancel(t *testing.T) {
 	m.updateSortedDocs()
 
 	// Press 'd' to start delete
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	assert.True(t, m.confirmingDelete)
 
 	// Press 'n' to cancel
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'n', Text: "n"})
 	assert.False(t, m.confirmingDelete)
 	assert.Equal(t, 1, len(m.character.Personality.Documents))
 	assert.Contains(t, m.statusMessage, "cancelled")
@@ -146,7 +146,7 @@ func TestNotesEditor_RenameNote(t *testing.T) {
 	m.updateSortedDocs()
 
 	// Press 'r' to start rename
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'r', Text: "r"})
 	assert.True(t, m.inputMode)
 	assert.Equal(t, "rename", m.inputAction)
 	assert.Equal(t, "Old Name", m.inputBuffer)
@@ -154,18 +154,18 @@ func TestNotesEditor_RenameNote(t *testing.T) {
 	// Clear and type new name
 	// Backspace to clear
 	for range len("Old Name") {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+		m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyBackspace})
 	}
 	assert.Equal(t, "", m.inputBuffer)
 
 	// Type new name
 	for _, r := range "New Name" {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
 	assert.Equal(t, "New Name", m.inputBuffer)
 
 	// Press Enter to confirm
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.False(t, m.inputMode)
 	assert.Equal(t, "New Name", m.character.Personality.Documents[0].Title)
 	assert.Contains(t, m.statusMessage, "Renamed")
@@ -187,25 +187,25 @@ func TestNotesEditor_NavigateList(t *testing.T) {
 	assert.Equal(t, 0, m.listCursor)
 
 	// Move down
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, m.listCursor)
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 2, m.listCursor)
 
 	// Should not go past last item
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 2, m.listCursor)
 
 	// Move up
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 1, m.listCursor)
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 0, m.listCursor)
 
 	// Should not go below 0
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 0, m.listCursor)
 }
 
@@ -213,7 +213,7 @@ func TestNotesEditor_BackToSheet(t *testing.T) {
 	m := newTestNotesModel(t)
 	// returnTo is "sheet" by default
 
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	require.NotNil(t, cmd)
 	msg := cmd()
 	_, isBack := msg.(BackToSheetMsg)
@@ -226,7 +226,7 @@ func TestNotesEditor_BackToCharInfo(t *testing.T) {
 	require.NoError(t, err)
 	m := NewNotesEditorModel(char, store, "charinfo")
 
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	require.NotNil(t, cmd)
 	msg := cmd()
 	_, isBack := msg.(BackToCharacterInfoMsg)
@@ -237,16 +237,16 @@ func TestNotesEditor_InputCancel(t *testing.T) {
 	m := newTestNotesModel(t)
 
 	// Press 'a' to start creating
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 	assert.True(t, m.inputMode)
 
 	// Type something
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 't', Text: "t"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'e', Text: "e"})
 	assert.Equal(t, "te", m.inputBuffer)
 
 	// Press Esc to cancel
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.False(t, m.inputMode)
 	assert.Equal(t, "", m.inputBuffer)
 	assert.Equal(t, 0, len(m.character.Personality.Documents))
@@ -256,11 +256,11 @@ func TestNotesEditor_EmptyTitleRejected(t *testing.T) {
 	m := newTestNotesModel(t)
 
 	// Press 'a' to start creating
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 	assert.True(t, m.inputMode)
 
 	// Press Enter without typing anything
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	// Should still be in input mode since title was empty
 	assert.True(t, m.inputMode)
 	assert.Contains(t, m.statusMessage, "empty")
@@ -282,7 +282,7 @@ func TestNotesEditor_SelectEntersEditorMode(t *testing.T) {
 	m.updateSortedDocs()
 
 	// Press Enter to select
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Equal(t, NotesModeEditor, m.mode)
 	assert.NotNil(t, m.editingNote)
 	assert.Equal(t, "Test Note", m.editingNote.Title)
@@ -292,7 +292,7 @@ func TestNotesEditor_SelectOnEmptyListDoesNothing(t *testing.T) {
 	m := newTestNotesModel(t)
 
 	// Press Enter with no notes
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Equal(t, NotesModeList, m.mode)
 }
 
@@ -323,8 +323,8 @@ func TestNotesEditor_DeleteAdjustsCursor(t *testing.T) {
 	m.listCursor = 2
 
 	// Delete last item
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 
 	// Cursor should be adjusted
 	assert.Equal(t, 1, m.listCursor)
@@ -340,18 +340,18 @@ func TestNotesEditor_EditorTyping(t *testing.T) {
 
 	// Type "Hello"
 	for _, r := range "Hello" {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
 	assert.Equal(t, "Hello", m.editorLines[0])
 
 	// Enter for newline
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Equal(t, 2, len(m.editorLines))
 	assert.Equal(t, "Hello", m.editorLines[0])
 
 	// Type on second line
 	for _, r := range "World" {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
 	assert.Equal(t, "World", m.editorLines[1])
 }
@@ -368,7 +368,7 @@ func TestNotesEditor_EditorBackspace(t *testing.T) {
 	m.cursorCol = 0
 
 	// Backspace should merge with previous line
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyBackspace})
 	assert.Equal(t, 1, len(m.editorLines))
 	assert.Equal(t, "HelloWorld", m.editorLines[0])
 }
@@ -380,10 +380,10 @@ func TestNotesEditor_EditorSaveOnEsc(t *testing.T) {
 	m.enterEditorModeByID(note.ID)
 
 	for _, r := range "Saved content" {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.Equal(t, NotesModeList, m.mode)
 	assert.Equal(t, "Saved content", m.character.Personality.Documents[0].Content)
 }
@@ -401,7 +401,7 @@ func TestNotesEditor_PageUpDown(t *testing.T) {
 	m.enterEditorModeByID(note.ID)
 
 	assert.Equal(t, 19, m.cursorRow) // cursor at end
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyPgUp})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyPgUp})
 	assert.Less(t, m.cursorRow, 19)
 }
 
@@ -418,18 +418,18 @@ func TestNotesEditor_ArrowNavigation(t *testing.T) {
 
 	// Arrow left 5 times to start of line
 	for i := 0; i < 5; i++ {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+		m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 	}
 	assert.Equal(t, 1, m.cursorRow)
 	assert.Equal(t, 0, m.cursorCol)
 
 	// Arrow left once more wraps to end of previous line
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 	assert.Equal(t, 0, m.cursorRow)
 	assert.Equal(t, 5, m.cursorCol)
 
 	// Arrow up at row 0 stays at row 0
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	assert.Equal(t, 0, m.cursorRow)
 }
 
@@ -445,14 +445,14 @@ func TestNotesEditor_DeleteKey(t *testing.T) {
 	m.cursorCol = 0
 
 	// Delete first character
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDelete})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDelete})
 	assert.Equal(t, "ello", m.editorLines[0])
 
 	// Move to end of first line
 	m.cursorCol = len(m.editorLines[0])
 
 	// Delete at end of line merges with next line
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDelete})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDelete})
 	assert.Equal(t, 1, len(m.editorLines))
 	assert.Equal(t, "elloWorld", m.editorLines[0])
 }
@@ -468,11 +468,11 @@ func TestNotesEditor_HomeEnd(t *testing.T) {
 	assert.Equal(t, 11, m.cursorCol)
 
 	// Home goes to start
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyHome})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyHome})
 	assert.Equal(t, 0, m.cursorCol)
 
 	// End goes back to end
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnd})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnd})
 	assert.Equal(t, 11, m.cursorCol)
 }
 
@@ -488,7 +488,7 @@ func TestNotesEditor_ArrowRightWraps(t *testing.T) {
 	m.cursorCol = 2 // end of "AB"
 
 	// Arrow right wraps to start of next line
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	assert.Equal(t, 1, m.cursorRow)
 	assert.Equal(t, 0, m.cursorCol)
 }
@@ -516,7 +516,7 @@ func TestNotesEditor_EditorRunesDontTriggerListCommands(t *testing.T) {
 
 	// Type 'a', 'd', 's', 'r' - these should insert as text, not trigger list commands
 	for _, r := range "adsr" {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
 	assert.Equal(t, NotesModeEditor, m.mode)
 	assert.Equal(t, "adsr", m.editorLines[0])

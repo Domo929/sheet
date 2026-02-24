@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/Domo929/roll"
 )
@@ -139,7 +139,7 @@ func (e *RollEngine) Update(msg tea.Msg) tea.Cmd {
 			e.OpenCustomRoll()
 		}
 		return nil
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return e.handleKey(msg)
 	}
 	return nil
@@ -165,7 +165,7 @@ func (e *RollEngine) handleRequestRoll(msg RequestRollMsg) tea.Cmd {
 }
 
 // handleKey processes key input based on current state.
-func (e *RollEngine) handleKey(msg tea.KeyMsg) tea.Cmd {
+func (e *RollEngine) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 	switch e.state {
 	case rollStateAdvPrompt:
 		return e.handleAdvPromptKey(msg)
@@ -178,7 +178,7 @@ func (e *RollEngine) handleKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 // handleAdvPromptKey handles keys in the AdvPrompt state.
-func (e *RollEngine) handleAdvPromptKey(msg tea.KeyMsg) tea.Cmd {
+func (e *RollEngine) handleAdvPromptKey(msg tea.KeyPressMsg) tea.Cmd {
 	switch msg.String() {
 	case "n", "N":
 		return e.executeAndAnimate(e.pendingRoll.DiceExpr, e.pendingRoll.Modifier, false, false)
@@ -194,7 +194,7 @@ func (e *RollEngine) handleAdvPromptKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 // handleShowingKey handles keys in the Showing state.
-func (e *RollEngine) handleShowingKey(msg tea.KeyMsg) tea.Cmd {
+func (e *RollEngine) handleShowingKey(msg tea.KeyPressMsg) tea.Cmd {
 	if e.followUp != nil {
 		switch msg.String() {
 		case "enter":
@@ -217,7 +217,7 @@ func (e *RollEngine) handleShowingKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 // handleCustomRollKey handles keys in the CustomRoll state.
-func (e *RollEngine) handleCustomRollKey(msg tea.KeyMsg) tea.Cmd {
+func (e *RollEngine) handleCustomRollKey(msg tea.KeyPressMsg) tea.Cmd {
 	switch msg.String() {
 	case "left", "h":
 		if e.selectedDie > 0 {

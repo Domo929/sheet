@@ -10,9 +10,9 @@ import (
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/components"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // MainSheetModel is the model for the main character sheet view.
@@ -408,7 +408,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		}
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle quit confirmation
 		if m.confirmingQuit {
 			switch msg.String() {
@@ -448,7 +448,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 
 		// Handle save navigation when Abilities/Saves are focused
 		if m.focusArea == FocusAbilitiesAndSaves {
-			switch msg.Type {
+			switch msg.Code {
 			case tea.KeyUp:
 				if m.saveCursor > 0 {
 					m.saveCursor--
@@ -466,7 +466,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 
 		// Handle skill navigation when Skills are focused
 		if m.focusArea == FocusSkills {
-			switch msg.Type {
+			switch msg.Code {
 			case tea.KeyUp:
 				if m.skillCursor > 0 {
 					m.skillCursor--
@@ -485,7 +485,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 
 		// Handle action navigation when Actions are focused
 		if m.focusArea == FocusActions {
-			switch msg.Type {
+			switch msg.Code {
 			case tea.KeyUp:
 				if m.actionCursor > 0 {
 					m.actionCursor--
@@ -793,8 +793,8 @@ func (m *MainSheetModel) handleActionSelection() (*MainSheetModel, tea.Cmd) {
 }
 
 // handleHPInput handles keyboard input when in HP modification mode.
-func (m *MainSheetModel) handleHPInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd) {
-	switch msg.Type {
+func (m *MainSheetModel) handleHPInput(msg tea.KeyPressMsg) (*MainSheetModel, tea.Cmd) {
+	switch msg.Code {
 	case tea.KeyEscape:
 		m.hpInputMode = HPInputNone
 		m.hpInputBuffer = ""
@@ -805,7 +805,7 @@ func (m *MainSheetModel) handleHPInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd
 			m.hpInputMode = HPInputNone
 			return m, nil
 		}
-		
+
 		amount, err := strconv.Atoi(m.hpInputBuffer)
 		if err != nil || amount < 0 {
 			m.statusMessage = "Invalid number"
@@ -850,21 +850,21 @@ func (m *MainSheetModel) handleHPInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd
 		}
 		return m, nil
 
-	case tea.KeyRunes:
-		// Only accept digits
-		for _, r := range msg.Runes {
-			if r >= '0' && r <= '9' {
-				m.hpInputBuffer += string(r)
+	default:
+		if msg.Text != "" {
+			// Only accept digits
+			for _, r := range msg.Text {
+				if r >= '0' && r <= '9' {
+					m.hpInputBuffer += string(r)
+				}
 			}
 		}
 		return m, nil
 	}
-
-	return m, nil
 }
 
 // handleConditionInput handles keyboard input when in condition selection mode.
-func (m *MainSheetModel) handleConditionInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd) {
+func (m *MainSheetModel) handleConditionInput(msg tea.KeyPressMsg) (*MainSheetModel, tea.Cmd) {
 	var listLen int
 	if m.conditionAdding {
 		listLen = len(allConditions)
@@ -872,7 +872,7 @@ func (m *MainSheetModel) handleConditionInput(msg tea.KeyMsg) (*MainSheetModel, 
 		listLen = len(m.character.CombatStats.Conditions)
 	}
 
-	switch msg.Type {
+	switch msg.Code {
 	case tea.KeyEscape:
 		m.conditionMode = false
 		return m, nil
@@ -912,8 +912,8 @@ func (m *MainSheetModel) handleConditionInput(msg tea.KeyMsg) (*MainSheetModel, 
 }
 
 // handleCastingInput handles keyboard input when in spell casting modal mode.
-func (m *MainSheetModel) handleCastingInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd) {
-	switch msg.Type {
+func (m *MainSheetModel) handleCastingInput(msg tea.KeyPressMsg) (*MainSheetModel, tea.Cmd) {
+	switch msg.Code {
 	case tea.KeyEscape:
 		m.castingSpell = nil
 		m.availableCastLevels = nil
@@ -963,7 +963,7 @@ func (m *MainSheetModel) handleCastingInput(msg tea.KeyMsg) (*MainSheetModel, te
 }
 
 // handleRestInput handles keyboard input when in rest mode.
-func (m *MainSheetModel) handleRestInput(msg tea.KeyMsg) (*MainSheetModel, tea.Cmd) {
+func (m *MainSheetModel) handleRestInput(msg tea.KeyPressMsg) (*MainSheetModel, tea.Cmd) {
 	switch m.restMode {
 	case RestModeMenu:
 		switch msg.String() {

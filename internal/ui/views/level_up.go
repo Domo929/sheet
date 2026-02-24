@@ -10,9 +10,9 @@ import (
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // ---------------------------------------------------------------------------
@@ -509,7 +509,7 @@ func (m *LevelUpModel) Update(msg tea.Msg) (*LevelUpModel, tea.Cmd) {
 		m.height = msg.Height
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Force quit
 		if key.Matches(msg, m.keys.Quit) {
 			m.quitting = true
@@ -521,7 +521,7 @@ func (m *LevelUpModel) Update(msg tea.Msg) (*LevelUpModel, tea.Cmd) {
 }
 
 // handleKey dispatches key events based on current step.
-func (m *LevelUpModel) handleKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	switch m.currentStep {
 	case LevelUpStepHP:
 		return m.handleHPStepKey(msg)
@@ -602,7 +602,7 @@ var abilityNames = []string{
 // HP step handler
 // ---------------------------------------------------------------------------
 
-func (m *LevelUpModel) handleHPStepKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleHPStepKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Up):
 		if !m.hpRolled && m.hpMethodCursor > 0 {
@@ -657,7 +657,7 @@ func (m *LevelUpModel) handleHPStepKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) 
 // Subclass step handler
 // ---------------------------------------------------------------------------
 
-func (m *LevelUpModel) handleSubclassStepKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleSubclassStepKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	if m.classData == nil {
 		return m, nil
 	}
@@ -702,7 +702,7 @@ func (m *LevelUpModel) handleSubclassStepKey(msg tea.KeyMsg) (*LevelUpModel, tea
 // ASI / Feat step handler
 // ---------------------------------------------------------------------------
 
-func (m *LevelUpModel) handleASIStepKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleASIStepKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	// Handle feat ASI ability prompt
 	if m.inFeatASIPrompt {
 		return m.handleFeatASIPromptKey(msg)
@@ -734,7 +734,7 @@ func (m *LevelUpModel) handleASIStepKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd)
 	return m.handleFeatModeKey(msg)
 }
 
-func (m *LevelUpModel) handleASIModeKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleASIModeKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Up):
 		if m.asiAbilityCursor > 0 {
@@ -844,7 +844,7 @@ func (m *LevelUpModel) handleASIModeKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd)
 	return m, nil
 }
 
-func (m *LevelUpModel) handleFeatModeKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleFeatModeKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Up):
 		if m.featCursor > 0 {
@@ -877,12 +877,12 @@ func (m *LevelUpModel) handleFeatModeKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd
 	}
 
 	// Handle text filtering for feat search
-	if msg.Type == tea.KeyRunes {
-		m.featFilterText += string(msg.Runes)
+	if msg.Text != "" {
+		m.featFilterText += msg.Text
 		m.rebuildFilteredFeats()
 		return m, nil
 	}
-	if msg.Type == tea.KeyBackspace && len(m.featFilterText) > 0 {
+	if msg.Code == tea.KeyBackspace && len(m.featFilterText) > 0 {
 		m.featFilterText = m.featFilterText[:len(m.featFilterText)-1]
 		m.rebuildFilteredFeats()
 		return m, nil
@@ -891,7 +891,7 @@ func (m *LevelUpModel) handleFeatModeKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd
 	return m, nil
 }
 
-func (m *LevelUpModel) handleFeatASIPromptKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleFeatASIPromptKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	if m.stagedFeat == nil || m.stagedFeat.Effects.AbilityScoreIncrease == nil {
 		m.inFeatASIPrompt = false
 		return m, nil
@@ -931,7 +931,7 @@ func (m *LevelUpModel) handleFeatASIPromptKey(msg tea.KeyMsg) (*LevelUpModel, te
 // Features step handler
 // ---------------------------------------------------------------------------
 
-func (m *LevelUpModel) handleFeaturesStepKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleFeaturesStepKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	totalFeatures := len(m.stagedNewFeatures) + len(m.stagedSubclassFeats)
 
 	switch {
@@ -962,7 +962,7 @@ func (m *LevelUpModel) handleFeaturesStepKey(msg tea.KeyMsg) (*LevelUpModel, tea
 // Spell slots step handler
 // ---------------------------------------------------------------------------
 
-func (m *LevelUpModel) handleSpellSlotsStepKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleSpellSlotsStepKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Select):
 		m.advanceStep()
@@ -979,7 +979,7 @@ func (m *LevelUpModel) handleSpellSlotsStepKey(msg tea.KeyMsg) (*LevelUpModel, t
 // Confirm step handler
 // ---------------------------------------------------------------------------
 
-func (m *LevelUpModel) handleConfirmStepKey(msg tea.KeyMsg) (*LevelUpModel, tea.Cmd) {
+func (m *LevelUpModel) handleConfirmStepKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Select):
 		if m.errMsg != "" {

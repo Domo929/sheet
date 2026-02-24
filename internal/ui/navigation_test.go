@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func TestDefaultKeyMap(t *testing.T) {
@@ -19,13 +19,13 @@ func TestDefaultKeyMap(t *testing.T) {
 func TestIsKey(t *testing.T) {
 	keys := []string{"up", "k"}
 
-	upMsg := tea.KeyMsg{Type: tea.KeyUp}
+	upMsg := tea.KeyPressMsg{Code: tea.KeyUp}
 	assert.True(t, IsKey(upMsg, keys), "Should match 'up' key")
 
-	kMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}}
+	kMsg := tea.KeyPressMsg{Code: 'k', Text: "k"}
 	assert.True(t, IsKey(kMsg, keys), "Should match 'k' key")
 
-	downMsg := tea.KeyMsg{Type: tea.KeyDown}
+	downMsg := tea.KeyPressMsg{Code: tea.KeyDown}
 	assert.False(t, IsKey(downMsg, keys), "Should not match 'down' key")
 }
 
@@ -34,73 +34,73 @@ func TestNavigationHandler(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		msg      tea.KeyMsg
-		checkFn  func(tea.KeyMsg) bool
+		msg      tea.KeyPressMsg
+		checkFn  func(tea.KeyPressMsg) bool
 		expected bool
 	}{
 		{
 			name:     "up key",
-			msg:      tea.KeyMsg{Type: tea.KeyUp},
+			msg:      tea.KeyPressMsg{Code: tea.KeyUp},
 			checkFn:  nav.IsUp,
 			expected: true,
 		},
 		{
 			name:     "k key (vim up)",
-			msg:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}},
+			msg:      tea.KeyPressMsg{Code: 'k', Text: "k"},
 			checkFn:  nav.IsUp,
 			expected: true,
 		},
 		{
 			name:     "down key",
-			msg:      tea.KeyMsg{Type: tea.KeyDown},
+			msg:      tea.KeyPressMsg{Code: tea.KeyDown},
 			checkFn:  nav.IsDown,
 			expected: true,
 		},
 		{
 			name:     "j key (vim down)",
-			msg:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+			msg:      tea.KeyPressMsg{Code: 'j', Text: "j"},
 			checkFn:  nav.IsDown,
 			expected: true,
 		},
 		{
 			name:     "left key",
-			msg:      tea.KeyMsg{Type: tea.KeyLeft},
+			msg:      tea.KeyPressMsg{Code: tea.KeyLeft},
 			checkFn:  nav.IsLeft,
 			expected: true,
 		},
 		{
 			name:     "right key",
-			msg:      tea.KeyMsg{Type: tea.KeyRight},
+			msg:      tea.KeyPressMsg{Code: tea.KeyRight},
 			checkFn:  nav.IsRight,
 			expected: true,
 		},
 		{
 			name:     "enter key",
-			msg:      tea.KeyMsg{Type: tea.KeyEnter},
+			msg:      tea.KeyPressMsg{Code: tea.KeyEnter},
 			checkFn:  nav.IsSelect,
 			expected: true,
 		},
 		{
 			name:     "escape key",
-			msg:      tea.KeyMsg{Type: tea.KeyEsc},
+			msg:      tea.KeyPressMsg{Code: tea.KeyEscape},
 			checkFn:  nav.IsBack,
 			expected: true,
 		},
 		{
 			name:     "q key",
-			msg:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}},
+			msg:      tea.KeyPressMsg{Code: 'q', Text: "q"},
 			checkFn:  nav.IsQuit,
 			expected: true,
 		},
 		{
 			name:     "tab key",
-			msg:      tea.KeyMsg{Type: tea.KeyTab},
+			msg:      tea.KeyPressMsg{Code: tea.KeyTab},
 			checkFn:  nav.IsTab,
 			expected: true,
 		},
 		{
 			name:     "shift+tab key",
-			msg:      tea.KeyMsg{Type: tea.KeyShiftTab},
+			msg:      tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift},
 			checkFn:  nav.IsShiftTab,
 			expected: true,
 		},
@@ -117,7 +117,7 @@ func TestNavigationHandler(t *testing.T) {
 func TestNavigationHandlerWrongKeys(t *testing.T) {
 	nav := NewNavigationHandler()
 
-	downMsg := tea.KeyMsg{Type: tea.KeyDown}
+	downMsg := tea.KeyPressMsg{Code: tea.KeyDown}
 
 	// Down key should not match Up check
 	assert.False(t, nav.IsUp(downMsg), "Down key should not match IsUp")

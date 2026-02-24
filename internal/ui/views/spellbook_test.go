@@ -6,7 +6,7 @@ import (
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -223,7 +223,7 @@ func TestSpellbookModel_CastPreparedSpell(t *testing.T) {
 	assert.Equal(t, "Magic Missile", model.castingSpell.Name, "Should be casting Magic Missile")
 
 	// Simulate Enter key to confirm cast
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// Should return to spell list mode
 	assert.Equal(t, ModeSpellList, model.mode, "Should return to spell list mode")
@@ -260,7 +260,7 @@ func TestSpellbookModel_CancelCasting(t *testing.T) {
 	assert.Equal(t, ModeConfirmCast, model.mode)
 
 	// Press Esc to cancel
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 
 	// Should return to spell list
 	assert.Equal(t, ModeSpellList, model.mode)
@@ -297,7 +297,7 @@ func TestSpellbookModel_CastCantrip(t *testing.T) {
 	assert.Equal(t, 0, len(model.availableCastLevels), "Cantrips should have no slot levels")
 
 	// Confirm cast
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// Should cast without consuming resources
 	assert.Equal(t, ModeSpellList, model.mode)
@@ -341,7 +341,7 @@ func TestSpellbookModel_UpcastSpell(t *testing.T) {
 
 	// Navigate to level 3 and cast
 	model.castLevelCursor = 1 // Select level 3
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// Check that level 3 slot was used
 	assert.Equal(t, 0, sc.SpellSlots.Level3.Remaining, "Should have 0 level 3 slots after upcasting")
@@ -441,7 +441,7 @@ func TestSpellbookModel_CantripsAreSelectable(t *testing.T) {
 	assert.Equal(t, "Fire Bolt", model.castingSpell.Name, "Should be casting Fire Bolt")
 
 	// Confirm cast
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// Should return to spell list with success message
 	assert.Equal(t, ModeSpellList, model.mode, "Should return to spell list")
@@ -589,7 +589,7 @@ func TestSpellbookModel_CastRitualSpell(t *testing.T) {
 
 	// Cursor defaults to 0 (ritual option), confirm cast
 	assert.Equal(t, 0, model.castLevelCursor)
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// Should cast as ritual without consuming spell slots
 	assert.Equal(t, ModeSpellList, model.mode)
@@ -629,11 +629,11 @@ func TestSpellbookModel_CastRitualSpellWithSlot(t *testing.T) {
 	assert.Equal(t, ModeConfirmCast, model.mode)
 
 	// Move cursor to slot option (index 1 = level 1 slot)
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, model.castLevelCursor)
 
 	// Confirm cast with spell slot
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// Should cast using a spell slot
 	assert.Equal(t, ModeSpellList, model.mode)

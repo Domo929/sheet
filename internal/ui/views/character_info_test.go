@@ -5,7 +5,7 @@ import (
 
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,12 +27,12 @@ func TestCharacterInfo_FeaturesCategorySwitch(t *testing.T) {
 	assert.Equal(t, "Darkvision", features[0].Name)
 
 	// Switch to Class
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	assert.Equal(t, FeatureCategoryClass, m.featureCategory)
 
 	// Switch to Feats
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	assert.Equal(t, FeatureCategoryFeats, m.featureCategory)
 }
 
@@ -42,9 +42,9 @@ func TestCharacterInfo_TabSwitchFocus(t *testing.T) {
 	m := NewCharacterInfoModel(char, store)
 
 	assert.Equal(t, CharInfoFocusPersonality, m.focus)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	assert.Equal(t, CharInfoFocusFeatures, m.focus)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	assert.Equal(t, CharInfoFocusPersonality, m.focus)
 }
 
@@ -57,9 +57,9 @@ func TestCharacterInfo_FeatureNavigation(t *testing.T) {
 	m.focus = CharInfoFocusFeatures
 
 	assert.Equal(t, 0, m.featureCursor)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, m.featureCursor)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, m.featureCursor) // clamped
 }
 
@@ -68,7 +68,7 @@ func TestCharacterInfo_BackToSheet(t *testing.T) {
 	store, _ := storage.NewCharacterStorage("")
 	m := NewCharacterInfoModel(char, store)
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	_, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	msg := cmd()
 	_, ok := msg.(BackToSheetMsg)
 	assert.True(t, ok)
@@ -79,7 +79,7 @@ func TestCharacterInfo_OpenNotes(t *testing.T) {
 	store, _ := storage.NewCharacterStorage("")
 	m := NewCharacterInfoModel(char, store)
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 'n', Text: "n"})
 	msg := cmd()
 	notesMsg, ok := msg.(OpenNotesMsg)
 	assert.True(t, ok)
@@ -94,7 +94,7 @@ func TestCharacterInfo_CategoryDoesNotWrapLeft(t *testing.T) {
 
 	assert.Equal(t, FeatureCategoryRacial, m.featureCategory)
 	// Left arrow should not wrap
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 	assert.Equal(t, FeatureCategoryRacial, m.featureCategory)
 }
 
@@ -105,13 +105,13 @@ func TestCharacterInfo_CategoryDoesNotWrapRight(t *testing.T) {
 	m.focus = CharInfoFocusFeatures
 
 	// Go all the way right
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	assert.Equal(t, FeatureCategoryFeats, m.featureCategory)
 
 	// Should not wrap past Feats
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	assert.Equal(t, FeatureCategoryFeats, m.featureCategory)
 }
 
@@ -146,9 +146,9 @@ func TestCharacterInfo_ShiftTabSwitchesFocus(t *testing.T) {
 	m := NewCharacterInfoModel(char, store)
 
 	assert.Equal(t, CharInfoFocusPersonality, m.focus)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift})
 	assert.Equal(t, CharInfoFocusFeatures, m.focus)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift})
 	assert.Equal(t, CharInfoFocusPersonality, m.focus)
 }
 
@@ -163,11 +163,11 @@ func TestCharacterInfo_FeatureCursorResetsOnCategorySwitch(t *testing.T) {
 	m.focus = CharInfoFocusFeatures
 
 	// Move cursor down in racial
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	assert.Equal(t, 1, m.featureCursor)
 
 	// Switch to Class — cursor should reset
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	assert.Equal(t, 0, m.featureCursor)
 }
 
@@ -217,9 +217,9 @@ func TestCharacterInfo_LeftRightDoNothingWhenPersonalityFocused(t *testing.T) {
 	m.focus = CharInfoFocusPersonality
 
 	originalCategory := m.featureCategory
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	assert.Equal(t, originalCategory, m.featureCategory)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 	assert.Equal(t, originalCategory, m.featureCategory)
 }
 
@@ -246,7 +246,7 @@ func TestCharacterInfo_CtrlCQuits(t *testing.T) {
 	store, _ := storage.NewCharacterStorage("")
 	m := NewCharacterInfoModel(char, store)
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
 	assert.NotNil(t, cmd)
 }
 
@@ -260,18 +260,18 @@ func TestCharacterInfo_AddTrait(t *testing.T) {
 	m.personalitySection = PersonalitySectionTraits
 
 	// Press 'a' to add
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 	assert.True(t, m.editMode)
 	assert.Equal(t, "add", m.editAction)
 	assert.Equal(t, PersonalitySectionTraits, m.editSection)
 
 	// Type trait text
 	for _, r := range "Brave" {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
 
 	// Confirm with Enter
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.False(t, m.editMode)
 	assert.Contains(t, char.Personality.Traits, "Brave")
 }
@@ -287,7 +287,7 @@ func TestCharacterInfo_EditTrait(t *testing.T) {
 	m.personalitySection = PersonalitySectionTraits
 
 	// Press 'e' to edit
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'e', Text: "e"})
 	assert.True(t, m.editMode)
 	assert.Equal(t, "edit", m.editAction)
 	assert.Equal(t, "Old trait", m.editBuffer) // prepopulated
@@ -295,9 +295,9 @@ func TestCharacterInfo_EditTrait(t *testing.T) {
 	// Clear and type new text
 	m.editBuffer = ""
 	for _, r := range "New trait" {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.False(t, m.editMode)
 	assert.Equal(t, "New trait", char.Personality.Traits[0])
 }
@@ -313,10 +313,10 @@ func TestCharacterInfo_DeleteTrait(t *testing.T) {
 	m.personalityCursor = 1
 	m.personalitySection = PersonalitySectionTraits
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	assert.True(t, m.confirmingDelete)
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 	assert.False(t, m.confirmingDelete)
 	assert.Equal(t, 1, len(char.Personality.Traits))
 	assert.Equal(t, "Curious", char.Personality.Traits[0])
@@ -332,10 +332,10 @@ func TestCharacterInfo_DeleteCancel(t *testing.T) {
 	m.personalityCursor = 1
 	m.personalitySection = PersonalitySectionTraits
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	assert.True(t, m.confirmingDelete)
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'n', Text: "n"})
 	assert.False(t, m.confirmingDelete)
 	assert.Equal(t, 1, len(char.Personality.Traits))
 }
@@ -350,15 +350,15 @@ func TestCharacterInfo_EditCancelOnEsc(t *testing.T) {
 	m.personalityCursor = 1
 	m.personalitySection = PersonalitySectionTraits
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'e', Text: "e"})
 	assert.True(t, m.editMode)
 
 	// Type something
 	for _, r := range "Changed" {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
 	// Cancel with Esc
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.False(t, m.editMode)
 	assert.Equal(t, "Original", char.Personality.Traits[0]) // unchanged
 }
@@ -372,10 +372,10 @@ func TestCharacterInfo_DeleteCancelOnEsc(t *testing.T) {
 	m.personalityCursor = 1
 	m.personalitySection = PersonalitySectionTraits
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	assert.True(t, m.confirmingDelete)
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	assert.False(t, m.confirmingDelete)
 	assert.Equal(t, 1, len(char.Personality.Traits))
 }
@@ -390,14 +390,14 @@ func TestCharacterInfo_AddIdeal(t *testing.T) {
 	m.personalitySection = PersonalitySectionIdeals
 
 	// Press 'a' to add ideal
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 	assert.True(t, m.editMode)
 	assert.Equal(t, PersonalitySectionIdeals, m.editSection)
 
 	for _, r := range "Justice" {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Contains(t, char.Personality.Ideals, "Justice")
 }
 
@@ -422,19 +422,19 @@ func TestCharacterInfo_EditBackstory(t *testing.T) {
 	m.personalitySection = PersonalitySectionBackstory
 
 	// Press 'e' to edit
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'e', Text: "e"})
 	assert.True(t, m.editMode)
 	assert.Equal(t, PersonalitySectionBackstory, m.editSection)
 	assert.Equal(t, "Old story", m.editBuffer)
 
 	// Enter should add newline (not save)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.True(t, m.editMode) // still editing
 	assert.Contains(t, m.editBuffer, "\n")
 
 	// Clear and set new content, save with ctrl+s
 	m.editBuffer = "New story"
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlS})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl})
 	assert.False(t, m.editMode)
 	assert.Equal(t, "New story", char.Personality.Backstory)
 }
@@ -448,18 +448,18 @@ func TestCharacterInfo_BackspaceInEditMode(t *testing.T) {
 	m.personalityCursor = 1
 	m.personalitySection = PersonalitySectionTraits
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'e', Text: "e"})
 	assert.Equal(t, "AB", m.editBuffer)
 
 	// Backspace removes last character
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyBackspace})
 	assert.Equal(t, "A", m.editBuffer)
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyBackspace})
 	assert.Equal(t, "", m.editBuffer)
 
 	// Backspace on empty buffer does nothing
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyBackspace})
 	assert.Equal(t, "", m.editBuffer)
 }
 
@@ -472,8 +472,8 @@ func TestCharacterInfo_AddEmptyDoesNotSave(t *testing.T) {
 	m.personalitySection = PersonalitySectionTraits
 
 	// Press 'a' to add, then immediately Enter (empty buffer)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.False(t, m.editMode)
 	assert.Equal(t, 0, len(char.Personality.Traits)) // nothing added
 }
@@ -487,7 +487,7 @@ func TestCharacterInfo_EditDoesNotWorkOnHeader(t *testing.T) {
 	m.personalitySection = PersonalitySectionTraits
 
 	// Press 'e' on header - should NOT enter edit mode
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'e', Text: "e"})
 	assert.False(t, m.editMode)
 }
 
@@ -500,7 +500,7 @@ func TestCharacterInfo_DeleteDoesNotWorkOnHeader(t *testing.T) {
 	m.personalitySection = PersonalitySectionTraits
 
 	// Press 'd' on header - should NOT enter delete confirmation
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	assert.False(t, m.confirmingDelete)
 }
 
@@ -512,7 +512,7 @@ func TestCharacterInfo_EditDoesNotWorkWhenFeaturesFocused(t *testing.T) {
 	m.focus = CharInfoFocusFeatures
 
 	// Press 'e' when features focused - should NOT enter edit mode
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'e', Text: "e"})
 	assert.False(t, m.editMode)
 }
 
@@ -528,7 +528,7 @@ func TestCharacterInfo_EditModalView(t *testing.T) {
 	m.height = 40
 
 	// Enter edit mode
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'e', Text: "e"})
 	assert.True(t, m.editMode)
 
 	// View should contain the edit modal
@@ -549,7 +549,7 @@ func TestCharacterInfo_DeleteConfirmModalView(t *testing.T) {
 	m.height = 40
 
 	// Enter delete confirmation
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	assert.True(t, m.confirmingDelete)
 
 	// View should contain the confirmation

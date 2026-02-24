@@ -7,9 +7,9 @@ import (
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // InventoryFocus represents which panel is focused in the inventory view.
@@ -127,7 +127,7 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 		m.height = msg.Height
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle quit confirmation
 		if m.confirmingQuit {
 			switch msg.String() {
@@ -366,8 +366,8 @@ func (m *InventoryModel) handleQuantity() (*InventoryModel, tea.Cmd) {
 }
 
 // handleQuantityInput handles input while in quantity adjustment mode
-func (m *InventoryModel) handleQuantityInput(msg tea.KeyMsg) (*InventoryModel, tea.Cmd) {
-	switch msg.Type {
+func (m *InventoryModel) handleQuantityInput(msg tea.KeyPressMsg) (*InventoryModel, tea.Cmd) {
+	switch msg.Code {
 	case tea.KeyEscape:
 		m.quantityMode = false
 		m.quantityBuffer = ""
@@ -415,16 +415,16 @@ func (m *InventoryModel) handleQuantityInput(msg tea.KeyMsg) (*InventoryModel, t
 		}
 		return m, nil
 
-	case tea.KeyRunes:
-		for _, r := range msg.Runes {
-			if r >= '0' && r <= '9' {
-				m.quantityBuffer += string(r)
+	default:
+		if msg.Text != "" {
+			for _, r := range msg.Text {
+				if r >= '0' && r <= '9' {
+					m.quantityBuffer += string(r)
+				}
 			}
 		}
 		return m, nil
 	}
-
-	return m, nil
 }
 
 // handleAdd adds currency (currency panel) or starts add item mode (items panel)
@@ -458,8 +458,8 @@ func (m *InventoryModel) handleSpend() (*InventoryModel, tea.Cmd) {
 }
 
 // handleAddItemInput handles input in add item mode
-func (m *InventoryModel) handleAddItemInput(msg tea.KeyMsg) (*InventoryModel, tea.Cmd) {
-	switch msg.Type {
+func (m *InventoryModel) handleAddItemInput(msg tea.KeyPressMsg) (*InventoryModel, tea.Cmd) {
+	switch msg.Code {
 	case tea.KeyEscape:
 		m.addingItem = false
 		m.itemSearchTerm = ""
@@ -502,14 +502,14 @@ func (m *InventoryModel) handleAddItemInput(msg tea.KeyMsg) (*InventoryModel, te
 		}
 		return m, nil
 
-	case tea.KeyRunes:
-		m.itemSearchTerm += string(msg.Runes)
-		m.updateSearchResults()
-		m.searchCursor = 0
+	default:
+		if msg.Text != "" {
+			m.itemSearchTerm += msg.Text
+			m.updateSearchResults()
+			m.searchCursor = 0
+		}
 		return m, nil
 	}
-
-	return m, nil
 }
 
 // updateSearchResults searches equipment database for matching items
@@ -805,8 +805,8 @@ func (m *InventoryModel) handleUnequipFromSlot() (*InventoryModel, tea.Cmd) {
 	return m, nil
 }
 
-func (m *InventoryModel) handleCurrencyInput(msg tea.KeyMsg) (*InventoryModel, tea.Cmd) {
-	switch msg.Type {
+func (m *InventoryModel) handleCurrencyInput(msg tea.KeyPressMsg) (*InventoryModel, tea.Cmd) {
+	switch msg.Code {
 	case tea.KeyEscape:
 		m.currencyMode = false
 		m.currencyBuffer = ""
@@ -870,16 +870,16 @@ func (m *InventoryModel) handleCurrencyInput(msg tea.KeyMsg) (*InventoryModel, t
 		}
 		return m, nil
 
-	case tea.KeyRunes:
-		for _, r := range msg.Runes {
-			if r >= '0' && r <= '9' {
-				m.currencyBuffer += string(r)
+	default:
+		if msg.Text != "" {
+			for _, r := range msg.Text {
+				if r >= '0' && r <= '9' {
+					m.currencyBuffer += string(r)
+				}
 			}
 		}
 		return m, nil
 	}
-
-	return m, nil
 }
 
 func currencyName(idx int) string {

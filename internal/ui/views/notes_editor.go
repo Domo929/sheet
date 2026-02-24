@@ -8,9 +8,9 @@ import (
 
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // OpenNotesMsg signals to open the notes editor view.
@@ -130,7 +130,7 @@ func (m *NotesEditorModel) Update(msg tea.Msg) (*NotesEditorModel, tea.Cmd) {
 		m.height = msg.Height
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Ctrl+C always quits
 		if key.Matches(msg, m.keys.Quit) {
 			return m, tea.Quit
@@ -148,7 +148,7 @@ func (m *NotesEditorModel) Update(msg tea.Msg) (*NotesEditorModel, tea.Cmd) {
 }
 
 // updateListMode handles key messages in list mode.
-func (m *NotesEditorModel) updateListMode(msg tea.KeyMsg) (*NotesEditorModel, tea.Cmd) {
+func (m *NotesEditorModel) updateListMode(msg tea.KeyPressMsg) (*NotesEditorModel, tea.Cmd) {
 	// Handle input overlay mode (new note or rename)
 	if m.inputMode {
 		return m.handleInputMode(msg)
@@ -244,8 +244,8 @@ func (m *NotesEditorModel) updateListMode(msg tea.KeyMsg) (*NotesEditorModel, te
 }
 
 // handleInputMode handles key messages when in input overlay mode.
-func (m *NotesEditorModel) handleInputMode(msg tea.KeyMsg) (*NotesEditorModel, tea.Cmd) {
-	switch msg.Type {
+func (m *NotesEditorModel) handleInputMode(msg tea.KeyPressMsg) (*NotesEditorModel, tea.Cmd) {
+	switch msg.Code {
 	case tea.KeyEscape:
 		m.inputMode = false
 		m.inputBuffer = ""
@@ -296,16 +296,16 @@ func (m *NotesEditorModel) handleInputMode(msg tea.KeyMsg) (*NotesEditorModel, t
 		}
 		return m, nil
 
-	case tea.KeyRunes:
-		m.inputBuffer += string(msg.Runes)
+	default:
+		if msg.Text != "" {
+			m.inputBuffer += msg.Text
+		}
 		return m, nil
 	}
-
-	return m, nil
 }
 
 // handleDeleteConfirm handles key messages during delete confirmation.
-func (m *NotesEditorModel) handleDeleteConfirm(msg tea.KeyMsg) (*NotesEditorModel, tea.Cmd) {
+func (m *NotesEditorModel) handleDeleteConfirm(msg tea.KeyPressMsg) (*NotesEditorModel, tea.Cmd) {
 	switch msg.String() {
 	case "y", "Y":
 		if len(m.sortedDocs) > 0 && m.listCursor < len(m.sortedDocs) {
@@ -331,8 +331,8 @@ func (m *NotesEditorModel) handleDeleteConfirm(msg tea.KeyMsg) (*NotesEditorMode
 }
 
 // updateEditorMode handles key messages in editor mode.
-func (m *NotesEditorModel) updateEditorMode(msg tea.KeyMsg) (*NotesEditorModel, tea.Cmd) {
-	switch msg.Type {
+func (m *NotesEditorModel) updateEditorMode(msg tea.KeyPressMsg) (*NotesEditorModel, tea.Cmd) {
+	switch msg.Code {
 	case tea.KeyEscape:
 		m.exitEditorMode()
 		return m, nil
@@ -464,17 +464,17 @@ func (m *NotesEditorModel) updateEditorMode(msg tea.KeyMsg) (*NotesEditorModel, 
 		m.ensureCursorVisible()
 		return m, nil
 
-	case tea.KeyRunes:
-		// Insert character(s) at cursor position
-		line := m.editorLines[m.cursorRow]
-		chars := string(msg.Runes)
-		m.editorLines[m.cursorRow] = line[:m.cursorCol] + chars + line[m.cursorCol:]
-		m.cursorCol += len(chars)
-		m.ensureCursorVisible()
+	default:
+		if msg.Text != "" {
+			// Insert character(s) at cursor position
+			line := m.editorLines[m.cursorRow]
+			chars := msg.Text
+			m.editorLines[m.cursorRow] = line[:m.cursorCol] + chars + line[m.cursorCol:]
+			m.cursorCol += len(chars)
+			m.ensureCursorVisible()
+		}
 		return m, nil
 	}
-
-	return m, nil
 }
 
 // ensureCursorVisible adjusts scrollOffset so the cursor row is visible.

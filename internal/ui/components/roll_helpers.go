@@ -3,7 +3,7 @@ package components
 import (
 	"fmt"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // BuildSpellRollCmd creates a tea.Cmd for a spell's dice roll based on its properties.
