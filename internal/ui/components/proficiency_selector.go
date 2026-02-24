@@ -43,7 +43,7 @@ func NewProficiencySelector(title string, options []string, maxSelect int) Profi
 		width:         60,
 		height:        20,
 		focused:       true,
-		titleStyle:    lipgloss.NewStyle().Bold(true).Underline(true),
+		titleStyle:    lipgloss.NewStyle().Bold(true).UnderlineStyle(lipgloss.UnderlineCurly).UnderlineColor(lipgloss.Color("99")),
 		optionStyle:   lipgloss.NewStyle().Foreground(lipgloss.Color("240")),
 		selectedStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("green")).Bold(true),
 		lockedStyle:   lipgloss.NewStyle().Foreground(lipgloss.Color("cyan")),

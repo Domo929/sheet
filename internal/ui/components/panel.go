@@ -50,7 +50,9 @@ func (p Panel) Render() string {
 	if p.Title != "" {
 		titleStyle := lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("99"))
+			Foreground(lipgloss.Color("99")).
+			UnderlineStyle(lipgloss.UnderlineCurly).
+			UnderlineColor(lipgloss.Color("99"))
 		title := titleStyle.Render(p.Title)
 		content = title + "\n\n" + content
 	}

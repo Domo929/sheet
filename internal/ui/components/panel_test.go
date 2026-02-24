@@ -1,10 +1,18 @@
 package components
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+// stripANSI removes ANSI escape sequences from a string for test assertions.
+var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;:]*m`)
+
+func stripANSI(s string) string {
+	return ansiRegex.ReplaceAllString(s, "")
+}
 
 func TestNewPanel(t *testing.T) {
 	p := NewPanel("Title", "Content", 40, 10)
@@ -18,8 +26,9 @@ func TestPanelRender(t *testing.T) {
 	t.Run("with title", func(t *testing.T) {
 		p := NewPanel("Title", "Content", 40, 10)
 		result := p.Render()
-		assert.Contains(t, result, "Title")
-		assert.Contains(t, result, "Content")
+		stripped := stripANSI(result)
+		assert.Contains(t, stripped, "Title")
+		assert.Contains(t, stripped, "Content")
 	})
 
 	t.Run("without title", func(t *testing.T) {

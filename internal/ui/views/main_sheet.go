@@ -1345,7 +1345,8 @@ func (m *MainSheetModel) renderHeader(width int) string {
 		Bold(true).
 		Foreground(lipgloss.Color("15")).  // Bright white for maximum visibility
 		MarginBottom(0).
-		Underline(true)  // Add underline for emphasis
+		UnderlineStyle(lipgloss.UnderlineCurly).
+		UnderlineColor(lipgloss.Color("99"))
 
 	// Info style
 	infoStyle := lipgloss.NewStyle().
