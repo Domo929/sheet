@@ -576,11 +576,16 @@ func (m *SpellbookModel) renderSpellList() string {
 				ritualMarker = " (R)"
 			}
 
+			// Render spell name with hyperlink to D&D Beyond
+			spellNameRendered := lipgloss.NewStyle().
+				Hyperlink(spellHyperlinkURL(spell.Name)).
+				Render(spell.Name)
+
 			var line string
 			if m.mode == ModePreparation {
-				line = fmt.Sprintf("%s[%s] %s%s", cursor, prepMarker, spell.Name, ritualMarker)
+				line = fmt.Sprintf("%s[%s] %s%s", cursor, prepMarker, spellNameRendered, ritualMarker)
 			} else {
-				line = fmt.Sprintf("%s%s%s", cursor, spell.Name, ritualMarker)
+				line = fmt.Sprintf("%s%s%s", cursor, spellNameRendered, ritualMarker)
 			}
 
 			if currentIndex == m.spellCursor {
@@ -623,7 +628,9 @@ func (m *SpellbookModel) renderSpellDetails() string {
 	spell := m.selectedSpellData
 	var lines []string
 
-	lines = append(lines, lipgloss.NewStyle().Bold(true).Render(spell.Name))
+	lines = append(lines, lipgloss.NewStyle().Bold(true).
+		Hyperlink(spellHyperlinkURL(spell.Name)).
+		Render(spell.Name))
 
 	levelSchool := fmt.Sprintf("Level %d %s", spell.Level, spell.School)
 	if spell.Level == 0 {
@@ -1260,6 +1267,12 @@ func (m *SpellbookModel) detailsPanelWidth() int {
 	return availableWidth / 3
 }
 
+// spellHyperlinkURL returns the D&D Beyond URL for a spell name.
+func spellHyperlinkURL(spellName string) string {
+	slug := strings.ToLower(strings.ReplaceAll(spellName, " ", "-"))
+	return fmt.Sprintf("https://www.dndbeyond.com/spells/%s", slug)
+}
+
 func (m *SpellbookModel) wordWrap(text string, width int) []string {
 	if width <= 0 {
 		width = 40
@@ -1549,7 +1562,10 @@ func (m *SpellbookModel) renderCastLevelOverlay() string {
 	sc := m.character.Spellcasting
 	var lines []string
 
-	lines = append(lines, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Cast %s", m.castingSpell.Name)))
+	castSpellNameLinked := lipgloss.NewStyle().
+		Hyperlink(spellHyperlinkURL(m.castingSpell.Name)).
+		Render(m.castingSpell.Name)
+	lines = append(lines, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Cast %s", castSpellNameLinked)))
 	lines = append(lines, "")
 	lines = append(lines, "Select spell slot level:")
 	lines = append(lines, "")
@@ -1615,7 +1631,10 @@ func (m *SpellbookModel) renderCastConfirmationModal() string {
 	var lines []string
 
 	// Title
-	lines = append(lines, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Cast %s", spell.Name)))
+	spellNameLinked := lipgloss.NewStyle().
+		Hyperlink(spellHyperlinkURL(spell.Name)).
+		Render(spell.Name)
+	lines = append(lines, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Cast %s", spellNameLinked)))
 	lines = append(lines, "")
 
 	// Level and school
