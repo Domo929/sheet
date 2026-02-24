@@ -1388,3 +1388,14 @@ type OpenInventoryMsg struct{}
 
 // OpenSpellbookMsg signals to open the spellbook view.
 type OpenSpellbookMsg struct{}
+
+// CursorInfo returns cursor settings when a text input is active in inventory.
+func (m *InventoryModel) CursorInfo() *tea.Cursor {
+	if m.addingItem || m.quantityMode || m.currencyMode {
+		return &tea.Cursor{
+			Shape: tea.CursorBar,
+			Blink: true,
+		}
+	}
+	return nil
+}

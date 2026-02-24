@@ -2802,14 +2802,37 @@ func (m *CharacterCreationModel) lookupArmor(name string) *data.ArmorItem {
 	if err != nil || equipment == nil {
 		return nil
 	}
-	
+
 	normalizedName := strings.ToLower(strings.TrimSpace(name))
-	
+
 	for _, a := range equipment.Armor.GetAllArmor() {
 		if strings.ToLower(a.Name) == normalizedName {
 			return &a
 		}
 	}
-	
+
+	return nil
+}
+
+// CursorInfo returns cursor settings when a text input field is active.
+func (m *CharacterCreationModel) CursorInfo() *tea.Cursor {
+	switch m.currentStep {
+	case StepBasicInfo:
+		// Name and player name fields are text inputs (focusedField 0 or 1)
+		if m.focusedField <= 1 {
+			return &tea.Cursor{
+				Shape: tea.CursorBar,
+				Blink: true,
+			}
+		}
+	case StepPersonality:
+		// Editing a personality trait/ideal/bond/flaw/backstory
+		if m.personalityEditing {
+			return &tea.Cursor{
+				Shape: tea.CursorBar,
+				Blink: true,
+			}
+		}
+	}
 	return nil
 }

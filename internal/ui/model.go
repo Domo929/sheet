@@ -12,6 +12,13 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+// CursorProvider is implemented by sub-views that have text input modes.
+// When input is active, CursorInfo returns cursor shape/blink settings;
+// otherwise it returns nil.
+type CursorProvider interface {
+	CursorInfo() *tea.Cursor
+}
+
 // ViewType represents the different views in the application.
 type ViewType int
 
@@ -402,12 +409,38 @@ func (m Model) windowTitle() string {
 	}
 }
 
+// currentCursor returns cursor settings from the active sub-view, if any.
+func (m Model) currentCursor() *tea.Cursor {
+	switch m.currentView {
+	case ViewMainSheet:
+		if cp, ok := interface{}(m.mainSheetModel).(CursorProvider); ok {
+			return cp.CursorInfo()
+		}
+	case ViewNotes:
+		if cp, ok := interface{}(m.notesEditorModel).(CursorProvider); ok {
+			return cp.CursorInfo()
+		}
+	case ViewCharacterCreation:
+		if cp, ok := interface{}(m.characterCreationModel).(CursorProvider); ok {
+			return cp.CursorInfo()
+		}
+	case ViewInventory:
+		if cp, ok := interface{}(m.inventoryModel).(CursorProvider); ok {
+			return cp.CursorInfo()
+		}
+	}
+	return nil
+}
+
 // newView wraps a content string in a tea.View with declarative screen settings.
 func (m Model) newView(content string) tea.View {
 	v := tea.NewView(content)
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
 	v.WindowTitle = m.windowTitle()
+	if cursor := m.currentCursor(); cursor != nil {
+		v.Cursor = cursor
+	}
 	return v
 }
 

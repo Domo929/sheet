@@ -3166,3 +3166,14 @@ type OpenLevelUpMsg struct{}
 
 // LevelUpCompleteMsg is sent when a level-up is complete.
 type LevelUpCompleteMsg struct{}
+
+// CursorInfo returns cursor settings when an HP/XP text input is active.
+func (m *MainSheetModel) CursorInfo() *tea.Cursor {
+	if m.hpInputMode != HPInputNone {
+		return &tea.Cursor{
+			Shape: tea.CursorBar,
+			Blink: true,
+		}
+	}
+	return nil
+}

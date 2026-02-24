@@ -815,3 +815,14 @@ func relativeTime(t time.Time) string {
 		return fmt.Sprintf("%d months ago", int(dur.Hours()/(24*30)))
 	}
 }
+
+// CursorInfo returns cursor settings when a text input or editor is active.
+func (m *NotesEditorModel) CursorInfo() *tea.Cursor {
+	if m.inputMode || m.mode == NotesModeEditor {
+		return &tea.Cursor{
+			Shape: tea.CursorBar,
+			Blink: true,
+		}
+	}
+	return nil
+}
