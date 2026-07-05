@@ -67,3 +67,8 @@ See [IMPLEMENTATION.md](IMPLEMENTATION.md) for git workflow and development guid
 ## License
 
 TBD
+
+## Credits
+
+Game data is derived from the System Reference Document 5.2, licensed under
+CC BY 4.0. See [CREDITS.md](CREDITS.md) for full attribution.
