@@ -2,17 +2,19 @@ package views
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
-	"github.com/Domo929/sheet/internal/data"
-	"github.com/Domo929/sheet/internal/domain"
-	"github.com/Domo929/sheet/internal/models"
-	"github.com/Domo929/sheet/internal/storage"
-	"github.com/Domo929/sheet/internal/ui/components"
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/Domo929/sheet/internal/data"
+	"github.com/Domo929/sheet/internal/domain"
+	"github.com/Domo929/sheet/internal/export"
+	"github.com/Domo929/sheet/internal/models"
+	"github.com/Domo929/sheet/internal/storage"
+	"github.com/Domo929/sheet/internal/ui/components"
 )
 
 // MainSheetModel is the model for the main character sheet view.
@@ -235,6 +237,7 @@ type mainSheetKeyMap struct {
 	ToggleSlot     key.Binding // space (toggle selected action-type slot)
 	MoveStep       key.Binding // ] (spend 5 ft movement)
 	MoveBack       key.Binding // [ (refund 5 ft movement)
+	Export         key.Binding // E (export sheet to Markdown + JSON)
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -378,6 +381,10 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		MoveBack: key.NewBinding(
 			key.WithKeys("["),
 			key.WithHelp("[", "refund 5ft move"),
+		),
+		Export: key.NewBinding(
+			key.WithKeys("E"),
+			key.WithHelp("E", "export sheet"),
 		),
 	}
 }
@@ -773,6 +780,9 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			m.statusMessage = "New turn: action economy reset"
 			m.saveCharacter()
 			return m, nil
+		case key.Matches(msg, m.keys.Export):
+			m.exportSheet()
+			return m, nil
 		case key.Matches(msg, m.keys.ToggleSlot):
 			if m.focusArea == FocusActions {
 				switch m.selectedActionType {
@@ -811,6 +821,24 @@ func (m *MainSheetModel) saveCharacter() {
 	if m.storage != nil {
 		_, _ = m.storage.Save(m.character)
 	}
+}
+
+// exportSheet writes the character to Markdown and JSON files and reports the
+// destination via the status message.
+func (m *MainSheetModel) exportSheet() {
+	if m.character == nil {
+		return
+	}
+	dir := "exports"
+	if m.storage != nil {
+		dir = filepath.Join(filepath.Dir(m.storage.GetBaseDir()), "exports")
+	}
+	mdPath, _, err := export.WriteFiles(m.character, dir)
+	if err != nil {
+		m.statusMessage = "Export failed: " + err.Error()
+		return
+	}
+	m.statusMessage = "Exported sheet to " + filepath.Dir(mdPath)
 }
 
 // handleActionSelection handles when user presses Enter on an action
@@ -3249,7 +3277,7 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Foreground(lipgloss.Color("244")).
 		Width(width)
 
-	help := "tab: panels • i: inventory • s: spellbook • c: char info • n: notes • /: roll dice • `: luck • H: history • r: rest • esc: back • q: quit"
+	help := "tab: panels • i: inventory • s: spellbook • c: char info • n: notes • /: roll dice • `: luck • H: history • r: rest • E: export • esc: back • q: quit"
 
 	// Show condition selection if in condition mode
 	if m.conditionMode {
