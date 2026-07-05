@@ -523,7 +523,7 @@ func (m *InventoryModel) updateSearchResults() {
 	var results []models.Item
 
 	// Get equipment from the data package using loader
-	loader := data.NewLoader("data")
+	loader := data.NewEmbeddedLoader()
 	equipment, err := loader.GetEquipment()
 	if err != nil {
 		m.statusMessage = "Error loading equipment"
@@ -915,8 +915,10 @@ func (m *InventoryModel) View() string {
 	header := m.renderHeader(width)
 
 	// Three-column layout: Equipment | Items | Currency
-	// Use proportional widths with minimums
-	const compactBreakpoint = 80
+	// Use proportional widths with minimums. Below 90 columns the three panels
+	// get too narrow (equipment/currency hit their minimums and item names wrap),
+	// so stack them vertically to match the main sheet and spellbook views.
+	const compactBreakpoint = 90
 
 	if width < compactBreakpoint {
 		// Compact layout: stack panels vertically

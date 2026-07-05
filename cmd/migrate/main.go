@@ -23,7 +23,7 @@ func main() {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
 
-	loader := data.NewLoader("./data")
+	loader := data.NewEmbeddedLoader()
 	if err := loader.LoadAll(); err != nil {
 		log.Fatalf("Failed to load game data: %v", err)
 	}

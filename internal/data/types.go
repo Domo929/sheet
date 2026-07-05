@@ -146,6 +146,7 @@ type Class struct {
 	Spellcaster              bool              `json:"spellcaster"`
 	SpellcastingAbility      string            `json:"spellcastingAbility,omitempty"`
 	SpellSlots               []SpellSlot       `json:"spellSlots,omitempty"`
+	PactMagicSlots           []PactMagicSlot   `json:"pactMagicSlots,omitempty"` // Warlock-style pact magic progression
 	RitualCaster             bool              `json:"ritualCaster,omitempty"`             // Can cast ritual spells
 	RitualCasterUnprepared   bool              `json:"ritualCasterUnprepared,omitempty"`   // Can cast rituals without preparing (Wizard)
 	Features                 []Feature         `json:"features"`
@@ -191,6 +192,14 @@ type SpellSlot struct {
 	Seventh int `json:"7th"`
 	Eighth  int `json:"8th"`
 	Ninth   int `json:"9th"`
+}
+
+// PactMagicSlot represents a Warlock's pact magic slots at a given class level.
+// Unlike regular spell slots, all pact slots are the same level and recharge on a Short Rest.
+type PactMagicSlot struct {
+	Level     int `json:"level"`     // Class level
+	Slots     int `json:"slots"`     // Number of pact magic slots
+	SlotLevel int `json:"slotLevel"` // The spell level of every pact slot
 }
 
 // SkillChoices represents the skill proficiency selection for a class.
