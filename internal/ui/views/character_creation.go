@@ -1815,6 +1815,7 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 		}
 		if m.selectedSubtype >= 0 && m.selectedSubtype < len(m.selectedRace.Subtypes) {
 			subtype := m.selectedRace.Subtypes[m.selectedSubtype]
+			m.character.Info.Subrace = subtype.Name
 			source := fmt.Sprintf("%s (%s)", m.selectedRace.Name, subtype.Name)
 			for _, trait := range subtype.Traits {
 				m.character.Features.AddRacialTrait(trait.Name, source, trait.Description)

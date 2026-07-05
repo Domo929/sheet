@@ -1,5 +1,7 @@
 package domain
 
+import "strings"
+
 // WeaponMastery represents the mastery property of a weapon in the 2024
 // (5.5e) rules. Each weapon has exactly one mastery property, which a
 // character can use only if a class feature grants them mastery with that
@@ -63,5 +65,29 @@ func (m WeaponMastery) Label() string {
 		return "Vex"
 	default:
 		return ""
+	}
+}
+
+// WeaponMasteryCount returns how many weapons a character of the given class and
+// level may have Weapon Mastery with under the 2024 rules. Fighters scale with
+// level (3 at 1st, 4 at 4th, 5 at 10th, 6 at 16th); Barbarians, Paladins,
+// Rangers, and Rogues get 2; all other classes get none.
+func WeaponMasteryCount(className string, level int) int {
+	switch strings.ToLower(strings.TrimSpace(className)) {
+	case "fighter":
+		switch {
+		case level >= 16:
+			return 6
+		case level >= 10:
+			return 5
+		case level >= 4:
+			return 4
+		default:
+			return 3
+		}
+	case "barbarian", "paladin", "ranger", "rogue":
+		return 2
+	default:
+		return 0
 	}
 }

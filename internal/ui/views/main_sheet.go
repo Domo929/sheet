@@ -38,6 +38,10 @@ type MainSheetModel struct {
 	conditionCursor  int
 	conditionAdding  bool // true = adding, false = removing
 
+	// Weapon Mastery selection mode
+	masteryMode   bool
+	masteryCursor int
+
 	// Action type selection (for Actions panel)
 	selectedActionType ActionType
 	actionCursor       int // Cursor for selecting actions within the current type
@@ -205,6 +209,7 @@ type mainSheetKeyMap struct {
 	DeathReset     key.Binding
 	AddCondition   key.Binding
 	RemCondition   key.Binding
+	WeaponMastery  key.Binding
 	NextActionType key.Binding
 	PrevActionType key.Binding
 	AddXP          key.Binding
@@ -290,6 +295,10 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		RemCondition: key.NewBinding(
 			key.WithKeys("-", "_"),
 			key.WithHelp("-", "remove condition"),
+		),
+		WeaponMastery: key.NewBinding(
+			key.WithKeys("m"),
+			key.WithHelp("m", "weapon mastery"),
 		),
 		NextActionType: key.NewBinding(
 			key.WithKeys("right", "l"),
@@ -434,6 +443,11 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		// Handle condition selection mode
 		if m.conditionMode {
 			return m.handleConditionInput(msg)
+		}
+
+		// Handle weapon mastery selection mode
+		if m.masteryMode {
+			return m.handleMasteryInput(msg)
 		}
 
 		// Handle spell casting modal
@@ -641,6 +655,12 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 				m.conditionMode = true
 				m.conditionAdding = false
 				m.conditionCursor = 0
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.WeaponMastery):
+			if m.focusArea == FocusActions && m.character.WeaponMasteryLimit() > 0 && len(m.getMasterableWeapons()) > 0 {
+				m.masteryMode = true
+				m.masteryCursor = 0
 				return m, nil
 			}
 		case key.Matches(msg, m.keys.NextActionType):
@@ -929,6 +949,78 @@ func (m *MainSheetModel) handleConditionInput(msg tea.KeyPressMsg) (*MainSheetMo
 	case tea.KeyDown:
 		if m.conditionCursor < listLen-1 {
 			m.conditionCursor++
+		}
+		return m, nil
+	}
+
+	return m, nil
+}
+
+// getMasterableWeapons returns the distinct weapons the character carries that
+// have a Weapon Mastery property. Both carried and equipped weapons are
+// eligible, since Weapon Mastery is chosen from weapon kinds. Order is
+// deterministic (inventory order, then equipped) for stable cursor behaviour.
+func (m *MainSheetModel) getMasterableWeapons() []models.Item {
+	seen := map[string]bool{}
+	var out []models.Item
+	add := func(it models.Item) {
+		if it.Type != models.ItemTypeWeapon || it.Mastery == "" {
+			return
+		}
+		k := strings.ToLower(it.Name)
+		if seen[k] {
+			return
+		}
+		seen[k] = true
+		out = append(out, it)
+	}
+	for _, it := range m.character.Inventory.Items {
+		add(it)
+	}
+	equip := &m.character.Inventory.Equipment
+	if equip.MainHand != nil {
+		add(*equip.MainHand)
+	}
+	if equip.OffHand != nil {
+		add(*equip.OffHand)
+	}
+	return out
+}
+
+// handleMasteryInput handles keyboard input when in weapon mastery selection mode.
+func (m *MainSheetModel) handleMasteryInput(msg tea.KeyPressMsg) (*MainSheetModel, tea.Cmd) {
+	weapons := m.getMasterableWeapons()
+
+	switch msg.Code {
+	case tea.KeyEscape:
+		m.masteryMode = false
+		return m, nil
+
+	case tea.KeyEnter:
+		if m.masteryCursor >= 0 && m.masteryCursor < len(weapons) {
+			name := weapons[m.masteryCursor].Name
+			if m.character.HasWeaponMastery(name) {
+				m.character.ToggleWeaponMastery(name)
+				m.statusMessage = fmt.Sprintf("Removed Weapon Mastery: %s", name)
+				m.saveCharacter()
+			} else if m.character.ToggleWeaponMastery(name) {
+				m.statusMessage = fmt.Sprintf("Weapon Mastery: %s", name)
+				m.saveCharacter()
+			} else {
+				m.statusMessage = fmt.Sprintf("Weapon Mastery limit reached (%d)", m.character.WeaponMasteryLimit())
+			}
+		}
+		return m, nil
+
+	case tea.KeyUp:
+		if m.masteryCursor > 0 {
+			m.masteryCursor--
+		}
+		return m, nil
+
+	case tea.KeyDown:
+		if m.masteryCursor < len(weapons)-1 {
+			m.masteryCursor++
 		}
 		return m, nil
 	}
@@ -1969,6 +2061,35 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		lines = append(lines, hintStyle.Render("+: add  -: remove"))
 	}
 
+	// Damage defenses (resistances / immunities / vulnerabilities) derived from
+	// species traits and feats.
+	def := char.Defenses()
+	if !def.Empty() {
+		lines = append(lines, "")
+		lines = append(lines, titleStyle.Render("Defenses"))
+		resStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
+		immStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("45"))
+		vulnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
+		if len(def.Resistances) > 0 {
+			lines = append(lines, fmt.Sprintf("%s %s",
+				labelStyle.Render("Resist:"),
+				resStyle.Render(strings.Join(def.Resistances, ", ")),
+			))
+		}
+		if len(def.Immunities) > 0 {
+			lines = append(lines, fmt.Sprintf("%s %s",
+				labelStyle.Render("Immune:"),
+				immStyle.Render(strings.Join(def.Immunities, ", ")),
+			))
+		}
+		if len(def.Vulnerabilities) > 0 {
+			lines = append(lines, fmt.Sprintf("%s %s",
+				labelStyle.Render("Vuln:"),
+				vulnStyle.Render(strings.Join(def.Vulnerabilities, ", ")),
+			))
+		}
+	}
+
 	return panelStyle.Render(strings.Join(lines, "\n"))
 }
 
@@ -2008,7 +2129,11 @@ func (m *MainSheetModel) renderActions(width int) string {
 	lines = append(lines, strings.Join(tabs, " "))
 	if isFocused {
 		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
-		lines = append(lines, hintStyle.Render("←/→: switch type  ↑↓: select  Enter: use"))
+		hint := "←/→: switch type  ↑↓: select  Enter: use"
+		if m.character.WeaponMasteryLimit() > 0 && len(m.getMasterableWeapons()) > 0 {
+			hint += "  m: mastery"
+		}
+		lines = append(lines, hintStyle.Render(hint))
 	}
 
 	// Get all action items for current type
@@ -2244,10 +2369,15 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 				damageStr = fmt.Sprintf("%s (%d/%d ft)", damageStr, w.RangeNormal, w.RangeLong)
 			}
 
+			masterySuffix := ""
+			if m.character.HasWeaponMastery(w.Name) {
+				masterySuffix = weaponMasterySuffix(*w)
+			}
+
 			items = append(items, ActionItem{
 				Type:        ActionItemWeapon,
 				Name:        w.Name,
-				Description: fmt.Sprintf("Hit: %s, Dmg: %s%s", formatModifier(attackBonus), damageStr, weaponMasterySuffix(*w)),
+				Description: fmt.Sprintf("Hit: %s, Dmg: %s%s", formatModifier(attackBonus), damageStr, masterySuffix),
 				Weapon:      w,
 			})
 		}
@@ -2793,6 +2923,43 @@ func (m *MainSheetModel) renderFooter(width int) string {
 
 		// Show only a window of items around the cursor
 		start := m.conditionCursor - 3
+		if start < 0 {
+			start = 0
+		}
+		end := start + 7
+		if end > len(items) {
+			end = len(items)
+		}
+		visibleItems := items[start:end]
+
+		return lipgloss.JoinVertical(lipgloss.Left,
+			titleStyle.Render(title),
+			itemStyle.Render(strings.Join(visibleItems, "\n")),
+		)
+	}
+
+	// Show weapon mastery selection if in mastery mode
+	if m.masteryMode {
+		weapons := m.getMasterableWeapons()
+		title := fmt.Sprintf("Weapon Mastery — %d/%d chosen (↑/↓ select, Enter toggle, Esc done)",
+			len(m.character.MasteredWeapons), m.character.WeaponMasteryLimit())
+		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
+		itemStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+
+		var items []string
+		for i, w := range weapons {
+			prefix := "  "
+			if i == m.masteryCursor {
+				prefix = "▶ "
+			}
+			check := "[ ]"
+			if m.character.HasWeaponMastery(w.Name) {
+				check = "[x]"
+			}
+			items = append(items, fmt.Sprintf("%s%s %s — %s", prefix, check, w.Name, w.Mastery.Label()))
+		}
+
+		start := m.masteryCursor - 3
 		if start < 0 {
 			start = 0
 		}

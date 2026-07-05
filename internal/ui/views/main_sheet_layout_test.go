@@ -104,10 +104,24 @@ func TestMainSheetWeaponMasteryDisplay(t *testing.T) {
 		})
 		char.Inventory.Equipment.MainHand = &char.Inventory.Items[len(char.Inventory.Items)-1]
 
+		// Until the weapon is chosen for Weapon Mastery, its mastery property
+		// must NOT appear in the attack description (2024 rules: mastery applies
+		// only to weapons you have selected).
 		model := NewMainSheetModel(char, nil)
 		model, _ = model.Update(tea.WindowSizeMsg{Width: width, Height: 40})
+		for _, item := range model.getActionItems() {
+			if item.Name == "Longsword" {
+				assert.NotContains(t, item.Description, "• Sap",
+					"width %d: unmastered Longsword should not show its mastery", width)
+			}
+		}
 
-		// The mastery label must reach the rendered attack description.
+		// After choosing the weapon for mastery, the label must reach the
+		// rendered attack description.
+		char.MasteredWeapons = []string{"Longsword"}
+		model = NewMainSheetModel(char, nil)
+		model, _ = model.Update(tea.WindowSizeMsg{Width: width, Height: 40})
+
 		var masteryShown bool
 		for _, item := range model.getActionItems() {
 			if item.Name == "Longsword" && strings.Contains(item.Description, "• Sap") {
@@ -115,9 +129,78 @@ func TestMainSheetWeaponMasteryDisplay(t *testing.T) {
 			}
 		}
 		require.True(t, masteryShown,
-			"width %d: equipped Longsword should show its '• Sap' mastery in the actions panel", width)
+			"width %d: mastered Longsword should show its '• Sap' mastery in the actions panel", width)
 
 		assert.LessOrEqual(t, maxLineWidth(model.View()), width,
 			"width %d: a rendered line overflowed the terminal width", width)
+	}
+}
+
+func TestWeaponMasterySelectionFlow(t *testing.T) {
+	char := models.NewCharacter("fid", "Boromir", "Human", "Fighter") // limit 3 at L1
+	char.Inventory.Items = append(char.Inventory.Items, models.Item{
+		ID:         "greataxe",
+		Name:       "Greataxe",
+		Type:       models.ItemTypeWeapon,
+		Quantity:   1,
+		Damage:     "1d12",
+		DamageType: domain.DamageSlashing,
+		Mastery:    domain.MasteryCleave,
+	})
+	char.Inventory.Equipment.MainHand = &char.Inventory.Items[len(char.Inventory.Items)-1]
+
+	model := NewMainSheetModel(char, nil)
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
+
+	// Focus the Actions panel and open the mastery selector with "m".
+	model.focusArea = FocusActions
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'm', Text: "m"})
+	require.True(t, model.masteryMode, "pressing m in the Actions panel should open the mastery selector")
+
+	view := model.View()
+	if _, ok := findLineContaining(view, "Weapon Mastery"); !ok {
+		t.Fatal("mastery overlay header should render")
+	}
+	line, ok := findLineContaining(view, "] Greataxe")
+	require.True(t, ok, "mastery overlay should list the Greataxe with a checkbox")
+	assert.Contains(t, line, "[ ]", "weapon starts unmastered")
+
+	// Toggle mastery on.
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	assert.True(t, model.character.HasWeaponMastery("Greataxe"))
+	line, ok = findLineContaining(model.View(), "] Greataxe")
+	require.True(t, ok)
+	assert.Contains(t, line, "[x]", "weapon should now be mastered")
+
+	// Close the selector.
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
+	assert.False(t, model.masteryMode)
+
+	// Mastery now shows in the attack line.
+	var shown bool
+	for _, item := range model.getActionItems() {
+		if item.Name == "Greataxe" && strings.Contains(item.Description, "• Cleave") {
+			shown = true
+		}
+	}
+	assert.True(t, shown, "a mastered weapon shows its property in the actions panel")
+
+	assert.LessOrEqual(t, maxLineWidth(model.View()), 100)
+}
+
+func TestDefensesPanelRender(t *testing.T) {
+	char := models.NewCharacter("tid", "Zar", "Dragonborn", "Fighter")
+	char.Info.Subrace = "Red"
+	char.Features.AddRacialTrait("Draconic Ancestry", "Dragonborn",
+		"You have Resistance to the damage type determined by your Draconic Ancestry.")
+
+	model := NewMainSheetModel(char, nil)
+	for _, width := range []int{90, 100, 120} {
+		model, _ = model.Update(tea.WindowSizeMsg{Width: width, Height: 40})
+		view := model.View()
+		line, ok := findLineContaining(view, "Resist:")
+		require.True(t, ok, "width %d: the Defenses panel should show a Resist line", width)
+		assert.Contains(t, line, "Fire", "width %d: Dragonborn (Red) should resist Fire", width)
+		assert.LessOrEqual(t, maxLineWidth(view), width, "width %d: a rendered line overflowed", width)
 	}
 }

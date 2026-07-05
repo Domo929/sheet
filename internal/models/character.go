@@ -25,6 +25,11 @@ type Character struct {
 	Features      Features      `json:"features"`
 	Proficiencies Proficiencies `json:"proficiencies"`
 	Personality   Personality   `json:"personality"`
+
+	// MasteredWeapons lists the weapon names the character has chosen Weapon
+	// Mastery with (2024 rules). Only weapons in this list benefit from their
+	// mastery property.
+	MasteredWeapons []string `json:"masteredWeapons,omitempty"`
 }
 
 // NewCharacter creates a new character with the given basic information.
