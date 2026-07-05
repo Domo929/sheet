@@ -104,6 +104,27 @@ type KnownSpell struct {
 	Prepared       bool   `json:"prepared,omitempty"`
 	Ritual         bool   `json:"ritual,omitempty"`
 	AlwaysPrepared bool   `json:"alwaysPrepared,omitempty"` // Always prepared, doesn't count against prep limit (from class features)
+	Custom         bool   `json:"custom,omitempty"`         // Homebrew spell not from the SRD database
+}
+
+// CustomSpell holds the full detail of a homebrew spell created by the user.
+// It mirrors the fields of the database spell so the spellbook can render it the
+// same way. Enumerated fields are stored as plain strings to keep the models
+// package free of a dependency on the data package.
+type CustomSpell struct {
+	Name        string `json:"name"`
+	Level       int    `json:"level"`
+	School      string `json:"school,omitempty"`
+	CastingTime string `json:"castingTime,omitempty"`
+	Range       string `json:"range,omitempty"`
+	Components  string `json:"components,omitempty"`
+	Duration    string `json:"duration,omitempty"`
+	Description string `json:"description,omitempty"`
+	Damage      string `json:"damage,omitempty"`
+	DamageType  string `json:"damageType,omitempty"`
+	SavingThrow string `json:"savingThrow,omitempty"`
+	Upcast      string `json:"upcast,omitempty"`
+	Ritual      bool   `json:"ritual,omitempty"`
 }
 
 // PactMagic represents Warlock-style pact magic slots.
@@ -147,6 +168,7 @@ type Spellcasting struct {
 	PactMagic             *PactMagic   `json:"pactMagic,omitempty"` // For Warlocks
 	RitualCaster          bool         `json:"ritualCaster,omitempty"` // Can cast ritual spells
 	RitualCasterUnprepared bool        `json:"ritualCasterUnprepared,omitempty"` // Can cast rituals without preparing (Wizard)
+	CustomSpells          []CustomSpell `json:"customSpells,omitempty"` // Homebrew spells created by the user
 }
 
 // NewSpellcasting creates a new spellcasting tracker.
@@ -212,4 +234,71 @@ func CalculateSpellSaveDC(abilityMod, proficiencyBonus int) int {
 // CalculateSpellAttackBonus calculates the spell attack bonus.
 func CalculateSpellAttackBonus(abilityMod, proficiencyBonus int) int {
 	return abilityMod + proficiencyBonus
+}
+
+// FindCustomSpell returns the stored homebrew spell detail with the given name,
+// or nil if the character has no custom spell by that name.
+func (sc *Spellcasting) FindCustomSpell(name string) *CustomSpell {
+	for i := range sc.CustomSpells {
+		if sc.CustomSpells[i].Name == name {
+			return &sc.CustomSpells[i]
+		}
+	}
+	return nil
+}
+
+// IsCustomSpell reports whether a spell (by name) is a homebrew custom spell.
+func (sc *Spellcasting) IsCustomSpell(name string) bool {
+	return sc.FindCustomSpell(name) != nil
+}
+
+// AddCustomSpell stores a homebrew spell's detail and adds it to the character's
+// known spells (or cantrips). If a custom spell with the same name already
+// exists, its detail is replaced.
+func (sc *Spellcasting) AddCustomSpell(cs CustomSpell) {
+	replaced := false
+	for i := range sc.CustomSpells {
+		if sc.CustomSpells[i].Name == cs.Name {
+			sc.CustomSpells[i] = cs
+			replaced = true
+			break
+		}
+	}
+	if !replaced {
+		sc.CustomSpells = append(sc.CustomSpells, cs)
+	}
+
+	if cs.Level == 0 {
+		for _, name := range sc.CantripsKnown {
+			if name == cs.Name {
+				return
+			}
+		}
+		sc.CantripsKnown = append(sc.CantripsKnown, cs.Name)
+		return
+	}
+
+	for i := range sc.KnownSpells {
+		if sc.KnownSpells[i].Name == cs.Name {
+			sc.KnownSpells[i].Custom = true
+			sc.KnownSpells[i].Ritual = cs.Ritual
+			return
+		}
+	}
+	sc.KnownSpells = append(sc.KnownSpells, KnownSpell{
+		Name:   cs.Name,
+		Level:  cs.Level,
+		Ritual: cs.Ritual,
+		Custom: true,
+	})
+}
+
+// RemoveCustomSpell removes a homebrew spell's stored detail by name.
+func (sc *Spellcasting) RemoveCustomSpell(name string) {
+	for i := range sc.CustomSpells {
+		if sc.CustomSpells[i].Name == name {
+			sc.CustomSpells = append(sc.CustomSpells[:i], sc.CustomSpells[i+1:]...)
+			return
+		}
+	}
 }

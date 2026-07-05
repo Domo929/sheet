@@ -3,9 +3,11 @@ package views
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/Domo929/sheet/internal/data"
+	"github.com/Domo929/sheet/internal/domain"
 	"github.com/Domo929/sheet/internal/models"
 	"github.com/Domo929/sheet/internal/storage"
 	"github.com/Domo929/sheet/internal/ui/components"
@@ -23,6 +25,7 @@ const (
 	ModeAddSpell                        // Adding a new spell
 	ModeSelectCastLevel                 // Selecting spell slot level for casting
 	ModeConfirmCast                     // Confirming spell cast with details
+	ModeCustomSpell                     // Creating a homebrew custom spell
 )
 
 // SpellbookModel is the model for the spellbook view.
@@ -52,6 +55,20 @@ type SpellbookModel struct {
 	spellSearchTerm string
 	searchResults   []data.SpellData
 	searchCursor    int
+
+	// Custom (homebrew) spell creation mode
+	customStep        int
+	customName        string
+	customLevelBuf    string
+	customSchool      string
+	customCastingTime string
+	customRange       string
+	customComponents  string
+	customDuration    string
+	customDamage      string
+	customDamageType  string
+	customSavingThrow string
+	customDescription string
 
 	// Delete confirmation
 	confirmingRemove bool
@@ -84,6 +101,7 @@ type spellbookKeyMap struct {
 	Filter        key.Binding
 	CustomRoll    key.Binding
 	HistoryToggle key.Binding
+	CustomSpell   key.Binding
 }
 
 func defaultSpellbookKeyMap() spellbookKeyMap {
@@ -101,6 +119,7 @@ func defaultSpellbookKeyMap() spellbookKeyMap {
 		Filter:        key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "filter level")),
 		CustomRoll:    key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "roll dice")),
 		HistoryToggle: key.NewBinding(key.WithKeys("H"), key.WithHelp("H", "history")),
+		CustomSpell:   key.NewBinding(key.WithKeys("C"), key.WithHelp("C", "homebrew spell")),
 	}
 }
 
@@ -188,6 +207,11 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 		// Handle add spell mode
 		if m.mode == ModeAddSpell {
 			return m.handleAddSpellInput(msg)
+		}
+
+		// Handle custom (homebrew) spell creation mode
+		if m.mode == ModeCustomSpell {
+			return m.handleCustomSpellInput(msg)
 		}
 
 		// Handle spell cast level selection
@@ -318,6 +342,9 @@ func (m *SpellbookModel) Update(msg tea.Msg) (*SpellbookModel, tea.Cmd) {
 			m.searchResults = []data.SpellData{}
 			m.searchCursor = 0
 			return m, nil
+		case key.Matches(msg, m.keys.CustomSpell):
+			m.startCustomSpell()
+			return m, nil
 		case key.Matches(msg, m.keys.Remove):
 			if m.mode == ModePreparation {
 				return m.handleRemoveSpell(), nil
@@ -423,6 +450,12 @@ func (m *SpellbookModel) View() string {
 	// Handle add spell overlay
 	if m.mode == ModeAddSpell {
 		overlay := m.renderAddSpellOverlay()
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, overlay)
+	}
+
+	// Handle homebrew spell creation overlay
+	if m.mode == ModeCustomSpell {
+		overlay := m.renderCustomSpellOverlay()
 		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, overlay)
 	}
 
@@ -575,6 +608,9 @@ func (m *SpellbookModel) renderSpellList() string {
 			if spell.Ritual {
 				ritualMarker = " (R)"
 			}
+			if sc.IsCustomSpell(spell.Name) {
+				ritualMarker += " ★"
+			}
 
 			// Render spell name with hyperlink to D&D Beyond
 			spellNameRendered := lipgloss.NewStyle().
@@ -640,6 +676,9 @@ func (m *SpellbookModel) renderSpellDetails() string {
 		levelSchool += " (ritual)"
 	}
 	lines = append(lines, levelSchool)
+	if m.character.Spellcasting != nil && m.character.Spellcasting.IsCustomSpell(spell.Name) {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("★ Homebrew"))
+	}
 	lines = append(lines, "")
 
 	lines = append(lines, fmt.Sprintf("Casting Time: %s", spell.CastingTime))
@@ -754,6 +793,7 @@ func (m *SpellbookModel) renderFooter() string {
 	}
 
 	helps = append(helps, "a: add spell")
+	helps = append(helps, "C: homebrew")
 	helps = append(helps, "f: filter")
 	helps = append(helps, "/: roll dice")
 	helps = append(helps, "H: history")
@@ -811,7 +851,50 @@ func (m *SpellbookModel) renderAddSpellOverlay() string {
 		Render(content)
 }
 
-// Helper functions
+// renderCustomSpellOverlay renders the homebrew spell creation modal.
+func (m *SpellbookModel) renderCustomSpellOverlay() string {
+	fields := m.customSpellFields()
+
+	activeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
+	doneStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+
+	var lines []string
+	lines = append(lines, lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("214")).Render("★ Create Homebrew Spell"))
+	lines = append(lines, "")
+
+	for i, f := range fields {
+		style := dimStyle
+		cursor := ""
+		switch {
+		case i == m.customStep:
+			style = activeStyle
+			cursor = "_"
+		case i < m.customStep:
+			style = doneStyle
+		}
+		label := f.label
+		if f.optional {
+			label += " (optional)"
+		}
+		lines = append(lines, style.Render(fmt.Sprintf("%-26s %s%s", label+":", *f.value, cursor)))
+	}
+
+	lines = append(lines, "")
+	lines = append(lines, dimStyle.Render("Enter: next/create • Esc: cancel • optional fields may be left blank"))
+
+	content := strings.Join(lines, "\n")
+	width := 64
+	height := len(lines) + 2
+
+	return lipgloss.NewStyle().
+		Width(width).
+		Height(height).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("214")).
+		Padding(1, 2).
+		Render(content)
+}
 
 func (m *SpellbookModel) handleUp() *SpellbookModel {
 	if m.spellCursor > 0 {
@@ -974,6 +1057,7 @@ func (m *SpellbookModel) performRemoveSpell() {
 	for i, spell := range sc.KnownSpells {
 		if spell.Name == m.removeSpellName {
 			sc.KnownSpells = append(sc.KnownSpells[:i], sc.KnownSpells[i+1:]...)
+			sc.RemoveCustomSpell(m.removeSpellName)
 			m.statusMessage = fmt.Sprintf("Removed %s", m.removeSpellName)
 
 			// Adjust cursor if needed
@@ -1154,6 +1238,158 @@ func (m *SpellbookModel) addSpellToCharacter(spell data.SpellData) {
 	m.updateSelectedSpellData()
 }
 
+// customSpellField describes one step of the homebrew spell creation form.
+type customSpellField struct {
+	label    string
+	value    *string
+	numeric  bool
+	optional bool
+}
+
+// customSpellFields returns the ordered fields of the homebrew spell form.
+func (m *SpellbookModel) customSpellFields() []customSpellField {
+	return []customSpellField{
+		{"Name", &m.customName, false, false},
+		{"Level (0-9)", &m.customLevelBuf, true, false},
+		{"School", &m.customSchool, false, true},
+		{"Casting Time", &m.customCastingTime, false, true},
+		{"Range", &m.customRange, false, true},
+		{"Components (e.g. V, S, M)", &m.customComponents, false, true},
+		{"Duration", &m.customDuration, false, true},
+		{"Damage (e.g. 2d6)", &m.customDamage, false, true},
+		{"Damage Type", &m.customDamageType, false, true},
+		{"Saving Throw", &m.customSavingThrow, false, true},
+		{"Description", &m.customDescription, false, true},
+	}
+}
+
+// startCustomSpell resets the form state and enters homebrew spell mode.
+func (m *SpellbookModel) startCustomSpell() {
+	if m.character == nil || m.character.Spellcasting == nil {
+		m.statusMessage = "This character has no spellcasting"
+		return
+	}
+	m.mode = ModeCustomSpell
+	m.customStep = 0
+	m.customName = ""
+	m.customLevelBuf = ""
+	m.customSchool = ""
+	m.customCastingTime = ""
+	m.customRange = ""
+	m.customComponents = ""
+	m.customDuration = ""
+	m.customDamage = ""
+	m.customDamageType = ""
+	m.customSavingThrow = ""
+	m.customDescription = ""
+	m.statusMessage = "New homebrew spell: type a name, Enter to continue, Esc to cancel"
+}
+
+func (m *SpellbookModel) handleCustomSpellInput(msg tea.KeyPressMsg) (*SpellbookModel, tea.Cmd) {
+	fields := m.customSpellFields()
+	if msg.Code == tea.KeyEscape {
+		m.mode = ModeSpellList
+		m.statusMessage = "Homebrew spell cancelled"
+		return m, nil
+	}
+
+	field := fields[m.customStep]
+
+	switch msg.Code {
+	case tea.KeyEnter:
+		// Name is required; everything else may be left blank.
+		if m.customStep == 0 && strings.TrimSpace(m.customName) == "" {
+			m.statusMessage = "Name cannot be empty"
+			return m, nil
+		}
+		if m.customStep == len(fields)-1 {
+			return m, m.finalizeCustomSpell()
+		}
+		m.customStep++
+		return m, nil
+	case tea.KeyBackspace:
+		if len(*field.value) > 0 {
+			*field.value = (*field.value)[:len(*field.value)-1]
+		}
+		return m, nil
+	default:
+		if msg.Text == "" {
+			return m, nil
+		}
+		if field.numeric {
+			if isDigitStr(msg.Text) {
+				*field.value += msg.Text
+			}
+		} else {
+			*field.value += msg.Text
+		}
+		return m, nil
+	}
+}
+
+func (m *SpellbookModel) finalizeCustomSpell() tea.Cmd {
+	sc := m.character.Spellcasting
+	if sc == nil {
+		m.mode = ModeSpellList
+		return nil
+	}
+
+	level, _ := strconv.Atoi(strings.TrimSpace(m.customLevelBuf))
+	if level < 0 {
+		level = 0
+	}
+	if level > 9 {
+		level = 9
+	}
+
+	cs := models.CustomSpell{
+		Name:        strings.TrimSpace(m.customName),
+		Level:       level,
+		School:      strings.TrimSpace(m.customSchool),
+		CastingTime: strings.TrimSpace(m.customCastingTime),
+		Range:       strings.TrimSpace(m.customRange),
+		Components:  strings.TrimSpace(m.customComponents),
+		Duration:    strings.TrimSpace(m.customDuration),
+		Damage:      strings.TrimSpace(m.customDamage),
+		DamageType:  strings.TrimSpace(m.customDamageType),
+		SavingThrow: strings.TrimSpace(m.customSavingThrow),
+		Description: strings.TrimSpace(m.customDescription),
+	}
+
+	sc.AddCustomSpell(cs)
+	m.mode = ModeSpellList
+	m.statusMessage = fmt.Sprintf("Added homebrew spell: %s", cs.Name)
+	m.updateSelectedSpellData()
+	return m.saveCharacter()
+}
+
+// customSpellToData converts a stored homebrew spell into the data.SpellData
+// shape the details panel renders.
+func customSpellToData(cs *models.CustomSpell) data.SpellData {
+	var components []data.SpellComponent
+	for _, part := range strings.Split(cs.Components, ",") {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			components = append(components, data.SpellComponent(part))
+		}
+	}
+	return data.SpellData{
+		Name:        cs.Name,
+		Level:       cs.Level,
+		School:      data.SpellSchool(cs.School),
+		CastingTime: data.CastingTime(cs.CastingTime),
+		Range:       cs.Range,
+		Components:  components,
+		Duration:    cs.Duration,
+		Description: cs.Description,
+		Ritual:      cs.Ritual,
+		Damage:      cs.Damage,
+		DamageType:  domain.DamageType(cs.DamageType),
+		SavingThrow: cs.SavingThrow,
+		Upcast:      cs.Upcast,
+	}
+}
+
 // getDisplaySpells returns the spells to display based on mode and filter.
 // In spell list mode, includes cantrips as level 0 "spells" for casting.
 func (m *SpellbookModel) getDisplaySpells() []models.KnownSpell {
@@ -1230,6 +1466,15 @@ func (m *SpellbookModel) updateSelectedSpellData() {
 	for i := range m.spellDatabase.Spells {
 		if m.spellDatabase.Spells[i].Name == spell.Name {
 			m.selectedSpellData = &m.spellDatabase.Spells[i]
+			return
+		}
+	}
+
+	// Fall back to a homebrew custom spell if present.
+	if sc := m.character.Spellcasting; sc != nil {
+		if cs := sc.FindCustomSpell(spell.Name); cs != nil {
+			sd := customSpellToData(cs)
+			m.selectedSpellData = &sd
 			return
 		}
 	}
