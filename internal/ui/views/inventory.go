@@ -533,14 +533,25 @@ func (m *InventoryModel) updateSearchResults() {
 	// Search weapons
 	for _, w := range equipment.Weapons.GetAllWeapons() {
 		if strings.Contains(strings.ToLower(w.Name), searchLower) {
-			results = append(results, models.Item{
-				ID:       w.ID,
-				Name:     w.Name,
-				Type:     models.ItemTypeWeapon,
-				Weight:   w.Weight,
-				Value:    costMapToCurrency(w.Cost),
-				Quantity: 1,
-			})
+			item := models.Item{
+				ID:              w.ID,
+				Name:            w.Name,
+				Type:            models.ItemTypeWeapon,
+				Weight:          w.Weight,
+				Value:           costMapToCurrency(w.Cost),
+				Quantity:        1,
+				Damage:          w.Damage,
+				DamageType:      w.DamageType,
+				WeaponProps:     w.Properties,
+				Mastery:         w.Mastery,
+				VersatileDamage: w.VersatileDamage,
+				SubCategory:     w.SubCategory,
+			}
+			if w.Range != nil {
+				item.RangeNormal = w.Range.Normal
+				item.RangeLong = w.Range.Long
+			}
+			results = append(results, item)
 			if len(results) >= 10 {
 				break
 			}
@@ -1244,6 +1255,9 @@ func (m *InventoryModel) renderItems(width int) string {
 		}
 		if hoveredItem.Damage != "" {
 			lines = append(lines, dimStyle.Render(fmt.Sprintf("Damage: %s %s", hoveredItem.Damage, hoveredItem.DamageType)))
+		}
+		if hoveredItem.Mastery != "" {
+			lines = append(lines, dimStyle.Render(fmt.Sprintf("Mastery: %s", hoveredItem.Mastery.Label())))
 		}
 		if hoveredItem.Charges > 0 || hoveredItem.MaxCharges > 0 {
 			lines = append(lines, dimStyle.Render(fmt.Sprintf("Charges: %d/%d", hoveredItem.Charges, hoveredItem.MaxCharges)))

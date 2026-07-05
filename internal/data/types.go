@@ -151,6 +151,14 @@ type Class struct {
 	RitualCasterUnprepared   bool              `json:"ritualCasterUnprepared,omitempty"`   // Can cast rituals without preparing (Wizard)
 	Features                 []Feature         `json:"features"`
 	Subclasses               []Subclass        `json:"subclasses,omitempty"`
+	WeaponMastery            *WeaponMasteryGrant `json:"weaponMastery,omitempty"` // 2024 Weapon Mastery grant (martial classes)
+}
+
+// WeaponMasteryGrant describes a class's 2024 Weapon Mastery feature: the level
+// at which it is gained and how many weapons' Mastery properties can be used.
+type WeaponMasteryGrant struct {
+	Level int `json:"level"`
+	Count int `json:"count"`
 }
 
 // EquipmentChoice represents a starting equipment item or choice.

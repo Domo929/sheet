@@ -274,7 +274,8 @@ type Item struct {
 	// Weapon properties
 	Damage          string                  `json:"damage,omitempty"`           // e.g., "1d8"
 	DamageType      domain.DamageType       `json:"damageType,omitempty"`       // e.g., "slashing"
-	WeaponProps     []domain.WeaponProperty `json:"weaponProperties,omitempty"` // e.g., ["finesse", "light", "topple"]
+	WeaponProps     []domain.WeaponProperty `json:"weaponProperties,omitempty"` // e.g., ["finesse", "light"]
+	Mastery         domain.WeaponMastery    `json:"mastery,omitempty"`          // 2024 weapon mastery property, e.g., "topple"
 	VersatileDamage string   `json:"versatileDamage,omitempty"`  // e.g., "1d10" for versatile weapons
 	RangeNormal     int      `json:"rangeNormal,omitempty"`      // Normal range in feet
 	RangeLong       int      `json:"rangeLong,omitempty"`        // Long range in feet

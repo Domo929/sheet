@@ -2215,7 +2215,7 @@ func (m *MainSheetModel) getActionItems() []ActionItem {
 			items = append(items, ActionItem{
 				Type:        ActionItemWeapon,
 				Name:        w.Name,
-				Description: fmt.Sprintf("Hit: %s, Dmg: %s", formatModifier(attackBonus), damageStr),
+				Description: fmt.Sprintf("Hit: %s, Dmg: %s%s", formatModifier(attackBonus), damageStr, weaponMasterySuffix(*w)),
 				Weapon:      w,
 			})
 		}
@@ -2860,6 +2860,15 @@ func (m *MainSheetModel) getWeaponAttackBonus(weapon models.Item) int {
 // getWeaponDamageMod returns the damage modifier for a weapon (ability mod + magic bonus).
 func (m *MainSheetModel) getWeaponDamageMod(weapon models.Item) int {
 	return m.getWeaponAbilityMod(weapon) + weapon.MagicBonus
+}
+
+// weaponMasterySuffix returns a short " • <Mastery>" suffix for a weapon's
+// action description, or an empty string if the weapon has no mastery property.
+func weaponMasterySuffix(weapon models.Item) string {
+	if weapon.Mastery == "" {
+		return ""
+	}
+	return " • " + weapon.Mastery.Label()
 }
 
 // getWeaponAbilityMod returns the ability modifier used for a weapon.

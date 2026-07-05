@@ -1754,6 +1754,7 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 				item.Damage = weapon.Damage
 				item.DamageType = weapon.DamageType
 				item.WeaponProps = weapon.Properties
+				item.Mastery = weapon.Mastery
 				item.Weight = weapon.Weight
 				item.VersatileDamage = weapon.VersatileDamage
 				if weapon.Range != nil {

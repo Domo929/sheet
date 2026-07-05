@@ -8,6 +8,9 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/Domo929/sheet/internal/domain"
+	"github.com/Domo929/sheet/internal/models"
 )
 
 // findLineContaining returns the first ANSI-stripped rendered line that contains sub.
@@ -63,6 +66,42 @@ func TestMainSheetAbilityRowsDoNotWrap(t *testing.T) {
 			"width %d: Strength row truncated the save column: %q", width, segment)
 
 		assert.LessOrEqual(t, maxLineWidth(render), width,
+			"width %d: a rendered line overflowed the terminal width", width)
+	}
+}
+
+// TestMainSheetWeaponMasteryDisplay verifies that an equipped weapon's 2024
+// mastery property surfaces in the actions panel (D&D Beyond parity) and that
+// the extra suffix never pushes a rendered line past the terminal width at any
+// supported layout breakpoint.
+func TestMainSheetWeaponMasteryDisplay(t *testing.T) {
+	for _, width := range []int{80, 90, 100, 120} {
+		char := createTestCharacter() // Ranger L5, STR 16 (+3)
+		char.Inventory.Items = append(char.Inventory.Items, models.Item{
+			ID:         "longsword",
+			Name:       "Longsword",
+			Type:       models.ItemTypeWeapon,
+			Quantity:   1,
+			Damage:     "1d8",
+			DamageType: domain.DamageSlashing,
+			Mastery:    domain.MasterySap,
+		})
+		char.Inventory.Equipment.MainHand = &char.Inventory.Items[len(char.Inventory.Items)-1]
+
+		model := NewMainSheetModel(char, nil)
+		model, _ = model.Update(tea.WindowSizeMsg{Width: width, Height: 40})
+
+		// The mastery label must reach the rendered attack description.
+		var masteryShown bool
+		for _, item := range model.getActionItems() {
+			if item.Name == "Longsword" && strings.Contains(item.Description, "• Sap") {
+				masteryShown = true
+			}
+		}
+		require.True(t, masteryShown,
+			"width %d: equipped Longsword should show its '• Sap' mastery in the actions panel", width)
+
+		assert.LessOrEqual(t, maxLineWidth(model.View()), width,
 			"width %d: a rendered line overflowed the terminal width", width)
 	}
 }

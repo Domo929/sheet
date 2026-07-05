@@ -468,6 +468,11 @@
           "description": "While not wearing armor, your AC equals 10 + Dexterity modifier + Constitution modifier. You can use a shield and still gain this benefit."
         },
         {
+          "level": 1,
+          "name": "Weapon Mastery",
+          "description": "You gain mastery with two kinds of weapons of your choice, such as a Greataxe and a Handaxe. Whenever you finish a Long Rest, you can change one of those weapon choices. You can use the Mastery property of a weapon only if you have mastery with it. The number of weapons you can master increases as you gain Barbarian levels."
+        },
+        {
           "level": 2,
           "name": "Reckless Attack",
           "description": "When you make your first attack on your turn, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls using Strength during this turn, but attack rolls against you have advantage until your next turn."
@@ -481,6 +486,11 @@
           "level": 3,
           "name": "Primal Path",
           "description": "Choose a Primal Path that shapes the nature of your rage: Path of the Berserker, Path of the Totem Warrior, or others. Your choice grants features at 3rd, 6th, 10th, and 14th level."
+        },
+        {
+          "level": 3,
+          "name": "Primal Knowledge",
+          "description": "You gain proficiency in one additional skill of your choice from the Barbarian skill list. In addition, while your Rage is active, you can channel primal power when you attempt certain tasks; whenever you make an Acrobatics, Intimidation, Perception, Stealth, or Survival check, you can make it as a Strength check even if it normally uses a different ability."
         },
         {
           "level": 4,
@@ -790,7 +800,11 @@
           ],
           "description": "Rage in Ecstatic Union with a God Barbarians who walk the Path of the Zealot receive boons from a god or pantheon. These Barbarians experience their Rage as an ecstatic episode of divine union that infuses them with power. They are often allies to the priests and other followers of their god or pantheon."
         }
-      ]
+      ],
+      "weaponMastery": {
+        "level": 1,
+        "count": 2
+      }
     },
     {
       "name": "Bard",
@@ -1267,19 +1281,14 @@
           "description": "You can add half your proficiency bonus (rounded down) to any ability check you make that doesn't already use your proficiency bonus."
         },
         {
-          "level": 2,
-          "name": "Song of Rest",
-          "description": "You can use soothing music or oration during a short rest to help revitalize your wounded allies. You and any friendly creatures who hear your performance regain extra hit points equal to your Charisma modifier at the end of the short rest."
-        },
-        {
           "level": 3,
           "name": "Bard College",
           "description": "Choose a college that you emulate in your bardic techniques: College of Lore, College of Valor, or others. Your choice grants features at 3rd, 6th, and 14th level."
         },
         {
-          "level": 3,
+          "level": 2,
           "name": "Expertise",
-          "description": "Choose two of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies. At 10th level, you can choose two more skills to gain this benefit."
+          "description": "Choose two of your skill proficiencies. Your Proficiency Bonus is doubled for any ability check you make that uses either of the chosen proficiencies. You gain two more such proficiencies at 9th level."
         },
         {
           "level": 4,
@@ -1890,8 +1899,8 @@
         },
         {
           "level": 1,
-          "name": "Divine Domain",
-          "description": "Choose one domain related to your deity: Knowledge, Life, Light, Nature, Tempest, Trickery, War, or others. Your choice grants domain spells and features at 1st, 2nd, 6th, 8th, and 17th level."
+          "name": "Divine Order",
+          "description": "You have dedicated yourself to one of the following sacred roles of your choice: Protector (gain training with Martial weapons and Heavy armor) or Thaumaturge (you know one extra Cleric cantrip and add your Wisdom modifier to your Intelligence (Arcana or Religion) checks)."
         },
         {
           "level": 2,
@@ -1905,8 +1914,8 @@
         },
         {
           "level": 3,
-          "name": "Divine Domain Feature",
-          "description": "You gain a feature from your Divine Domain."
+          "name": "Divine Domain",
+          "description": "You gain a Divine Domain of your choice, such as the Life Domain. Your choice grants you features at 3rd level and again at 6th, 8th (or 17th), and 17th level."
         },
         {
           "level": 4,
@@ -1915,8 +1924,8 @@
         },
         {
           "level": 5,
-          "name": "Destroy Undead (CR 1/2)",
-          "description": "When an undead fails its saving throw against your Turn Undead feature, it is instantly destroyed if its challenge rating is 1/2 or lower."
+          "name": "Sear Undead",
+          "description": "Whenever you use Turn Undead, you can roll a number of d8s equal to your Wisdom modifier (minimum 1) and add the rolls together. Each Undead that fails its saving throw against the Turn Undead effect takes Radiant damage equal to the roll. This damage doesn't end the Turn Undead effect."
         },
         {
           "level": 6,
@@ -2517,6 +2526,11 @@
           "description": "You can cast druid spells. Wisdom is your spellcasting ability. You prepare spells from the druid spell list. The number of spells you can prepare equals your Wisdom modifier + your druid level (minimum of 1)."
         },
         {
+          "level": 1,
+          "name": "Primal Order",
+          "description": "You have dedicated yourself to one of the following sacred roles of your choice: Magician (you know one extra Druid cantrip and add your Wisdom modifier to your Intelligence (Arcana or Nature) checks) or Warden (gain training with Martial weapons and Medium armor)."
+        },
+        {
           "level": 2,
           "name": "Wild Shape",
           "description": "You can use your action to magically assume the shape of a beast you have seen before. You can use this feature twice, regaining uses on a short or long rest. Your druid level determines the beasts you can transform into.",
@@ -2524,8 +2538,13 @@
         },
         {
           "level": 2,
+          "name": "Wild Companion",
+          "description": "You can expend a use of Wild Shape to cast the Find Familiar spell without a spell slot. The familiar is a Fey rather than its normal creature type, and it disappears after a number of hours equal to half your Druid level."
+        },
+        {
+          "level": 3,
           "name": "Druid Circle",
-          "description": "At level 3, you choose a Druid Circle: Circle of the Land, Circle of the Moon, or others. Your choice grants features at 3rd, 6th, 10th, and 14th level."
+          "description": "You gain a Druid Circle of your choice, such as the Circle of the Land. Your choice grants you features at 3rd level and again at 6th, 10th, and 14th level."
         },
         {
           "level": 4,
@@ -2536,6 +2555,11 @@
           "level": 4,
           "name": "Ability Score Improvement",
           "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Wild Resurgence",
+          "description": "Once per turn, if you have no uses of Wild Shape left, you can give yourself one use by expending a spell slot (no action required). In addition, you can convert one use of Wild Shape into a 1st-level spell slot once per Long Rest."
         },
         {
           "level": 6,
@@ -2863,9 +2887,19 @@
           "activation": "bonus"
         },
         {
+          "level": 1,
+          "name": "Weapon Mastery",
+          "description": "Your training with weapons lets you use the Mastery property of three kinds of weapons of your choice. Whenever you finish a Long Rest, you can change one of those weapon choices. The number of weapons you can master increases as you gain Fighter levels."
+        },
+        {
           "level": 2,
           "name": "Action Surge (one use)",
           "description": "You can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action. Once used, you must finish a short or long rest before you can use it again."
+        },
+        {
+          "level": 2,
+          "name": "Tactical Mind",
+          "description": "When you fail an ability check, you can expend a use of Second Wind to push yourself toward success. Roll 1d10 and add the number to the check, potentially turning a failure into a success. If the check still fails, this use of Second Wind isn't expended."
         },
         {
           "level": 3,
@@ -2881,6 +2915,11 @@
           "level": 5,
           "name": "Extra Attack",
           "description": "You can attack twice, instead of once, whenever you take the Attack action on your turn."
+        },
+        {
+          "level": 5,
+          "name": "Tactical Shift",
+          "description": "Whenever you activate Second Wind with a Bonus Action, you can move up to half your Speed without provoking Opportunity Attacks."
         },
         {
           "level": 6,
@@ -3139,7 +3178,11 @@
           ],
           "description": "Augment Physical Might with Psionic Power\nPsi Warriors awaken the power of their minds to augment their physical might. They harness this psionic power to infuse their weapon strikes, lash out with telekinetic energy, and create barriers of mental force."
         }
-      ]
+      ],
+      "weaponMastery": {
+        "level": 1,
+        "count": 3
+      }
     },
     {
       "name": "Monk",
@@ -3245,13 +3288,18 @@
         },
         {
           "level": 2,
-          "name": "Ki",
-          "description": "You gain access to ki, represented by a number of ki points equal to your monk level. You can spend ki points to fuel various ki features. You regain all ki points on a short or long rest. Starting ki features include: Flurry of Blows (1 ki), Patient Defense (1 ki), and Step of the Wind (1 ki). Some features require your target to make a saving throw (DC = 8 + proficiency bonus + Wisdom modifier)."
+          "name": "Monk's Focus",
+          "description": "Your focus and martial training allow you to harness a well of extraordinary energy called Focus. You have a number of Focus Points equal to your Monk level. You can spend these points to fuel Flurry of Blows, Patient Defense, and Step of the Wind, and you regain all expended Focus Points when you finish a Short or Long Rest."
         },
         {
           "level": 2,
           "name": "Unarmored Movement",
           "description": "Your speed increases by 10 feet while not wearing armor or wielding a shield. This bonus increases at certain monk levels."
+        },
+        {
+          "level": 2,
+          "name": "Uncanny Metabolism",
+          "description": "When you roll Initiative, you can regain all expended Focus Points. When you do so, roll your Martial Arts die, and regain a number of Hit Points equal to your Monk level plus the number rolled. Once you use this feature, you can't do so again until you finish a Long Rest."
         },
         {
           "level": 3,
@@ -3260,8 +3308,8 @@
         },
         {
           "level": 3,
-          "name": "Deflect Missiles",
-          "description": "You can use your reaction to deflect or catch a missile when hit by a ranged weapon attack. The damage you take is reduced by 1d10 + Dexterity modifier + monk level. If you reduce damage to 0 and have a free hand, you can catch the missile and spend 1 ki point to make a ranged attack with it.",
+          "name": "Deflect Attacks",
+          "description": "When you're hit by an attack that deals Bludgeoning, Piercing, or Slashing damage, you can take a Reaction to reduce the damage by 1d10 + your Dexterity modifier + your Monk level. If you reduce the damage to 0, you can redirect some of the attack's force: spend 1 Focus Point to make a ranged attack, or make an unarmed strike if the attacker is within range.",
           "activation": "reaction"
         },
         {
@@ -3654,7 +3702,7 @@
       "spellSlots": [
         {
           "level": 1,
-          "1st": 0,
+          "1st": 2,
           "2nd": 0,
           "3rd": 0,
           "4th": 0,
@@ -3816,12 +3864,6 @@
       "features": [
         {
           "level": 1,
-          "name": "Divine Sense",
-          "description": "As an action, you can detect celestials, fiends, and undead within 60 feet. You can use this feature a number of times equal to 1 + your Charisma modifier. You regain all uses on a long rest.",
-          "activation": "action"
-        },
-        {
-          "level": 1,
           "name": "Lay on Hands",
           "description": "You have a pool of healing power equal to 5 × your paladin level. As an action, you can touch a creature and restore hit points (up to the maximum in your pool) or cure one disease or neutralize one poison. You regain all uses on a long rest.",
           "activation": "action"
@@ -3832,24 +3874,30 @@
           "description": "Choose a fighting style: Defense, Dueling, Great Weapon Fighting, or Protection."
         },
         {
-          "level": 2,
+          "level": 1,
           "name": "Spellcasting",
-          "description": "You can cast paladin spells starting at 2nd level. Charisma is your spellcasting ability. You prepare spells from the paladin spell list. The number of spells you can prepare equals your Charisma modifier + half your paladin level (rounded down, minimum of 1)."
+          "description": "You have learned to cast spells through prayer and meditation. Charisma is your spellcasting ability for your Paladin spells. You prepare a list of Paladin spells equal to your Charisma modifier + half your Paladin level (rounded down), minimum one spell."
+        },
+        {
+          "level": 1,
+          "name": "Weapon Mastery",
+          "description": "Your martial prowess lets you use the Mastery property of two kinds of weapons of your choice. Whenever you finish a Long Rest, you can change one of those weapon choices."
         },
         {
           "level": 2,
-          "name": "Divine Smite",
-          "description": "When you hit with a melee weapon attack, you can expend one spell slot to deal extra radiant damage: 2d8 for a 1st-level slot, plus 1d8 for each spell level higher than 1st (max 5d8). The damage increases by 1d8 if the target is an undead or fiend (max 6d8)."
-        },
-        {
-          "level": 3,
-          "name": "Divine Health",
-          "description": "You are immune to disease."
+          "name": "Paladin's Smite",
+          "description": "You always have the Divine Smite spell prepared. In addition, you can cast it without expending a spell slot once per Long Rest."
         },
         {
           "level": 3,
           "name": "Sacred Oath",
           "description": "Choose an oath: Oath of Devotion, Oath of the Ancients, Oath of Vengeance, or others. Your choice grants features at 3rd, 7th, 15th, and 20th level. You gain oath spells at certain levels."
+        },
+        {
+          "level": 3,
+          "name": "Channel Divinity",
+          "description": "You can channel divine energy to fuel magical effects, using it a number of times shown in the Channel Divinity column of the Paladin table and regaining expended uses on a Short or Long Rest. You gain the Divine Sense option, and your Sacred Oath grants additional options.",
+          "activation": "action"
         },
         {
           "level": 4,
@@ -3860,6 +3908,11 @@
           "level": 5,
           "name": "Extra Attack",
           "description": "You can attack twice, instead of once, whenever you take the Attack action on your turn."
+        },
+        {
+          "level": 5,
+          "name": "Faithful Steed",
+          "description": "You always have the Find Steed spell prepared. You can also cast it without expending a spell slot once per Long Rest."
         },
         {
           "level": 6,
@@ -4091,7 +4144,11 @@
         }
       ],
       "ritualCaster": true,
-      "ritualCasterUnprepared": false
+      "ritualCasterUnprepared": false,
+      "weaponMastery": {
+        "level": 1,
+        "count": 2
+      }
     },
     {
       "name": "Ranger",
@@ -4293,7 +4350,7 @@
       "spellSlots": [
         {
           "level": 1,
-          "1st": 0,
+          "1st": 2,
           "2nd": 0,
           "3rd": 0,
           "4th": 0,
@@ -4456,12 +4513,7 @@
         {
           "level": 1,
           "name": "Favored Enemy",
-          "description": "Choose a type of favored enemy: aberrations, beasts, celestials, constructs, dragons, elementals, fey, fiends, giants, monstrosities, oozes, plants, or undead. Alternatively, choose two races of humanoid. You have advantage on Wisdom (Survival) checks to track your favored enemies and Intelligence checks to recall information about them. You learn one language of your choice spoken by your favored enemies."
-        },
-        {
-          "level": 1,
-          "name": "Natural Explorer",
-          "description": "Choose one type of favored terrain: arctic, coast, desert, forest, grassland, mountain, swamp, or Underdark. When you make an Intelligence or Wisdom check related to your favored terrain, your proficiency bonus is doubled. While traveling in your favored terrain, you gain several benefits."
+          "description": "You always have the Hunter's Mark spell prepared, and it doesn't count against the number of spells you can prepare. You can cast it a number of times equal to your Wisdom modifier (minimum once) without expending a spell slot, regaining all expended uses when you finish a Long Rest."
         },
         {
           "level": 2,
@@ -4470,19 +4522,23 @@
         },
         {
           "level": 2,
+          "name": "Deft Explorer",
+          "description": "Thanks to your travels, you gain Expertise in one skill of your choice in which you have proficiency, doubling your Proficiency Bonus for checks using it. You also become fluent in two languages of your choice."
+        },
+        {
+          "level": 1,
           "name": "Spellcasting",
-          "description": "You can cast ranger spells starting at 2nd level. Wisdom is your spellcasting ability. You know a limited number of spells from the ranger spell list."
+          "description": "You have learned to channel the magical essence of nature to cast spells. Wisdom is your spellcasting ability for your Ranger spells. You prepare a list of Ranger spells equal to your Wisdom modifier + half your Ranger level (rounded down), minimum one spell."
+        },
+        {
+          "level": 1,
+          "name": "Weapon Mastery",
+          "description": "Your martial training lets you use the Mastery property of two kinds of weapons of your choice. Whenever you finish a Long Rest, you can change one of those weapon choices."
         },
         {
           "level": 3,
           "name": "Ranger Archetype",
           "description": "Choose an archetype: Hunter, Beast Master, or others. Your choice grants features at 3rd, 7th, 11th, and 15th level."
-        },
-        {
-          "level": 3,
-          "name": "Primeval Awareness",
-          "description": "You can use your action and expend one ranger spell slot to focus your awareness. For 1 minute per level of the spell slot, you sense whether aberrations, celestials, dragons, elementals, fey, fiends, or undead are present within 1 mile of you (or 6 miles in your favored terrain).",
-          "activation": "action"
         },
         {
           "level": 4,
@@ -4739,7 +4795,11 @@
         }
       ],
       "ritualCaster": true,
-      "ritualCasterUnprepared": false
+      "ritualCasterUnprepared": false,
+      "weaponMastery": {
+        "level": 1,
+        "count": 2
+      }
     },
     {
       "name": "Rogue",
@@ -4877,6 +4937,11 @@
           "description": "You know thieves' cant, a secret mix of dialect, jargon, and code that allows you to hide messages in seemingly normal conversation."
         },
         {
+          "level": 1,
+          "name": "Weapon Mastery",
+          "description": "Your training with weapons lets you use the Mastery property of two kinds of weapons of your choice, provided you have proficiency with them. Whenever you finish a Long Rest, you can change one of those weapon choices."
+        },
+        {
           "level": 2,
           "name": "Cunning Action",
           "description": "You can take a bonus action on each of your turns to take the Dash, Disengage, or Hide action.",
@@ -4888,6 +4953,12 @@
           "description": "Choose an archetype: Thief, Assassin, Arcane Trickster, or others. Your choice grants features at 3rd, 9th, 13th, and 17th level."
         },
         {
+          "level": 3,
+          "name": "Steady Aim",
+          "description": "As a Bonus Action, you give yourself Advantage on your next attack roll on the current turn. You can use this feature only if you haven't moved during this turn, and after you use it, your Speed is 0 until the end of the current turn.",
+          "activation": "bonus"
+        },
+        {
           "level": 4,
           "name": "Ability Score Improvement",
           "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
@@ -4897,6 +4968,11 @@
           "name": "Uncanny Dodge",
           "description": "When an attacker you can see hits you with an attack, you can use your reaction to halve the attack's damage against you.",
           "activation": "reaction"
+        },
+        {
+          "level": 5,
+          "name": "Cunning Strike",
+          "description": "When you deal Sneak Attack damage, you can forgo some of that damage to add a Cunning Strike effect such as Poison, Trip, or Withdraw. Each effect has a cost expressed in Sneak Attack dice, which you subtract from the Sneak Attack damage before rolling."
         },
         {
           "level": 6,
@@ -5172,7 +5248,11 @@
           ],
           "description": "Hunt for Treasure as a Classic Adventurer A mix of burglar, treasure hunter, and explorer, you are the epitome of an adventurer. In addition to improving your agility and stealth, you gain abilities useful for delving into ruins and getting maximum benefit from the magic items you find there."
         }
-      ]
+      ],
+      "weaponMastery": {
+        "level": 1,
+        "count": 2
+      }
     },
     {
       "name": "Sorcerer",
@@ -5640,8 +5720,9 @@
         },
         {
           "level": 1,
-          "name": "Sorcerous Origin",
-          "description": "Choose the source of your power: Draconic Bloodline, Wild Magic, Divine Soul, or others. Your choice grants features at 1st, 6th, 14th, and 18th level."
+          "name": "Innate Sorcery",
+          "description": "An event in your past left an indelible mark on you, infusing you with simmering magic. As a Bonus Action, you can unleash that magic for 1 minute: your spell save DC increases by 1, and you have Advantage on the attack rolls of Sorcerer spells you cast. You can use this feature twice, and you regain all expended uses when you finish a Long Rest.",
+          "activation": "bonus"
         },
         {
           "level": 2,
@@ -5649,14 +5730,24 @@
           "description": "You have 2 sorcery points and gain more as you level up. You can use sorcery points to fuel metamagic or create spell slots. You regain all sorcery points on a long rest."
         },
         {
-          "level": 3,
+          "level": 2,
           "name": "Metamagic",
           "description": "You gain the ability to twist your spells to suit your needs. Choose two Metamagic options from: Careful Spell, Distant Spell, Empowered Spell, Extended Spell, Heightened Spell, Quickened Spell, Subtle Spell, Twinned Spell. You gain another at 10th and 17th level."
+        },
+        {
+          "level": 3,
+          "name": "Sorcerer Subclass",
+          "description": "You gain a Sorcerer Subclass of your choice, such as Draconic Sorcery. Your choice grants you features at 3rd level and again at 6th, 14th, and 18th level."
         },
         {
           "level": 4,
           "name": "Ability Score Improvement",
           "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Sorcerous Restoration",
+          "description": "When you finish a Short Rest, you can regain expended Sorcery Points, up to a number equal to half your Sorcerer level (rounded down). Once you use this feature, you can't do so again until you finish a Long Rest."
         },
         {
           "level": 6,
@@ -6271,8 +6362,8 @@
       "features": [
         {
           "level": 1,
-          "name": "Otherworldly Patron",
-          "description": "Choose a patron: The Archfey, The Fiend, The Great Old One, or others. Your choice grants features at 1st, 6th, 10th, and 14th level."
+          "name": "Eldritch Invocations",
+          "description": "You have unearthed Eldritch Invocations, pieces of forbidden knowledge that imbue you with an abiding magical ability. You learn invocations of your choice, and the number you know increases as you gain Warlock levels. Pact of the Blade, Chain, and Tome are Invocations you can choose. Whenever you gain a Warlock level, you can replace one invocation you know."
         },
         {
           "level": 1,
@@ -6281,13 +6372,13 @@
         },
         {
           "level": 2,
-          "name": "Eldritch Invocations",
-          "description": "You learn two eldritch invocations of your choice. You learn additional invocations as you level up. When you gain a level, you can replace one invocation with another. Some invocations have prerequisites."
+          "name": "Magical Cunning",
+          "description": "You can perform an esoteric rite over 1 minute. At its conclusion, you regain expended Pact Magic spell slots, up to a number equal to half your maximum (rounded up). Once you use this feature, you can't do so again until you finish a Long Rest."
         },
         {
           "level": 3,
-          "name": "Pact Boon",
-          "description": "Choose a pact boon: Pact of the Chain, Pact of the Blade, Pact of the Tome, or others. Your choice grants you a special benefit."
+          "name": "Otherworldly Patron",
+          "description": "You gain an Otherworldly Patron of your choice, such as the Fiend. Your choice grants you features at 3rd level and again at 6th, 10th, and 14th level."
         },
         {
           "level": 4,
@@ -6919,14 +7010,29 @@
           "description": "Once per day during a short rest, you can recover expended spell slots. The spell slots can have a combined level equal to or less than half your wizard level (rounded up), and none can be 6th level or higher."
         },
         {
+          "level": 1,
+          "name": "Ritual Adept",
+          "description": "You can cast any spell as a Ritual if that spell has the Ritual tag and the spell is in your spellbook. You needn't have the spell prepared, but you must read from the book to cast it this way."
+        },
+        {
           "level": 2,
+          "name": "Scholar",
+          "description": "While studying magic, you also specialized in a field of study. You gain Expertise in one of the following skills of your choice in which you have proficiency: Arcana, History, Investigation, Medicine, Nature, or Religion."
+        },
+        {
+          "level": 3,
           "name": "Arcane Tradition",
-          "description": "Choose an arcane tradition: School of Abjuration, School of Conjuration, School of Divination, School of Enchantment, School of Evocation, School of Illusion, School of Necromancy, School of Transmutation, or others. Your choice grants features at 2nd, 6th, 10th, and 14th level."
+          "description": "You gain a Wizard subclass of your choice, such as the School of Evocation. Your choice grants you features at 3rd level and again at 6th, 10th, and 14th level."
         },
         {
           "level": 4,
           "name": "Ability Score Improvement",
           "description": "You can increase one ability score by 2, or two ability scores by 1, to a maximum of 20. Alternatively, you can take a feat."
+        },
+        {
+          "level": 5,
+          "name": "Memorize Spell",
+          "description": "Whenever you finish a Short Rest, you can study your spellbook and replace one of the Wizard spells you have prepared with another Wizard spell from the book."
         },
         {
           "level": 6,

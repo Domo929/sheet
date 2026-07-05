@@ -41,6 +41,7 @@ type Weapon struct {
 	DamageType      domain.DamageType `json:"damageType"`
 	Weight          float64        `json:"weight"`
 	Properties      []domain.WeaponProperty `json:"properties"`
+	Mastery         domain.WeaponMastery    `json:"mastery,omitempty"`
 	Range           *WeaponRange   `json:"range,omitempty"`
 	VersatileDamage string         `json:"versatileDamage,omitempty"`
 	Category        EquipmentCategory `json:"category,omitempty"`

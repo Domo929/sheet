@@ -64,6 +64,23 @@ func TestFinalizeNonCasterHasNoSpellcasting(t *testing.T) {
 	assert.Nil(t, model.character.Spellcasting, "fighter should not have spellcasting")
 }
 
+// TestFinalizePaladinHalfCasterSlotsAtLevel1 locks in the 2024 change that
+// Paladins (and Rangers) are spellcasters from level 1 with two 1st-level slots.
+func TestFinalizePaladinHalfCasterSlotsAtLevel1(t *testing.T) {
+	model, loader := newFinalizeTestModel(t)
+	paladin, err := loader.FindClassByName("Paladin")
+	require.NoError(t, err)
+	model.selectedClass = paladin
+
+	model.finalizeCharacter()
+
+	require.NotNil(t, model.character.Spellcasting, "paladin should have spellcasting at level 1 (2024)")
+	assert.Equal(t, models.Ability("charisma"), model.character.Spellcasting.Ability)
+	require.NotNil(t, model.character.Spellcasting.SpellSlots.GetSlot(1))
+	assert.Equal(t, 2, model.character.Spellcasting.SpellSlots.GetSlot(1).Total,
+		"level 1 paladin should have 2 first-level spell slots (2024)")
+}
+
 func TestFinalizeAppliesBackgroundOriginFeat(t *testing.T) {
 	model, loader := newFinalizeTestModel(t)
 	fighter, err := loader.FindClassByName("Fighter")
