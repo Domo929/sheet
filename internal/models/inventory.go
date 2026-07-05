@@ -520,3 +520,35 @@ func (inv *Inventory) TotalWeight() float64 {
 	}
 	return total
 }
+
+// CountAttunedItems returns the number of attuned items in the inventory.
+func (inv *Inventory) CountAttunedItems() int {
+	count := 0
+	for i := range inv.Items {
+		if inv.Items[i].Attuned {
+			count++
+		}
+	}
+	return count
+}
+
+// ToggleAttunement flips attunement on the item with the given ID. Attuning
+// requires the item to allow attunement and respects the maximum of 3.
+func (inv *Inventory) ToggleAttunement(id string) error {
+	item := inv.FindItem(id)
+	if item == nil {
+		return ErrItemNotAttuned
+	}
+	if item.Attuned {
+		item.Attuned = false
+		return nil
+	}
+	if !item.RequiresAttunement {
+		return ErrItemDoesNotRequireAttunement
+	}
+	if inv.CountAttunedItems() >= 3 {
+		return ErrMaxAttunementReached
+	}
+	item.Attuned = true
+	return nil
+}

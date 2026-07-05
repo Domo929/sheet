@@ -95,6 +95,7 @@ type inventoryKeyMap struct {
 	Add       key.Binding
 	Spend     key.Binding
 	Custom    key.Binding
+	Attune    key.Binding
 }
 
 func defaultInventoryKeyMap() inventoryKeyMap {
@@ -113,6 +114,7 @@ func defaultInventoryKeyMap() inventoryKeyMap {
 		Add:       key.NewBinding(key.WithKeys("a", "+"), key.WithHelp("a/+", "add item/currency")),
 		Spend:     key.NewBinding(key.WithKeys("s", "-"), key.WithHelp("s/-", "spend currency")),
 		Custom:    key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "create custom item")),
+		Attune:    key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "attune/unattune")),
 	}
 }
 
@@ -235,6 +237,8 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 			return m.handleAdd()
 		case key.Matches(msg, m.keys.Custom):
 			return m.handleCustomStart()
+		case key.Matches(msg, m.keys.Attune):
+			return m.handleAttune()
 		case key.Matches(msg, m.keys.Spend):
 			return m.handleSpend()
 		}
@@ -879,6 +883,37 @@ func (m *InventoryModel) performDelete() {
 	m.deleteItem = nil
 }
 
+func (m *InventoryModel) handleAttune() (*InventoryModel, tea.Cmd) {
+	if m.focus != FocusItems {
+		return m, nil
+	}
+	if m.viewingContainer != nil {
+		m.statusMessage = "Attune items from the main inventory"
+		return m, nil
+	}
+	items := m.character.Inventory.Items
+	if m.itemCursor >= len(items) {
+		return m, nil
+	}
+	item := &items[m.itemCursor]
+	if !item.RequiresAttunement {
+		m.statusMessage = fmt.Sprintf("%s does not require attunement", item.Name)
+		return m, nil
+	}
+	wasAttuned := item.Attuned
+	if err := m.character.Inventory.ToggleAttunement(item.ID); err != nil {
+		m.statusMessage = err.Error()
+		return m, nil
+	}
+	if wasAttuned {
+		m.statusMessage = fmt.Sprintf("Ended attunement to %s", item.Name)
+	} else {
+		m.statusMessage = fmt.Sprintf("Attuned to %s", item.Name)
+	}
+	m.saveCharacter()
+	return m, nil
+}
+
 func (m *InventoryModel) handleEquip() (*InventoryModel, tea.Cmd) {
 	// Handle Equipment panel - unequip items
 	if m.focus == FocusEquipment {
@@ -1405,7 +1440,7 @@ func (m *InventoryModel) renderEquipment(width int) string {
 
 	// Attunement count
 	lines = append(lines, "")
-	attuned := equip.CountAttunedItems()
+	attuned := m.character.Inventory.CountAttunedItems()
 	attunementStyle := valueStyle
 	if attuned >= 3 {
 		attunementStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
@@ -1483,6 +1518,9 @@ func (m *InventoryModel) renderItems(width int) string {
 			if item.Custom {
 				name = "★ " + name
 			}
+			if item.Attuned {
+				name = "✦ " + name
+			}
 			
 			// Show container indicator if item has contents
 			if len(item.Contents) > 0 {
@@ -1515,6 +1553,13 @@ func (m *InventoryModel) renderItems(width int) string {
 		lines = append(lines, itemStyle.Render(hoveredItem.Name))
 		if hoveredItem.Custom {
 			lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("★ Homebrew"))
+		}
+		if hoveredItem.RequiresAttunement {
+			if hoveredItem.Attuned {
+				lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("✦ Attuned"))
+			} else {
+				lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("Requires Attunement (t)"))
+			}
 		}
 		if hoveredItem.Description != "" {
 			desc := hoveredItem.Description
@@ -1655,7 +1700,7 @@ func (m *InventoryModel) renderFooter(width int) string {
 			if m.viewingContainer != nil {
 				help = "↑/↓: navigate • a: add item • n: quantity • x: delete • esc: back to inventory"
 			} else {
-				help = "↑/↓: nav • a: add • c: custom • n: qty • x: del • e: equip • tab: next • esc: back"
+				help = "↑/↓: nav • a: add • c: custom • t: attune • n: qty • x: del • e: equip • tab: next • esc: back"
 			}
 		case FocusCurrency:
 			help = "↑/↓: select • a: add • s: spend • tab: next panel • esc: back"
