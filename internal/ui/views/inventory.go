@@ -1031,25 +1031,48 @@ func (m *InventoryModel) renderHeader(width int) string {
 	infoStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("252"))
 
-	// Calculate carried weight
-	totalWeight := m.character.Inventory.TotalWeight()
-	strScore := m.character.AbilityScores.Strength.Total()
-	carryCapacity := strScore * 15 // Standard carrying capacity
+	// Calculate carried weight and encumbrance (2024 variant rules).
+	totalWeight := m.character.CarriedWeight()
+	carryCapacity := m.character.CarryingCapacity()
+	pushDragLift := m.character.PushDragLiftCapacity()
+	load := m.character.Encumbrance()
 
 	title := titleStyle.Render(fmt.Sprintf("📦 %s's Inventory", m.character.Info.Name))
-	weight := infoStyle.Render(fmt.Sprintf("Weight: %.1f / %d lbs", totalWeight, carryCapacity))
+	weight := infoStyle.Render(fmt.Sprintf("Weight: %.1f / %.0f lbs", totalWeight, carryCapacity))
+
+	// Encumbrance status, colored by severity.
+	loadColor := lipgloss.Color("42") // green: unencumbered
+	switch load {
+	case models.LoadEncumbered:
+		loadColor = lipgloss.Color("214") // amber
+	case models.LoadHeavilyEncumbered:
+		loadColor = lipgloss.Color("208") // orange
+	case models.LoadOverCapacity:
+		loadColor = lipgloss.Color("196") // red
+	}
+	loadLabel := load.String()
+	if pen := load.SpeedPenalty(); pen > 0 {
+		loadLabel = fmt.Sprintf("%s (-%d ft)", loadLabel, pen)
+	}
+	loadStyle := lipgloss.NewStyle().Bold(true).Foreground(loadColor)
 
 	// Total value
 	gp, cp := m.character.Inventory.Currency.TotalInGold()
 	value := infoStyle.Render(fmt.Sprintf("Total: %d GP %d CP", gp, cp))
 
-	return lipgloss.JoinHorizontal(lipgloss.Center,
+	top := lipgloss.JoinHorizontal(lipgloss.Center,
 		title,
 		strings.Repeat(" ", 4),
 		weight,
 		strings.Repeat(" ", 4),
 		value,
 	)
+	bottom := infoStyle.Render(lipgloss.JoinHorizontal(lipgloss.Center,
+		loadStyle.Render(loadLabel),
+		strings.Repeat(" ", 4),
+		infoStyle.Render(fmt.Sprintf("Push/Drag/Lift: %.0f lbs", pushDragLift)),
+	))
+	return lipgloss.JoinVertical(lipgloss.Left, top, bottom)
 }
 
 func (m *InventoryModel) renderEquipment(width int) string {

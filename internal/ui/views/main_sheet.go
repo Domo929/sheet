@@ -2112,6 +2112,28 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		))
 	}
 
+	// Carried load vs. carrying capacity (2024 variant encumbrance).
+	loadStr := fmt.Sprintf("%.1f / %.0f lb", char.CarriedWeight(), char.CarryingCapacity())
+	if load := char.Encumbrance(); load != models.LoadNormal {
+		loadColor := lipgloss.Color("214")
+		switch load {
+		case models.LoadHeavilyEncumbered:
+			loadColor = lipgloss.Color("208")
+		case models.LoadOverCapacity:
+			loadColor = lipgloss.Color("196")
+		}
+		badge := load.String()
+		if pen := load.SpeedPenalty(); pen > 0 {
+			badge = fmt.Sprintf("%s -%d ft", badge, pen)
+		}
+		loadStr = fmt.Sprintf("%s  %s", loadStr,
+			lipgloss.NewStyle().Bold(true).Foreground(loadColor).Render(badge))
+	}
+	lines = append(lines, fmt.Sprintf("%s %s",
+		labelStyle.Render("Load:"),
+		valueStyle.Render(loadStr),
+	))
+
 	// Hit Dice
 	hd := char.CombatStats.HitDice
 	lines = append(lines, fmt.Sprintf("%s %s/%s d%d",

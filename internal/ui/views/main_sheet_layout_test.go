@@ -331,3 +331,45 @@ func TestSpeedsAndSensesDisplay(t *testing.T) {
 	require.True(t, ok, "should show a Senses line when the character has special senses")
 	assert.Contains(t, sensesLine, "Darkvision 60 ft")
 }
+
+// TestMainSheetLoadLine verifies the Combat panel's carrying-load line: it shows
+// carried weight vs. capacity, stays silent about status while unencumbered, and
+// surfaces the colored encumbrance badge (with speed penalty) once the character
+// is carrying enough to cross the 2024 variant thresholds. STR 16 -> capacity 240,
+// encumbered above 80 lb, heavily encumbered above 160 lb, over capacity above 240.
+func TestMainSheetLoadLine(t *testing.T) {
+	newModel := func(itemWeight float64) *MainSheetModel {
+		char := createTestCharacter() // STR 16
+		if itemWeight > 0 {
+			it := models.NewItem("ballast", "Ballast", models.ItemTypeGeneral)
+			it.Weight = itemWeight
+			char.Inventory.AddItem(it)
+		}
+		m := NewMainSheetModel(char, nil)
+		m, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+		return m
+	}
+
+	// Unencumbered: shows the capacity readout, no status badge.
+	line, ok := findLineContaining(newModel(10).View(), "Load:")
+	require.True(t, ok, "expected a Load line")
+	assert.Contains(t, line, "/ 240 lb")
+	assert.NotContains(t, line, "Encumbered")
+
+	// Encumbered tier (100 > 80): badge with -10 ft penalty.
+	line, ok = findLineContaining(newModel(100).View(), "Load:")
+	require.True(t, ok)
+	assert.Contains(t, line, "Encumbered")
+	assert.Contains(t, line, "-10 ft")
+
+	// Heavily encumbered tier (200 > 160): -20 ft penalty.
+	line, ok = findLineContaining(newModel(200).View(), "Load:")
+	require.True(t, ok)
+	assert.Contains(t, line, "Heavily Encumbered")
+	assert.Contains(t, line, "-20 ft")
+
+	// Over capacity (300 > 240).
+	line, ok = findLineContaining(newModel(300).View(), "Load:")
+	require.True(t, ok)
+	assert.Contains(t, line, "Over Capacity")
+}

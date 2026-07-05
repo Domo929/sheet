@@ -1799,7 +1799,12 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 				}
 			}
 		}
-		
+
+		// Populate weight for gear, tools, and packs from the equipment database.
+		if item.Weight == 0 && equipItem.Category != data.CategoryWeapon && equipItem.Category != data.CategoryArmor {
+			item.Weight = m.lookupItemWeight(equipItem.Name)
+		}
+
 		m.character.Inventory.AddItem(item)
 	}
 	
@@ -3014,6 +3019,33 @@ func (m *CharacterCreationModel) lookupArmor(name string) *data.ArmorItem {
 	}
 
 	return nil
+}
+
+// lookupItemWeight returns the per-unit weight (in pounds) of a non-weapon,
+// non-armor item (gear, tool, or pack) by name, or 0 if not found.
+func (m *CharacterCreationModel) lookupItemWeight(name string) float64 {
+	equipment, err := m.loader.GetEquipment()
+	if err != nil || equipment == nil {
+		return 0
+	}
+
+	normalizedName := strings.ToLower(strings.TrimSpace(name))
+	for _, p := range equipment.Packs {
+		if strings.ToLower(p.Name) == normalizedName {
+			return p.Weight
+		}
+	}
+	for _, group := range [][]data.Item{
+		equipment.Gear, equipment.Tools, equipment.Services,
+		equipment.FoodDrinkLodging, equipment.Transportation,
+	} {
+		for _, it := range group {
+			if strings.ToLower(it.Name) == normalizedName {
+				return it.Weight
+			}
+		}
+	}
+	return 0
 }
 
 // CursorInfo returns cursor settings when a text input field is active.

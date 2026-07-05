@@ -186,3 +186,19 @@ func TestOriginFeatASIOptionsNoneForSingleOption(t *testing.T) {
 	opts, _ = model.originFeatASIOptions()
 	assert.Empty(t, opts, "feat without ASI should not present a choice")
 }
+
+// TestLookupItemWeight confirms starting gear, tools, and packs resolve their
+// weight from the equipment database so carried weight and encumbrance are
+// accurate for freshly created characters (weapons/armor already set weight).
+func TestLookupItemWeight(t *testing.T) {
+	model, _ := newFinalizeTestModel(t)
+
+	// Packs report their bundled weight.
+	assert.Greater(t, model.lookupItemWeight("Burglar's Pack"), 0.0,
+		"a known pack should resolve a nonzero weight")
+	// Tools resolve their weight.
+	assert.Greater(t, model.lookupItemWeight("Alchemist's Supplies"), 0.0,
+		"a known tool should resolve a nonzero weight")
+	// Unknown items resolve to zero rather than erroring.
+	assert.Equal(t, 0.0, model.lookupItemWeight("Nonexistent Doohickey"))
+}
