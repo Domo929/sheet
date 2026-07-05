@@ -231,6 +231,10 @@ type mainSheetKeyMap struct {
 	HistoryToggle  key.Binding // H (capital)
 	PageDown       key.Binding
 	PageUp         key.Binding
+	NewTurn        key.Binding // T (reset action economy)
+	ToggleSlot     key.Binding // space (toggle selected action-type slot)
+	MoveStep       key.Binding // ] (spend 5 ft movement)
+	MoveBack       key.Binding // [ (refund 5 ft movement)
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -358,6 +362,22 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		PageUp: key.NewBinding(
 			key.WithKeys("pgup", "ctrl+u"),
 			key.WithHelp("PgUp", "scroll up"),
+		),
+		NewTurn: key.NewBinding(
+			key.WithKeys("T"),
+			key.WithHelp("T", "new turn"),
+		),
+		ToggleSlot: key.NewBinding(
+			key.WithKeys(" ", "space"),
+			key.WithHelp("space", "toggle action"),
+		),
+		MoveStep: key.NewBinding(
+			key.WithKeys("]"),
+			key.WithHelp("]", "spend 5ft move"),
+		),
+		MoveBack: key.NewBinding(
+			key.WithKeys("["),
+			key.WithHelp("[", "refund 5ft move"),
 		),
 	}
 }
@@ -746,6 +766,38 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 					m.selectedActionType--
 				}
 				m.actionCursor = 0 // Reset cursor when changing tabs
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.NewTurn):
+			m.character.TurnState.ResetTurn()
+			m.statusMessage = "New turn: action economy reset"
+			m.saveCharacter()
+			return m, nil
+		case key.Matches(msg, m.keys.ToggleSlot):
+			if m.focusArea == FocusActions {
+				switch m.selectedActionType {
+				case ActionTypeAction:
+					m.character.TurnState.ActionUsed = !m.character.TurnState.ActionUsed
+				case ActionTypeBonus:
+					m.character.TurnState.BonusActionUsed = !m.character.TurnState.BonusActionUsed
+				case ActionTypeReaction:
+					m.character.TurnState.ReactionUsed = !m.character.TurnState.ReactionUsed
+				default:
+					return m, nil
+				}
+				m.saveCharacter()
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.MoveStep):
+			if m.focusArea == FocusActions {
+				m.character.TurnState.UseMovement(5, m.character.GetEffectiveSpeed())
+				m.saveCharacter()
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.MoveBack):
+			if m.focusArea == FocusActions {
+				m.character.TurnState.UseMovement(-5, m.character.GetEffectiveSpeed())
+				m.saveCharacter()
 				return m, nil
 			}
 		}
@@ -2318,6 +2370,34 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 	return panelStyle.Render(strings.Join(lines, "\n"))
 }
 
+func (m *MainSheetModel) renderActionEconomy() string {
+	ts := &m.character.TurnState
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+	availStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("42")) // green
+	usedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Strikethrough(true)
+
+	pip := func(name string, used bool) string {
+		if used {
+			return usedStyle.Render("✗ " + name)
+		}
+		return availStyle.Render("✓ " + name)
+	}
+
+	speed := m.character.GetEffectiveSpeed()
+	moveStyle := availStyle
+	if ts.RemainingMovement(speed) == 0 && speed > 0 {
+		moveStyle = usedStyle
+	}
+	move := moveStyle.Render(fmt.Sprintf("Move %d/%d", ts.RemainingMovement(speed), speed))
+
+	return labelStyle.Render("Turn: ") + strings.Join([]string{
+		pip("Action", ts.ActionUsed),
+		pip("Bonus", ts.BonusActionUsed),
+		pip("Reaction", ts.ReactionUsed),
+		move,
+	}, "  ")
+}
+
 func (m *MainSheetModel) renderActions(width int) string {
 	char := m.character
 	isFocused := m.focusArea == FocusActions
@@ -2354,12 +2434,15 @@ func (m *MainSheetModel) renderActions(width int) string {
 	lines = append(lines, strings.Join(tabs, " "))
 	if isFocused {
 		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
-		hint := "←/→: switch type  ↑↓: select  Enter: use"
+		hint := "←/→: switch type  ↑↓: select  Enter: use  space: toggle  [/]: move  T: new turn"
 		if m.character.WeaponMasteryLimit() > 0 && len(m.getMasterableWeapons()) > 0 {
 			hint += "  m: mastery"
 		}
 		lines = append(lines, hintStyle.Render(hint))
 	}
+
+	// Per-turn action economy tracker (Action / Bonus / Reaction / Movement).
+	lines = append(lines, m.renderActionEconomy())
 
 	// Get all action items for current type
 	actionItems := m.getActionItems()

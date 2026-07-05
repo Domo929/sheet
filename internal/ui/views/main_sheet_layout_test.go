@@ -373,3 +373,45 @@ func TestMainSheetLoadLine(t *testing.T) {
 	require.True(t, ok)
 	assert.Contains(t, line, "Over Capacity")
 }
+
+// TestActionEconomyTracker exercises the per-turn action economy line in the
+// Actions panel: the tabbed slot toggles with space, movement is spent/refunded
+// with ]/[, and T resets the whole turn.
+func TestActionEconomyTracker(t *testing.T) {
+	char := createTestCharacter() // speed 30
+	model := NewMainSheetModel(char, nil)
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
+	model.focusArea = FocusActions
+
+	// Fresh turn: everything available, full movement.
+	line, ok := findLineContaining(model.View(), "Turn:")
+	require.True(t, ok, "Actions panel should show a Turn line")
+	assert.Contains(t, line, "Move 30/30")
+
+	// Space toggles the currently selected tab's slot (starts on Action).
+	model, _ = model.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
+	assert.True(t, model.character.TurnState.ActionUsed, "space marks the Action used")
+
+	// Switch to the Bonus tab and toggle it.
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	model, _ = model.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
+	assert.True(t, model.character.TurnState.BonusActionUsed, "space marks the Bonus Action used")
+	assert.True(t, model.character.TurnState.ActionUsed, "Action stays used")
+
+	// Spend movement: two steps of 5 ft.
+	model, _ = model.Update(tea.KeyPressMsg{Code: ']', Text: "]"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: ']', Text: "]"})
+	assert.Equal(t, 10, model.character.TurnState.MovementUsed)
+	line, _ = findLineContaining(model.View(), "Turn:")
+	assert.Contains(t, line, "Move 20/30")
+
+	// Refund 5 ft.
+	model, _ = model.Update(tea.KeyPressMsg{Code: '[', Text: "["})
+	assert.Equal(t, 5, model.character.TurnState.MovementUsed)
+
+	// New turn resets everything (works regardless of focus).
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'T', Text: "T"})
+	assert.False(t, model.character.TurnState.ActionUsed)
+	assert.False(t, model.character.TurnState.BonusActionUsed)
+	assert.Equal(t, 0, model.character.TurnState.MovementUsed)
+}

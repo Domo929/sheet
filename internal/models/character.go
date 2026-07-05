@@ -39,6 +39,10 @@ type Character struct {
 	// concentrating on, or "" when not concentrating. Only one concentration
 	// spell can be active at a time (2024 rules).
 	Concentration string `json:"concentration,omitempty"`
+
+	// TurnState tracks the per-turn action economy (Action, Bonus Action,
+	// Reaction, and movement) during combat. It is reset each turn and on a rest.
+	TurnState ActionEconomy `json:"turnState,omitempty"`
 }
 
 // NewCharacter creates a new character with the given basic information.
@@ -173,6 +177,7 @@ func (c *Character) ShortRest() {
 		c.Spellcasting.PactMagic.Restore()
 	}
 	c.RestoreResources(false)
+	c.TurnState.ResetTurn()
 	c.MarkUpdated()
 }
 
@@ -204,6 +209,7 @@ func (c *Character) LongRest() {
 	// Restore all class resource pools
 	c.RestoreResources(true)
 
+	c.TurnState.ResetTurn()
 	c.MarkUpdated()
 }
 
