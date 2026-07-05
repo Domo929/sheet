@@ -44,6 +44,89 @@ func (c *Currency) TotalInGold() (goldPieces int, remainingCopper int) {
 	return goldPieces, remainingCopper
 }
 
+// TotalCopper returns the total value of the pouch in copper pieces.
+func (c *Currency) TotalCopper() int {
+	return c.Copper + c.Silver*10 + c.Electrum*50 + c.Gold*100 + c.Platinum*1000
+}
+
+// distributeFromCopper resets the pouch to an optimal coin layout (platinum,
+// gold, silver, copper; electrum unused) for the given total copper value.
+func (c *Currency) distributeFromCopper(totalCopper int) {
+	c.Platinum = totalCopper / 1000
+	totalCopper %= 1000
+	c.Gold = totalCopper / 100
+	totalCopper %= 100
+	c.Electrum = 0
+	c.Silver = totalCopper / 10
+	totalCopper %= 10
+	c.Copper = totalCopper
+}
+
+// CurrencyFromCopper builds an optimally distributed Currency from a copper total.
+func CurrencyFromCopper(totalCopper int) Currency {
+	var c Currency
+	c.distributeFromCopper(totalCopper)
+	return c
+}
+
+// SpendCoins deducts the given cost, making change from larger coins only when
+// a denomination is short. Denominations the player already holds are otherwise
+// preserved (e.g. paying 15 gp from 50 gp leaves 35 gp). Returns
+// ErrInsufficientFunds when the pouch cannot cover the cost.
+func (c *Currency) SpendCoins(cost Currency) error {
+	if c.TotalCopper() < cost.TotalCopper() {
+		return ErrInsufficientFunds
+	}
+	remaining := cost.TotalCopper()
+	denoms := []struct {
+		ptr *int
+		val int
+	}{
+		{&c.Copper, 1}, {&c.Silver, 10}, {&c.Electrum, 50}, {&c.Gold, 100}, {&c.Platinum, 1000},
+	}
+	for remaining > 0 {
+		// Pay with exact coins, smallest first, without overpaying.
+		for i := 0; i < len(denoms) && remaining > 0; i++ {
+			n := remaining / denoms[i].val
+			if n > *denoms[i].ptr {
+				n = *denoms[i].ptr
+			}
+			*denoms[i].ptr -= n
+			remaining -= n * denoms[i].val
+		}
+		if remaining == 0 {
+			break
+		}
+		// Break the smallest coin larger than the remainder into change.
+		broke := false
+		for i := 1; i < len(denoms); i++ {
+			if denoms[i].val > remaining && *denoms[i].ptr > 0 {
+				*denoms[i].ptr--
+				lower := i - 1
+				if denoms[lower].val == 50 { // skip electrum when making change
+					lower = 1 // silver
+				}
+				*denoms[lower].ptr += denoms[i].val / denoms[lower].val
+				broke = true
+				break
+			}
+		}
+		if !broke {
+			return ErrInsufficientFunds
+		}
+	}
+	return nil
+}
+
+// AddValue adds the given value to the pouch, preserving denominations.
+func (c *Currency) AddValue(v Currency) {
+	c.Copper += v.Copper
+	c.Silver += v.Silver
+	c.Electrum += v.Electrum
+	c.Gold += v.Gold
+	c.Platinum += v.Platinum
+}
+
 // Add adds currency to the pouch.
 func (c *Currency) Add(cp, sp, ep, gp, pp int) {
 	c.Copper += cp

@@ -67,6 +67,7 @@ type InventoryModel struct {
 
 	// Add item mode
 	addingItem     bool
+	buyMode        bool
 	itemSearchTerm string
 	searchResults  []models.Item
 	searchCursor   int
@@ -96,6 +97,7 @@ type inventoryKeyMap struct {
 	Spend     key.Binding
 	Custom    key.Binding
 	Attune    key.Binding
+	Buy       key.Binding
 }
 
 func defaultInventoryKeyMap() inventoryKeyMap {
@@ -115,6 +117,7 @@ func defaultInventoryKeyMap() inventoryKeyMap {
 		Spend:     key.NewBinding(key.WithKeys("s", "-"), key.WithHelp("s/-", "spend currency")),
 		Custom:    key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "create custom item")),
 		Attune:    key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "attune/unattune")),
+		Buy:       key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "buy item")),
 	}
 }
 
@@ -239,6 +242,8 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 			return m.handleCustomStart()
 		case key.Matches(msg, m.keys.Attune):
 			return m.handleAttune()
+		case key.Matches(msg, m.keys.Buy):
+			return m.handleBuyStart()
 		case key.Matches(msg, m.keys.Spend):
 			return m.handleSpend()
 		}
@@ -460,6 +465,7 @@ func (m *InventoryModel) handleAdd() (*InventoryModel, tea.Cmd) {
 		m.statusMessage = fmt.Sprintf("Add %s: type amount and press Enter", currencyName(m.currencyType))
 	case FocusItems:
 		m.addingItem = true
+		m.buyMode = false
 		m.itemSearchTerm = ""
 		m.searchResults = nil
 		m.searchCursor = 0
@@ -468,8 +474,30 @@ func (m *InventoryModel) handleAdd() (*InventoryModel, tea.Cmd) {
 	return m, nil
 }
 
-// handleSpend starts spend currency mode
+// handleBuyStart opens the item search in buy mode (Enter deducts the cost).
+func (m *InventoryModel) handleBuyStart() (*InventoryModel, tea.Cmd) {
+	if m.focus != FocusItems {
+		return m, nil
+	}
+	if m.viewingContainer != nil {
+		m.statusMessage = "Buy items from the main inventory"
+		return m, nil
+	}
+	m.addingItem = true
+	m.buyMode = true
+	m.itemSearchTerm = ""
+	m.searchResults = nil
+	m.searchCursor = 0
+	m.statusMessage = "Buy: search, Enter to purchase (deducts cost), Esc to cancel"
+	return m, nil
+}
+
+// handleSpend starts spend currency mode, or sells the hovered item when the
+// Items panel is focused.
 func (m *InventoryModel) handleSpend() (*InventoryModel, tea.Cmd) {
+	if m.focus == FocusItems {
+		return m.handleSell()
+	}
 	if m.focus != FocusCurrency {
 		return m, nil
 	}
@@ -480,11 +508,44 @@ func (m *InventoryModel) handleSpend() (*InventoryModel, tea.Cmd) {
 	return m, nil
 }
 
+// handleSell sells one unit of the hovered item for half its value.
+func (m *InventoryModel) handleSell() (*InventoryModel, tea.Cmd) {
+	if m.viewingContainer != nil {
+		m.statusMessage = "Sell items from the main inventory"
+		return m, nil
+	}
+	items := m.character.Inventory.Items
+	if m.itemCursor >= len(items) {
+		return m, nil
+	}
+	item := &items[m.itemCursor]
+	unitCopper := item.Value.TotalCopper()
+	if unitCopper <= 0 {
+		m.statusMessage = fmt.Sprintf("%s has no sale value", item.Name)
+		return m, nil
+	}
+	proceeds := models.CurrencyFromCopper(unitCopper / 2)
+	m.character.Inventory.Currency.AddValue(proceeds)
+	name := item.Name
+	if item.Quantity > 1 {
+		item.Quantity--
+	} else {
+		m.character.Inventory.RemoveItem(item.ID)
+		if m.itemCursor > 0 && m.itemCursor >= len(m.character.Inventory.Items) {
+			m.itemCursor--
+		}
+	}
+	m.saveCharacter()
+	m.statusMessage = fmt.Sprintf("Sold %s for %s", name, formatCost(proceeds))
+	return m, nil
+}
+
 // handleAddItemInput handles input in add item mode
 func (m *InventoryModel) handleAddItemInput(msg tea.KeyPressMsg) (*InventoryModel, tea.Cmd) {
 	switch msg.Code {
 	case tea.KeyEscape:
 		m.addingItem = false
+		m.buyMode = false
 		m.itemSearchTerm = ""
 		m.searchResults = nil
 		m.statusMessage = ""
@@ -505,15 +566,26 @@ func (m *InventoryModel) handleAddItemInput(msg tea.KeyPressMsg) (*InventoryMode
 	case tea.KeyEnter:
 		if len(m.searchResults) > 0 && m.searchCursor < len(m.searchResults) {
 			selectedItem := m.searchResults[m.searchCursor]
+			if m.buyMode {
+				if err := m.character.Inventory.Currency.SpendCoins(selectedItem.Value); err != nil {
+					m.statusMessage = fmt.Sprintf("Can't afford %s (%s)", selectedItem.Name, formatCost(selectedItem.Value))
+					return m, nil
+				}
+			}
 			// Create a copy with new ID
 			newItem := selectedItem
 			newItem.ID = fmt.Sprintf("%s-%d", selectedItem.ID, len(m.character.Inventory.Items)+1)
 			newItem.Quantity = 1
 			m.character.Inventory.AddItem(newItem)
 			m.saveCharacter()
-			m.statusMessage = fmt.Sprintf("Added %s to inventory", newItem.Name)
+			if m.buyMode {
+				m.statusMessage = fmt.Sprintf("Bought %s for %s", newItem.Name, formatCost(selectedItem.Value))
+			} else {
+				m.statusMessage = fmt.Sprintf("Added %s to inventory", newItem.Name)
+			}
 		}
 		m.addingItem = false
+		m.buyMode = false
 		m.itemSearchTerm = ""
 		m.searchResults = nil
 		return m, nil
@@ -1221,7 +1293,11 @@ func (m *InventoryModel) renderAddItemOverlay(width int) string {
 	normalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
 
 	var lines []string
-	lines = append(lines, titleStyle.Render("Add Item to Inventory"))
+	if m.buyMode {
+		lines = append(lines, titleStyle.Render("Buy Item (deducts cost)"))
+	} else {
+		lines = append(lines, titleStyle.Render("Add Item to Inventory"))
+	}
 	lines = append(lines, "")
 	lines = append(lines, fmt.Sprintf("Search: %s_", m.itemSearchTerm))
 	lines = append(lines, "")
@@ -1689,7 +1765,11 @@ func (m *InventoryModel) renderFooter(width int) string {
 	} else if m.confirmingQuit {
 		help = "y: quit • any other key: cancel"
 	} else if m.addingItem {
-		help = "type to search • ↑/↓: select • enter: add item • esc: cancel"
+		if m.buyMode {
+			help = "type to search • ↑/↓: select • enter: buy item • esc: cancel"
+		} else {
+			help = "type to search • ↑/↓: select • enter: add item • esc: cancel"
+		}
 	} else if m.customMode {
 		help = "custom item • type value • ↑/↓: type • enter: next/create • esc: cancel"
 	} else {
@@ -1700,7 +1780,7 @@ func (m *InventoryModel) renderFooter(width int) string {
 			if m.viewingContainer != nil {
 				help = "↑/↓: navigate • a: add item • n: quantity • x: delete • esc: back to inventory"
 			} else {
-				help = "↑/↓: nav • a: add • c: custom • t: attune • n: qty • x: del • e: equip • tab: next • esc: back"
+				help = "↑/↓: nav • a: add • b: buy • s: sell • c: custom • t: attune • x: del • e: equip • esc: back"
 			}
 		case FocusCurrency:
 			help = "↑/↓: select • a: add • s: spend • tab: next panel • esc: back"
