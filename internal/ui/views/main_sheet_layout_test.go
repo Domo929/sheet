@@ -70,10 +70,26 @@ func TestMainSheetAbilityRowsDoNotWrap(t *testing.T) {
 	}
 }
 
-// TestMainSheetWeaponMasteryDisplay verifies that an equipped weapon's 2024
-// mastery property surfaces in the actions panel (D&D Beyond parity) and that
-// the extra suffix never pushes a rendered line past the terminal width at any
-// supported layout breakpoint.
+// TestMainSheetExhaustionDisplay verifies the leveled 2024 Exhaustion state is
+// surfaced in the conditions panel with its mechanical penalty, and that the
+// extra line never overflows the terminal at any supported width.
+func TestMainSheetExhaustionDisplay(t *testing.T) {
+	for _, width := range []int{80, 90, 100, 120} {
+		char := createTestCharacter()
+		char.CombatStats.ExhaustionLevel = 3
+
+		model := NewMainSheetModel(char, nil)
+		model, _ = model.Update(tea.WindowSizeMsg{Width: width, Height: 40})
+
+		render := model.View()
+		line, ok := findLineContaining(render, "Exhaustion 3")
+		require.True(t, ok, "width %d: expected an Exhaustion level line", width)
+		assert.Contains(t, line, "-6", "width %d: should show -2*level d20 penalty", width)
+
+		assert.LessOrEqual(t, maxLineWidth(render), width,
+			"width %d: a rendered line overflowed the terminal width", width)
+	}
+}
 func TestMainSheetWeaponMasteryDisplay(t *testing.T) {
 	for _, width := range []int{80, 90, 100, 120} {
 		char := createTestCharacter() // Ranger L5, STR 16 (+3)

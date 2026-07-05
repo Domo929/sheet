@@ -863,13 +863,27 @@ func (m *MainSheetModel) handleHPInput(msg tea.KeyPressMsg) (*MainSheetModel, te
 	}
 }
 
+// removableConditions returns the labels the user can remove, unifying the
+// binary Conditions list with the leveled Exhaustion state (stored separately
+// in ExhaustionLevel, not in the Conditions slice).
+func (m *MainSheetModel) removableConditions() []string {
+	items := make([]string, 0, len(m.character.CombatStats.Conditions)+1)
+	for _, c := range m.character.CombatStats.Conditions {
+		items = append(items, string(c))
+	}
+	if lvl := m.character.CombatStats.ExhaustionLevel; lvl > 0 {
+		items = append(items, fmt.Sprintf("exhaustion (level %d)", lvl))
+	}
+	return items
+}
+
 // handleConditionInput handles keyboard input when in condition selection mode.
 func (m *MainSheetModel) handleConditionInput(msg tea.KeyPressMsg) (*MainSheetModel, tea.Cmd) {
 	var listLen int
 	if m.conditionAdding {
 		listLen = len(allConditions)
 	} else {
-		listLen = len(m.character.CombatStats.Conditions)
+		listLen = len(m.removableConditions())
 	}
 
 	switch msg.Code {
@@ -881,14 +895,25 @@ func (m *MainSheetModel) handleConditionInput(msg tea.KeyPressMsg) (*MainSheetMo
 		if m.conditionAdding {
 			// Add the selected condition
 			cond := allConditions[m.conditionCursor]
-			m.character.CombatStats.AddCondition(cond)
-			m.statusMessage = fmt.Sprintf("Added %s", cond)
+			if cond == models.ConditionExhaustion {
+				m.character.CombatStats.AddExhaustionLevel()
+				m.statusMessage = fmt.Sprintf("Exhaustion now level %d", m.character.CombatStats.ExhaustionLevel)
+			} else {
+				m.character.CombatStats.AddCondition(cond)
+				m.statusMessage = fmt.Sprintf("Added %s", cond)
+			}
 		} else {
 			// Remove the selected condition
-			if len(m.character.CombatStats.Conditions) > 0 {
-				cond := m.character.CombatStats.Conditions[m.conditionCursor]
-				m.character.CombatStats.RemoveCondition(cond)
-				m.statusMessage = fmt.Sprintf("Removed %s", cond)
+			removable := m.removableConditions()
+			if m.conditionCursor >= 0 && m.conditionCursor < len(removable) {
+				label := removable[m.conditionCursor]
+				if strings.HasPrefix(label, "exhaustion") {
+					m.character.CombatStats.RemoveExhaustionLevel()
+					m.statusMessage = fmt.Sprintf("Exhaustion now level %d", m.character.CombatStats.ExhaustionLevel)
+				} else {
+					m.character.CombatStats.RemoveCondition(models.Condition(label))
+					m.statusMessage = fmt.Sprintf("Removed %s", label)
+				}
 			}
 		}
 		m.conditionMode = false
@@ -1830,7 +1855,7 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 	// Speed
 	lines = append(lines, fmt.Sprintf("%s %s ft",
 		labelStyle.Render("Speed:"),
-		valueStyle.Render(fmt.Sprintf("%d", char.CombatStats.Speed)),
+		valueStyle.Render(fmt.Sprintf("%d", char.GetEffectiveSpeed())),
 	))
 
 	// Hit Dice
@@ -1924,10 +1949,17 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 	// Active conditions (always show section with hint when focused)
 	lines = append(lines, "")
 	lines = append(lines, titleStyle.Render("Conditions"))
-	if len(char.CombatStats.Conditions) > 0 {
+	exhaustion := char.CombatStats.ExhaustionLevel
+	if len(char.CombatStats.Conditions) > 0 || exhaustion > 0 {
 		condStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
 		for _, cond := range char.CombatStats.Conditions {
 			lines = append(lines, condStyle.Render("• "+string(cond)))
+		}
+		if exhaustion > 0 {
+			lines = append(lines, condStyle.Render(fmt.Sprintf(
+				"• Exhaustion %d (-%d d20 tests, -%d ft speed)",
+				exhaustion, 2*exhaustion, 5*exhaustion,
+			)))
 		}
 	} else {
 		lines = append(lines, labelStyle.Render("None"))
@@ -2494,17 +2526,11 @@ func (m *MainSheetModel) renderRestOverlay(width int) string {
 		lines = append(lines, fmt.Sprintf("  • %s", labelStyle.Render("Restore all spell slots")))
 
 		// Exhaustion reduction
-		exhaustion := 0
-		for _, cond := range m.character.CombatStats.Conditions {
-			if strings.HasPrefix(string(cond), "Exhaustion") {
-				exhaustion++
-			}
-		}
-		if exhaustion > 0 {
+		if m.character.CombatStats.ExhaustionLevel > 0 {
 			lines = append(lines, fmt.Sprintf(
 				"  • %s %s",
 				labelStyle.Render("Reduce exhaustion:"),
-				valueStyle.Render("-1 level"),
+				valueStyle.Render(fmt.Sprintf("-1 level (to %d)", m.character.CombatStats.ExhaustionLevel-1)),
 			))
 		}
 
@@ -2753,12 +2779,12 @@ func (m *MainSheetModel) renderFooter(width int) string {
 			}
 		} else {
 			title = "Remove Condition (↑/↓ to select, Enter to remove, Esc to cancel)"
-			for i, cond := range m.character.CombatStats.Conditions {
+			for i, cond := range m.removableConditions() {
 				prefix := "  "
 				if i == m.conditionCursor {
 					prefix = "▶ "
 				}
-				items = append(items, prefix+string(cond))
+				items = append(items, prefix+cond)
 			}
 		}
 
@@ -2854,7 +2880,7 @@ func (m *MainSheetModel) getWeaponAttackBonus(weapon models.Item) int {
 	// Add magic bonus if any
 	magicBonus := weapon.MagicBonus
 
-	return abilityMod + profBonus + magicBonus
+	return abilityMod + profBonus + magicBonus + char.ExhaustionPenalty()
 }
 
 // getWeaponDamageMod returns the damage modifier for a weapon (ability mod + magic bonus).

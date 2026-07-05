@@ -245,6 +245,31 @@ func TestAllConditionsCount(t *testing.T) {
 	assert.Len(t, conditions, 15)
 }
 
+// TestCombatStatsExhaustionLevels verifies the 2024 leveled Exhaustion model:
+// AddExhaustionLevel caps at 6 (death), RemoveExhaustionLevel floors at 0, and
+// exhaustion is tracked in ExhaustionLevel rather than the Conditions slice.
+func TestCombatStatsExhaustionLevels(t *testing.T) {
+	cs := NewCombatStats(20, 8, 1, 30)
+	assert.Equal(t, 0, cs.ExhaustionLevel)
+
+	cs.AddExhaustionLevel()
+	cs.AddExhaustionLevel()
+	assert.Equal(t, 2, cs.ExhaustionLevel)
+	assert.Empty(t, cs.Conditions, "exhaustion must not be stored as a binary condition")
+
+	// Caps at MaxExhaustionLevel (6).
+	for i := 0; i < 10; i++ {
+		cs.AddExhaustionLevel()
+	}
+	assert.Equal(t, MaxExhaustionLevel, cs.ExhaustionLevel)
+
+	// Floors at 0.
+	for i := 0; i < MaxExhaustionLevel+3; i++ {
+		cs.RemoveExhaustionLevel()
+	}
+	assert.Equal(t, 0, cs.ExhaustionLevel)
+}
+
 func TestCalculateAC(t *testing.T) {
 	tests := []struct {
 		name                string

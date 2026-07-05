@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"io"
+	"strings"
 	"time"
 )
 
@@ -60,14 +61,14 @@ func (c *Character) GetSkillModifier(skillName SkillName) int {
 	skill := c.Skills.Get(skillName)
 	ability := GetSkillAbility(skillName)
 	abilityMod := c.AbilityScores.GetModifier(ability)
-	return CalculateSkillModifier(skill, abilityMod, c.GetProficiencyBonus())
+	return CalculateSkillModifier(skill, abilityMod, c.GetProficiencyBonus()) + c.ExhaustionPenalty()
 }
 
 // GetSavingThrowModifier calculates the total modifier for a saving throw.
 func (c *Character) GetSavingThrowModifier(ability Ability) int {
 	save := c.SavingThrows.Get(ability)
 	abilityMod := c.AbilityScores.GetModifier(ability)
-	return CalculateSavingThrowModifier(save, abilityMod, c.GetProficiencyBonus())
+	return CalculateSavingThrowModifier(save, abilityMod, c.GetProficiencyBonus()) + c.ExhaustionPenalty()
 }
 
 // GetSpellSaveDC returns the character's spell save DC.
@@ -85,12 +86,53 @@ func (c *Character) GetSpellAttackBonus() int {
 		return 0
 	}
 	abilityMod := c.AbilityScores.GetModifier(c.Spellcasting.Ability)
-	return CalculateSpellAttackBonus(abilityMod, c.GetProficiencyBonus())
+	return CalculateSpellAttackBonus(abilityMod, c.GetProficiencyBonus()) + c.ExhaustionPenalty()
 }
 
-// GetInitiative returns the character's initiative modifier.
+// GetInitiative returns the character's initiative modifier. It includes the
+// Dexterity modifier, any stored initiative bonus from feats, the 2024 Alert
+// feat bonus (add Proficiency Bonus), and the Exhaustion penalty.
 func (c *Character) GetInitiative() int {
-	return c.AbilityScores.GetModifier(AbilityDexterity)
+	init := c.AbilityScores.GetModifier(AbilityDexterity) + c.CombatStats.Initiative
+	if c.HasFeat("Alert") {
+		init += c.GetProficiencyBonus()
+	}
+	return init + c.ExhaustionPenalty()
+}
+
+// ExhaustionPenalty returns the 2024 (5.5e) penalty applied to every d20 Test
+// while the character has the Exhaustion condition: -2 for each Exhaustion
+// level. The result is zero or negative and is folded into attack rolls,
+// ability checks, saving throws, and Initiative.
+func (c *Character) ExhaustionPenalty() int {
+	if level := c.CombatStats.ExhaustionLevel; level > 0 {
+		return -2 * level
+	}
+	return 0
+}
+
+// HasFeat reports whether the character has a feat with the given name
+// (case-insensitive).
+func (c *Character) HasFeat(name string) bool {
+	for _, f := range c.Features.Feats {
+		if strings.EqualFold(f.Name, name) {
+			return true
+		}
+	}
+	return false
+}
+
+// GetEffectiveSpeed returns the walking speed after the 2024 Exhaustion penalty
+// (-5 ft per Exhaustion level), clamped at 0.
+func (c *Character) GetEffectiveSpeed() int {
+	speed := c.CombatStats.Speed
+	if level := c.CombatStats.ExhaustionLevel; level > 0 {
+		speed -= 5 * level
+	}
+	if speed < 0 {
+		return 0
+	}
+	return speed
 }
 
 // IsSpellcaster returns true if the character has spellcasting ability.

@@ -281,6 +281,26 @@ func (cs *CombatStats) ClearConditions() {
 	cs.Conditions = []Condition{}
 }
 
+// MaxExhaustionLevel is the Exhaustion level at which a creature dies under the
+// 2024 (5.5e) rules.
+const MaxExhaustionLevel = 6
+
+// AddExhaustionLevel raises the Exhaustion level by one, capped at
+// MaxExhaustionLevel. Under the 2024 rules exhaustion is leveled (1-6) rather
+// than a binary condition; each level applies -2 to d20 Tests and -5 ft Speed.
+func (cs *CombatStats) AddExhaustionLevel() {
+	if cs.ExhaustionLevel < MaxExhaustionLevel {
+		cs.ExhaustionLevel++
+	}
+}
+
+// RemoveExhaustionLevel lowers the Exhaustion level by one, floored at zero.
+func (cs *CombatStats) RemoveExhaustionLevel() {
+	if cs.ExhaustionLevel > 0 {
+		cs.ExhaustionLevel--
+	}
+}
+
 // CalculateAC calculates the total AC from base AC, armor, shield, and modifiers.
 // Base AC is typically 10 + DEX modifier when unarmored.
 // With armor: use armor's AC + DEX modifier (capped based on armor type).

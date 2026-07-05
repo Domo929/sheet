@@ -188,6 +188,79 @@ func TestCharacterGetInitiative(t *testing.T) {
 	assert.Equal(t, 3, c.GetInitiative())
 }
 
+// TestCharacterInitiativeReadsFeatBonus guards the regression where a stored
+// initiative bonus (written by feat effects into CombatStats.Initiative) was
+// never read by GetInitiative.
+func TestCharacterInitiativeReadsFeatBonus(t *testing.T) {
+	c := NewCharacter("char-1", "Test", "Human", "Fighter")
+	c.AbilityScores.Dexterity = AbilityScore{Base: 12} // +1 modifier
+	c.CombatStats.Initiative = 4                        // e.g. a homebrew init feat
+
+	assert.Equal(t, 5, c.GetInitiative(), "+1 DEX + 4 stored feat bonus")
+}
+
+// TestCharacterAlertFeatInitiative verifies the 2024 Alert feat adds the
+// Proficiency Bonus to Initiative (replacing the 2014 flat +5).
+func TestCharacterAlertFeatInitiative(t *testing.T) {
+	c := NewCharacter("char-1", "Test", "Human", "Fighter")
+	c.AbilityScores.Dexterity = AbilityScore{Base: 14} // +2 modifier
+	c.Info.Level = 5                                   // Proficiency Bonus +3
+
+	assert.False(t, c.HasFeat("Alert"))
+	assert.Equal(t, 2, c.GetInitiative(), "without Alert: DEX only")
+
+	c.Features.AddFeat("Alert", "2024 Alert")
+	assert.True(t, c.HasFeat("alert"), "HasFeat should be case-insensitive")
+	assert.Equal(t, 5, c.GetInitiative(), "with Alert: +2 DEX + 3 PB")
+}
+
+// TestCharacterExhaustionPenalty verifies the 2024 rule that each Exhaustion
+// level applies a -2 penalty to every d20 Test (checks, saves, attacks,
+// Initiative).
+func TestCharacterExhaustionPenalty(t *testing.T) {
+	c := NewCharacter("char-1", "Test", "Human", "Fighter")
+	c.AbilityScores = NewAbilityScoresFromValues(16, 16, 14, 10, 12, 8) // STR/DEX 16 = +3
+	c.SavingThrows.SetProficiency(AbilityStrength, true)
+
+	assert.Equal(t, 0, c.ExhaustionPenalty(), "no exhaustion")
+
+	c.CombatStats.ExhaustionLevel = 3
+	assert.Equal(t, -6, c.ExhaustionPenalty(), "-2 per level")
+
+	// -6 folds into every d20 Test.
+	assert.Equal(t, -1, c.GetSavingThrowModifier(AbilityStrength), "+3 STR +2 prof -6 exh")
+	assert.Equal(t, -3, c.GetSkillModifier(SkillAthletics), "+3 STR -6 exh")
+	assert.Equal(t, -3, c.GetInitiative(), "+3 DEX -6 exh")
+}
+
+// TestCharacterExhaustionSpellAttack verifies exhaustion reduces spell attack
+// rolls (a d20 Test) but is a no-op for non-spellcasters.
+func TestCharacterExhaustionSpellAttack(t *testing.T) {
+	c := NewCharacter("char-1", "Test", "Elf", "Wizard")
+	c.AbilityScores = NewAbilityScoresFromValues(8, 14, 12, 18, 12, 10) // INT 18 = +4
+	sc := NewSpellcasting(AbilityIntelligence)
+	c.Spellcasting = &sc
+
+	assert.Equal(t, 6, c.GetSpellAttackBonus(), "+4 INT +2 prof")
+	c.CombatStats.ExhaustionLevel = 1
+	assert.Equal(t, 4, c.GetSpellAttackBonus(), "+4 INT +2 prof -2 exh")
+}
+
+// TestCharacterGetEffectiveSpeed verifies the 2024 Exhaustion speed penalty
+// (-5 ft per level, clamped at 0).
+func TestCharacterGetEffectiveSpeed(t *testing.T) {
+	c := NewCharacter("char-1", "Test", "Human", "Fighter")
+	c.CombatStats.Speed = 30
+
+	assert.Equal(t, 30, c.GetEffectiveSpeed(), "no exhaustion")
+
+	c.CombatStats.ExhaustionLevel = 2
+	assert.Equal(t, 20, c.GetEffectiveSpeed(), "-5 ft per level")
+
+	c.CombatStats.ExhaustionLevel = 7
+	assert.Equal(t, 0, c.GetEffectiveSpeed(), "clamped at 0")
+}
+
 func TestCharacterJSONStructure(t *testing.T) {
 	c := NewCharacter("char-1", "Test", "Human", "Fighter")
 

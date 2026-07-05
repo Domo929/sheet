@@ -5,10 +5,8 @@
       "category": "Origin",
       "prerequisite": "",
       "repeatable": false,
-      "description": "You gain a +5 bonus to Initiative. You can't be surprised, and creatures you can't see don't gain Advantage on attack rolls against you. You can swap your Initiative with a willing ally at the start of combat.",
-      "effects": {
-        "initiativeBonus": 5
-      }
+      "description": "Initiative Proficiency: When you roll Initiative, you can add your Proficiency Bonus to the roll. Initiative Swap: Immediately after you roll Initiative, you can swap your Initiative with one willing ally in the same combat, unless you or the ally has the Incapacitated condition.",
+      "effects": {}
     },
     {
       "name": "Crafter",
