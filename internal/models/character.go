@@ -30,6 +30,10 @@ type Character struct {
 	// Mastery with (2024 rules). Only weapons in this list benefit from their
 	// mastery property.
 	MasteredWeapons []string `json:"masteredWeapons,omitempty"`
+
+	// Resources holds limited-use class resource pools (Rage, Focus Points,
+	// Channel Divinity, etc.), kept in sync with class and level.
+	Resources []ResourcePool `json:"resources,omitempty"`
 }
 
 // NewCharacter creates a new character with the given basic information.
@@ -163,6 +167,7 @@ func (c *Character) ShortRest() {
 	if c.Spellcasting != nil && c.Spellcasting.PactMagic != nil {
 		c.Spellcasting.PactMagic.Restore()
 	}
+	c.RestoreResources(false)
 	c.MarkUpdated()
 }
 
@@ -190,6 +195,9 @@ func (c *Character) LongRest() {
 	if c.CombatStats.ExhaustionLevel > 0 {
 		c.CombatStats.ExhaustionLevel--
 	}
+
+	// Restore all class resource pools
+	c.RestoreResources(true)
 
 	c.MarkUpdated()
 }

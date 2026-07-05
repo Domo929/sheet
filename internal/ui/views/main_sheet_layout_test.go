@@ -204,3 +204,32 @@ func TestDefensesPanelRender(t *testing.T) {
 		assert.LessOrEqual(t, maxLineWidth(view), width, "width %d: a rendered line overflowed", width)
 	}
 }
+
+func TestClassResourceOverlayFlow(t *testing.T) {
+	char := models.NewCharacter("bid", "Grog", "Human", "Barbarian")
+	char.Info.Level = 6 // Rage 4/4
+
+	model := NewMainSheetModel(char, nil) // constructor syncs resources
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
+
+	// Resources should render in the Combat panel.
+	line, ok := findLineContaining(model.View(), "Rage:")
+	require.True(t, ok, "Combat panel should list the Rage resource")
+	assert.Contains(t, line, "4/4")
+
+	// Open the resource overlay from the Combat panel and spend one Rage.
+	model.focusArea = FocusCombat
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'u', Text: "u"})
+	require.True(t, model.resourceMode, "pressing u in Combat should open the resource overlay")
+
+	model, _ = model.Update(tea.KeyPressMsg{Code: '-', Text: "-"})
+	assert.Equal(t, 3, model.character.Resources[0].Current, "spending should decrement Rage")
+
+	// Restore one and close.
+	model, _ = model.Update(tea.KeyPressMsg{Code: '+', Text: "+"})
+	assert.Equal(t, 4, model.character.Resources[0].Current)
+	model, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
+	assert.False(t, model.resourceMode)
+
+	assert.LessOrEqual(t, maxLineWidth(model.View()), 100)
+}

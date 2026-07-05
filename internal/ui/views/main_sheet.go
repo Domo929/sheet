@@ -42,6 +42,10 @@ type MainSheetModel struct {
 	masteryMode   bool
 	masteryCursor int
 
+	// Class resource spend/restore mode
+	resourceMode   bool
+	resourceCursor int
+
 	// Action type selection (for Actions panel)
 	selectedActionType ActionType
 	actionCursor       int // Cursor for selecting actions within the current type
@@ -210,6 +214,7 @@ type mainSheetKeyMap struct {
 	AddCondition   key.Binding
 	RemCondition   key.Binding
 	WeaponMastery  key.Binding
+	Resources      key.Binding
 	NextActionType key.Binding
 	PrevActionType key.Binding
 	AddXP          key.Binding
@@ -300,6 +305,10 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 			key.WithKeys("m"),
 			key.WithHelp("m", "weapon mastery"),
 		),
+		Resources: key.NewBinding(
+			key.WithKeys("u"),
+			key.WithHelp("u", "use resource"),
+		),
 		NextActionType: key.NewBinding(
 			key.WithKeys("right", "l"),
 			key.WithHelp("→", "next action type"),
@@ -348,6 +357,12 @@ func NewMainSheetModel(character *models.Character, storage *storage.CharacterSt
 	// Load spell database
 	loader := data.NewEmbeddedLoader()
 	spellDB, _ := loader.GetSpells() // Ignore error for now, spells optional
+
+	// Keep class resource pools in sync with the character's class/level so
+	// existing saved characters gain any newly-defined pools.
+	if character != nil {
+		character.SyncResources()
+	}
 
 	return &MainSheetModel{
 		character:     character,
@@ -448,6 +463,11 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		// Handle weapon mastery selection mode
 		if m.masteryMode {
 			return m.handleMasteryInput(msg)
+		}
+
+		// Handle class resource spend/restore mode
+		if m.resourceMode {
+			return m.handleResourceInput(msg)
 		}
 
 		// Handle spell casting modal
@@ -661,6 +681,12 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			if m.focusArea == FocusActions && m.character.WeaponMasteryLimit() > 0 && len(m.getMasterableWeapons()) > 0 {
 				m.masteryMode = true
 				m.masteryCursor = 0
+				return m, nil
+			}
+		case key.Matches(msg, m.keys.Resources):
+			if m.focusArea == FocusCombat && len(m.character.Resources) > 0 {
+				m.resourceMode = true
+				m.resourceCursor = 0
 				return m, nil
 			}
 		case key.Matches(msg, m.keys.NextActionType):
@@ -1026,6 +1052,74 @@ func (m *MainSheetModel) handleMasteryInput(msg tea.KeyPressMsg) (*MainSheetMode
 	}
 
 	return m, nil
+}
+
+// handleResourceInput handles keyboard input when in the class resource
+// spend/restore overlay. Up/Down select a pool; -/left spends one; +/right
+// restores one; Esc closes.
+func (m *MainSheetModel) handleResourceInput(msg tea.KeyPressMsg) (*MainSheetModel, tea.Cmd) {
+	resources := m.character.Resources
+	if m.resourceCursor >= len(resources) {
+		m.resourceCursor = len(resources) - 1
+	}
+	if m.resourceCursor < 0 {
+		m.resourceCursor = 0
+	}
+
+	switch msg.Code {
+	case tea.KeyEscape, tea.KeyEnter:
+		m.resourceMode = false
+		return m, nil
+
+	case tea.KeyUp:
+		if m.resourceCursor > 0 {
+			m.resourceCursor--
+		}
+		return m, nil
+
+	case tea.KeyDown:
+		if m.resourceCursor < len(resources)-1 {
+			m.resourceCursor++
+		}
+		return m, nil
+
+	case tea.KeyLeft:
+		m.adjustSelectedResource(-1)
+		return m, nil
+
+	case tea.KeyRight:
+		m.adjustSelectedResource(1)
+		return m, nil
+	}
+
+	// Also accept +/- (and =) as spend/restore, matching the conditions UI.
+	switch msg.String() {
+	case "-", "_":
+		m.adjustSelectedResource(-1)
+	case "+", "=":
+		m.adjustSelectedResource(1)
+	}
+	return m, nil
+}
+
+// adjustSelectedResource spends (delta<0) or restores (delta>0) one point of the
+// currently selected resource pool and persists the change.
+func (m *MainSheetModel) adjustSelectedResource(delta int) {
+	if m.resourceCursor < 0 || m.resourceCursor >= len(m.character.Resources) {
+		return
+	}
+	pool := m.character.Resources[m.resourceCursor]
+	if delta < 0 {
+		if m.character.SpendResource(pool.Name, -delta) {
+			m.statusMessage = fmt.Sprintf("Spent 1 %s", pool.Name)
+			m.saveCharacter()
+		}
+	} else {
+		if m.character.RestoreResource(pool.Name, delta) {
+			m.statusMessage = fmt.Sprintf("Restored 1 %s", pool.Name)
+			m.saveCharacter()
+		}
+	}
 }
 
 // handleCastingInput handles keyboard input when in spell casting modal mode.
@@ -2038,6 +2132,31 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		}
 	}
 
+	// Class resources (Rage, Focus Points, Channel Divinity, etc.)
+	if len(char.Resources) > 0 {
+		lines = append(lines, "")
+		lines = append(lines, titleStyle.Render("Resources"))
+		for i, r := range char.Resources {
+			cursor := "  "
+			if m.resourceMode && i == m.resourceCursor {
+				cursor = "▶ "
+			}
+			amountStyle := valueStyle
+			if r.Current == 0 {
+				amountStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+			}
+			lines = append(lines, fmt.Sprintf("%s%s %s",
+				cursor,
+				labelStyle.Render(r.Name+":"),
+				amountStyle.Render(fmt.Sprintf("%d/%d", r.Current, r.Max)),
+			))
+		}
+		if m.focusArea == FocusCombat {
+			hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
+			lines = append(lines, hintStyle.Render("u: use resource"))
+		}
+	}
+
 	// Active conditions (always show section with hint when focused)
 	lines = append(lines, "")
 	lines = append(lines, titleStyle.Render("Conditions"))
@@ -2972,6 +3091,30 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		return lipgloss.JoinVertical(lipgloss.Left,
 			titleStyle.Render(title),
 			itemStyle.Render(strings.Join(visibleItems, "\n")),
+		)
+	}
+
+	// Show class resource spend/restore overlay if in resource mode
+	if m.resourceMode {
+		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
+		itemStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+
+		var items []string
+		for i, r := range m.character.Resources {
+			prefix := "  "
+			if i == m.resourceCursor {
+				prefix = "▶ "
+			}
+			rest := "Long"
+			if r.Recharge == "short" {
+				rest = "Short"
+			}
+			items = append(items, fmt.Sprintf("%s%s  %d/%d  (%s Rest)", prefix, r.Name, r.Current, r.Max, rest))
+		}
+
+		return lipgloss.JoinVertical(lipgloss.Left,
+			titleStyle.Render("Resources (↑/↓ select, +/− adjust, Esc done)"),
+			itemStyle.Render(strings.Join(items, "\n")),
 		)
 	}
 
