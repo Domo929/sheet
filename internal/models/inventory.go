@@ -296,6 +296,9 @@ type Item struct {
 
 	// Container properties (for backpacks, pouches, etc.)
 	Contents []Item `json:"contents,omitempty"`
+
+	// Custom marks a user-created (homebrew) item.
+	Custom bool `json:"custom,omitempty"`
 }
 
 // NewItem creates a basic item with the given name and type.

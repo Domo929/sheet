@@ -2,7 +2,9 @@ package views
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Domo929/sheet/internal/data"
 	"github.com/Domo929/sheet/internal/models"
@@ -68,6 +70,14 @@ type InventoryModel struct {
 	itemSearchTerm string
 	searchResults  []models.Item
 	searchCursor   int
+
+	// Custom (homebrew) item creation
+	customMode      bool
+	customStep      int // 0=name, 1=type, 2=weight, 3=damage (weapons only)
+	customName      string
+	customWeightBuf string
+	customDamageBuf string
+	customTypeIndex int
 }
 
 type inventoryKeyMap struct {
@@ -84,6 +94,7 @@ type inventoryKeyMap struct {
 	Equip     key.Binding
 	Add       key.Binding
 	Spend     key.Binding
+	Custom    key.Binding
 }
 
 func defaultInventoryKeyMap() inventoryKeyMap {
@@ -101,6 +112,7 @@ func defaultInventoryKeyMap() inventoryKeyMap {
 		Equip:     key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "equip/unequip")),
 		Add:       key.NewBinding(key.WithKeys("a", "+"), key.WithHelp("a/+", "add item/currency")),
 		Spend:     key.NewBinding(key.WithKeys("s", "-"), key.WithHelp("s/-", "spend currency")),
+		Custom:    key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "create custom item")),
 	}
 }
 
@@ -164,6 +176,11 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 			return m.handleAddItemInput(msg)
 		}
 
+		// Handle custom (homebrew) item creation mode
+		if m.customMode {
+			return m.handleCustomInput(msg)
+		}
+
 		// Ctrl+C always quits immediately
 		if key.Matches(msg, m.keys.ForceQuit) {
 			return m, tea.Quit
@@ -216,6 +233,8 @@ func (m *InventoryModel) Update(msg tea.Msg) (*InventoryModel, tea.Cmd) {
 			return m.handleEquip()
 		case key.Matches(msg, m.keys.Add):
 			return m.handleAdd()
+		case key.Matches(msg, m.keys.Custom):
+			return m.handleCustomStart()
 		case key.Matches(msg, m.keys.Spend):
 			return m.handleSpend()
 		}
@@ -618,6 +637,169 @@ func (m *InventoryModel) updateSearchResults() {
 	m.searchResults = results
 }
 
+// customItemTypeOption pairs an ItemType with a display label for the creator.
+type customItemTypeOption struct {
+	Type  models.ItemType
+	Label string
+}
+
+// customItemTypes lists selectable types in the homebrew item creator.
+var customItemTypes = []customItemTypeOption{
+	{models.ItemTypeGeneral, "General"},
+	{models.ItemTypeWeapon, "Weapon"},
+	{models.ItemTypeArmor, "Armor"},
+	{models.ItemTypeShield, "Shield"},
+	{models.ItemTypeConsumable, "Consumable"},
+	{models.ItemTypeTool, "Tool"},
+	{models.ItemTypeMagicItem, "Magic Item"},
+}
+
+// handleCustomStart opens the homebrew custom-item creation form.
+func (m *InventoryModel) handleCustomStart() (*InventoryModel, tea.Cmd) {
+	if m.focus != FocusItems {
+		m.statusMessage = "Switch to the Items panel (Tab) to create a custom item"
+		return m, nil
+	}
+	m.resetCustom()
+	m.customMode = true
+	m.statusMessage = "Custom item: type a name, Enter to continue, Esc to cancel"
+	return m, nil
+}
+
+// resetCustom clears homebrew item creation state.
+func (m *InventoryModel) resetCustom() {
+	m.customMode = false
+	m.customStep = 0
+	m.customName = ""
+	m.customWeightBuf = ""
+	m.customDamageBuf = ""
+	m.customTypeIndex = 0
+}
+
+// customIsWeapon reports whether the selected custom type is a weapon.
+func (m *InventoryModel) customIsWeapon() bool {
+	return customItemTypes[m.customTypeIndex].Type == models.ItemTypeWeapon
+}
+
+// handleCustomInput drives the multi-step homebrew item creation form.
+func (m *InventoryModel) handleCustomInput(msg tea.KeyPressMsg) (*InventoryModel, tea.Cmd) {
+	if msg.Code == tea.KeyEscape {
+		m.resetCustom()
+		m.statusMessage = "Custom item cancelled"
+		return m, nil
+	}
+
+	switch m.customStep {
+	case 0: // Name
+		switch msg.Code {
+		case tea.KeyEnter:
+			if strings.TrimSpace(m.customName) == "" {
+				m.statusMessage = "Name cannot be empty"
+				return m, nil
+			}
+			m.customStep = 1
+			m.statusMessage = "Select a type with ↑/↓, Enter to continue"
+		case tea.KeyBackspace:
+			if len(m.customName) > 0 {
+				m.customName = m.customName[:len(m.customName)-1]
+			}
+		default:
+			if msg.Text != "" {
+				m.customName += msg.Text
+			}
+		}
+		return m, nil
+
+	case 1: // Type
+		switch msg.Code {
+		case tea.KeyUp:
+			if m.customTypeIndex > 0 {
+				m.customTypeIndex--
+			}
+		case tea.KeyDown:
+			if m.customTypeIndex < len(customItemTypes)-1 {
+				m.customTypeIndex++
+			}
+		case tea.KeyEnter:
+			m.customStep = 2
+			m.statusMessage = "Enter weight in lbs (blank = 0), Enter to continue"
+		}
+		return m, nil
+
+	case 2: // Weight
+		switch msg.Code {
+		case tea.KeyEnter:
+			if m.customIsWeapon() {
+				m.customStep = 3
+				m.statusMessage = "Enter damage (e.g. 1d8), blank to skip, Enter to create"
+				return m, nil
+			}
+			return m.finalizeCustomItem()
+		case tea.KeyBackspace:
+			if len(m.customWeightBuf) > 0 {
+				m.customWeightBuf = m.customWeightBuf[:len(m.customWeightBuf)-1]
+			}
+		default:
+			if msg.Text == "." || isDigitStr(msg.Text) {
+				m.customWeightBuf += msg.Text
+			}
+		}
+		return m, nil
+
+	case 3: // Damage (weapons only)
+		switch msg.Code {
+		case tea.KeyEnter:
+			return m.finalizeCustomItem()
+		case tea.KeyBackspace:
+			if len(m.customDamageBuf) > 0 {
+				m.customDamageBuf = m.customDamageBuf[:len(m.customDamageBuf)-1]
+			}
+		default:
+			if msg.Text != "" {
+				m.customDamageBuf += msg.Text
+			}
+		}
+		return m, nil
+	}
+	return m, nil
+}
+
+// finalizeCustomItem builds the homebrew item, adds it, and persists.
+func (m *InventoryModel) finalizeCustomItem() (*InventoryModel, tea.Cmd) {
+	name := strings.TrimSpace(m.customName)
+	opt := customItemTypes[m.customTypeIndex]
+
+	weight := 0.0
+	if m.customWeightBuf != "" {
+		if w, err := strconv.ParseFloat(m.customWeightBuf, 64); err == nil && w >= 0 {
+			weight = w
+		}
+	}
+
+	item := models.Item{
+		ID:       fmt.Sprintf("custom-%d", time.Now().UnixNano()),
+		Name:     name,
+		Type:     opt.Type,
+		Weight:   weight,
+		Quantity: 1,
+		Custom:   true,
+	}
+	if opt.Type == models.ItemTypeWeapon {
+		item.Damage = strings.TrimSpace(m.customDamageBuf)
+	}
+
+	m.character.Inventory.AddItem(item)
+	m.saveCharacter()
+	m.resetCustom()
+	m.statusMessage = fmt.Sprintf("Created custom %s: %s", strings.ToLower(opt.Label), name)
+	return m, nil
+}
+
+// isDigitStr reports whether s is a single ASCII digit.
+func isDigitStr(s string) bool {
+	return len(s) == 1 && s[0] >= '0' && s[0] <= '9'
+}
+
 // costMapToCurrency converts a cost map to a Currency struct
 func costMapToCurrency(cost map[string]int) models.Currency {
 	return models.Currency{
@@ -947,6 +1129,10 @@ func (m *InventoryModel) View() string {
 			overlay := m.renderAddItemOverlay(width)
 			columns = lipgloss.JoinVertical(lipgloss.Left, columns, "", overlay)
 		}
+		if m.customMode {
+			overlay := m.renderCustomItemOverlay(width)
+			columns = lipgloss.JoinVertical(lipgloss.Left, columns, "", overlay)
+		}
 
 		footer := m.renderFooter(width)
 		return lipgloss.JoinVertical(lipgloss.Left, header, "", columns, "", footer)
@@ -975,6 +1161,10 @@ func (m *InventoryModel) View() string {
 	// Add item overlay
 	if m.addingItem {
 		overlay := m.renderAddItemOverlay(width)
+		columns = lipgloss.JoinVertical(lipgloss.Left, columns, "", overlay)
+	}
+	if m.customMode {
+		overlay := m.renderCustomItemOverlay(width)
 		columns = lipgloss.JoinVertical(lipgloss.Left, columns, "", overlay)
 	}
 
@@ -1019,6 +1209,60 @@ func (m *InventoryModel) renderAddItemOverlay(width int) string {
 			lines = append(lines, line)
 		}
 	}
+
+	return boxStyle.Render(strings.Join(lines, "\n"))
+}
+
+// renderCustomItemOverlay renders the homebrew custom-item creation form.
+func (m *InventoryModel) renderCustomItemOverlay(width int) string {
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("214")).
+		Padding(0, 1).
+		Width(width - 4)
+
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("214"))
+	activeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
+	doneStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+
+	// Render a field line: label + value, highlighting the active step.
+	field := func(step int, label, value string) string {
+		style := dimStyle
+		cursor := ""
+		switch {
+		case step == m.customStep:
+			style = activeStyle
+			cursor = "_"
+		case step < m.customStep:
+			style = doneStyle
+		}
+		return style.Render(fmt.Sprintf("%-8s %s%s", label+":", value, cursor))
+	}
+
+	var lines []string
+	lines = append(lines, titleStyle.Render("Create Custom Item (homebrew)"))
+	lines = append(lines, "")
+	lines = append(lines, field(0, "Name", m.customName))
+
+	typeLabel := customItemTypes[m.customTypeIndex].Label
+	if m.customStep == 1 {
+		typeLabel = "◀ " + typeLabel + " ▶"
+	}
+	lines = append(lines, field(1, "Type", typeLabel))
+
+	weightVal := m.customWeightBuf
+	if weightVal == "" && m.customStep > 2 {
+		weightVal = "0"
+	}
+	lines = append(lines, field(2, "Weight", weightVal))
+
+	if m.customIsWeapon() {
+		lines = append(lines, field(3, "Damage", m.customDamageBuf))
+	}
+
+	lines = append(lines, "")
+	lines = append(lines, dimStyle.Render("Enter: next/create · Esc: cancel"))
 
 	return boxStyle.Render(strings.Join(lines, "\n"))
 }
@@ -1236,6 +1480,9 @@ func (m *InventoryModel) renderItems(width int) string {
 			if item.Magical {
 				name = "✨ " + name
 			}
+			if item.Custom {
+				name = "★ " + name
+			}
 			
 			// Show container indicator if item has contents
 			if len(item.Contents) > 0 {
@@ -1266,6 +1513,9 @@ func (m *InventoryModel) renderItems(width int) string {
 		lines = append(lines, "")
 		lines = append(lines, dimStyle.Render("─── Details ───"))
 		lines = append(lines, itemStyle.Render(hoveredItem.Name))
+		if hoveredItem.Custom {
+			lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("★ Homebrew"))
+		}
 		if hoveredItem.Description != "" {
 			desc := hoveredItem.Description
 			if len(desc) > width-6 {
@@ -1395,6 +1645,8 @@ func (m *InventoryModel) renderFooter(width int) string {
 		help = "y: quit • any other key: cancel"
 	} else if m.addingItem {
 		help = "type to search • ↑/↓: select • enter: add item • esc: cancel"
+	} else if m.customMode {
+		help = "custom item • type value • ↑/↓: type • enter: next/create • esc: cancel"
 	} else {
 		switch m.focus {
 		case FocusEquipment:
@@ -1403,7 +1655,7 @@ func (m *InventoryModel) renderFooter(width int) string {
 			if m.viewingContainer != nil {
 				help = "↑/↓: navigate • a: add item • n: quantity • x: delete • esc: back to inventory"
 			} else {
-				help = "↑/↓: navigate • a: add item • n: quantity • x: delete • e: equip • tab: next • esc: back"
+				help = "↑/↓: nav • a: add • c: custom • n: qty • x: del • e: equip • tab: next • esc: back"
 			}
 		case FocusCurrency:
 			help = "↑/↓: select • a: add • s: spend • tab: next panel • esc: back"
@@ -1430,7 +1682,7 @@ type OpenSpellbookMsg struct{}
 
 // CursorInfo returns cursor settings when a text input is active in inventory.
 func (m *InventoryModel) CursorInfo() *tea.Cursor {
-	if m.addingItem || m.quantityMode || m.currencyMode {
+	if m.addingItem || m.quantityMode || m.currencyMode || m.customMode {
 		return &tea.Cursor{
 			Shape: tea.CursorBar,
 			Blink: true,
