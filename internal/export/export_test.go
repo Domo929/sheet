@@ -79,6 +79,25 @@ func TestToMarkdownOmitsSpellcastingForNonCaster(t *testing.T) {
 	assert.Contains(t, md, "# Grok")
 }
 
+func TestToMarkdownCompanions(t *testing.T) {
+	c := models.NewCharacter("r-1", "Kael", "Human", "Ranger")
+	// No companions: section omitted.
+	assert.NotContains(t, ToMarkdown(c), "## Companions")
+
+	c.AddCompanion(models.Companion{
+		ID: "c1", Name: "Dire Wolf", Kind: models.CompanionPet,
+		Size: "Large", Type: "Beast", AC: 14, MaxHP: 37, CurrentHP: 30,
+		Speed: "50 ft.", Abilities: [6]int{17, 15, 15, 3, 12, 7},
+		Attacks: []models.CompanionAttack{{Name: "Bite", Bonus: 5, Damage: "2d6 + 3 piercing"}},
+	})
+	md := ToMarkdown(c)
+	assert.Contains(t, md, "## Companions & Summons")
+	assert.Contains(t, md, "### Dire Wolf")
+	assert.Contains(t, md, "30/37")
+	assert.Contains(t, md, "Bite")
+	assert.Contains(t, md, "+3", "STR 17 modifier should render")
+}
+
 func TestToJSONRoundTrips(t *testing.T) {
 	c := sampleCharacter()
 	data, err := ToJSON(c)

@@ -43,6 +43,10 @@ type Character struct {
 	// TurnState tracks the per-turn action economy (Action, Bonus Action,
 	// Reaction, and movement) during combat. It is reset each turn and on a rest.
 	TurnState ActionEconomy `json:"turnState,omitempty"`
+
+	// Companions holds the stat blocks of pets, familiars, summoned creatures,
+	// mounts, and active Wild Shape forms associated with the character.
+	Companions []Companion `json:"companions,omitempty"`
 }
 
 // NewCharacter creates a new character with the given basic information.

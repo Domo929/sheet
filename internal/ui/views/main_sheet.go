@@ -228,6 +228,7 @@ type mainSheetKeyMap struct {
 	AddXP          key.Binding
 	LevelUp        key.Binding
 	Notes          key.Binding
+	Companions     key.Binding // o
 	Luck           key.Binding // backtick
 	CustomRoll     key.Binding // /
 	HistoryToggle  key.Binding // H (capital)
@@ -345,6 +346,10 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		Notes: key.NewBinding(
 			key.WithKeys("n"),
 			key.WithHelp("n", "notes"),
+		),
+		Companions: key.NewBinding(
+			key.WithKeys("o"),
+			key.WithHelp("o", "companions"),
 		),
 		Luck: key.NewBinding(
 			key.WithKeys("`"),
@@ -621,6 +626,8 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			return m, func() tea.Msg { return OpenCharacterInfoMsg{} }
 		case key.Matches(msg, m.keys.Notes):
 			return m, func() tea.Msg { return OpenNotesMsg{ReturnTo: "sheet"} }
+		case key.Matches(msg, m.keys.Companions):
+			return m, func() tea.Msg { return OpenCompanionsMsg{} }
 		case key.Matches(msg, m.keys.Luck):
 			// Force luck roll regardless of current skill cursor
 			return m, func() tea.Msg {
@@ -3277,7 +3284,7 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Foreground(lipgloss.Color("244")).
 		Width(width)
 
-	help := "tab: panels • i: inventory • s: spellbook • c: char info • n: notes • /: roll dice • `: luck • H: history • r: rest • E: export • esc: back • q: quit"
+	help := "tab: panels • i: inventory • s: spellbook • c: char info • n: notes • o: companions • /: roll dice • `: luck • H: history • r: rest • E: export • esc: back • q: quit"
 
 	// Show condition selection if in condition mode
 	if m.conditionMode {

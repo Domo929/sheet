@@ -33,6 +33,7 @@ const (
 	ViewCombat
 	ViewRest
 	ViewNotes
+	ViewCompanions
 )
 
 // minRollHistoryWidth is the minimum terminal width required to show the roll history column.
@@ -64,6 +65,7 @@ type Model struct {
 	levelUpModel            *views.LevelUpModel
 	notesEditorModel        *views.NotesEditorModel
 	characterInfoModel      *views.CharacterInfoModel
+	companionsModel         *views.CompanionsModel
 
 	// Roll engine and history (shared across views)
 	rollEngine  *components.RollEngine
@@ -192,6 +194,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.currentView = ViewSpellbook
 		return m, m.spellbookModel.Init()
+
+	case views.OpenCompanionsMsg:
+		// Navigate to companions view
+		m.companionsModel = views.NewCompanionsModel(m.character, m.storage)
+		if msg := m.sizeMsg(); msg != nil {
+			m.companionsModel, _ = m.companionsModel.Update(*msg)
+		}
+		m.currentView = ViewCompanions
+		return m, m.companionsModel.Init()
 
 	case views.OpenLevelUpMsg:
 		// Navigate to level-up wizard
@@ -369,6 +380,12 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.spellbookModel = updatedModel
 			cmd = c
 		}
+	case ViewCompanions:
+		if m.companionsModel != nil {
+			updatedModel, c := m.companionsModel.Update(msg)
+			m.companionsModel = updatedModel
+			cmd = c
+		}
 	case ViewLevelUp:
 		if m.levelUpModel != nil {
 			updatedModel, c := m.levelUpModel.Update(msg)
@@ -428,6 +445,10 @@ func (m Model) currentCursor() *tea.Cursor {
 		if cp, ok := interface{}(m.inventoryModel).(CursorProvider); ok {
 			return cp.CursorInfo()
 		}
+	case ViewCompanions:
+		if cp, ok := interface{}(m.companionsModel).(CursorProvider); ok {
+			return cp.CursorInfo()
+		}
 	}
 	return nil
 }
@@ -485,6 +506,8 @@ func (m Model) View() tea.View {
 		return m.newView(m.renderRest())
 	case ViewNotes:
 		return m.newView(m.renderNotes())
+	case ViewCompanions:
+		return m.newView(m.renderCompanions())
 	default:
 		return m.newView("Unknown view")
 	}
@@ -575,4 +598,11 @@ func (m Model) renderNotes() string {
 		return m.notesEditorModel.View()
 	}
 	return "Notes View (loading...)"
+}
+
+func (m Model) renderCompanions() string {
+	if m.companionsModel != nil {
+		return m.companionsModel.View()
+	}
+	return "Companions View (loading...)"
 }

@@ -116,6 +116,7 @@ func ToMarkdown(c *models.Character) string {
 	writeFeatures(&b, c)
 	writeSpellcasting(&b, c)
 	writeInventory(&b, c)
+	writeCompanions(&b, c)
 	writePersonality(&b, c)
 	return b.String()
 }
@@ -427,4 +428,66 @@ func writePersonality(b *strings.Builder, c *models.Character) {
 		fmt.Fprintf(b, "\n### Backstory\n\n%s\n", p.Backstory)
 	}
 	b.WriteString("\n")
+}
+
+func writeCompanions(b *strings.Builder, c *models.Character) {
+	if len(c.Companions) == 0 {
+		return
+	}
+	b.WriteString("## Companions & Summons\n\n")
+	for i := range c.Companions {
+		comp := &c.Companions[i]
+		fmt.Fprintf(b, "### %s\n\n", comp.Name)
+
+		descr := string(comp.Kind)
+		if st := strings.TrimSpace(comp.Size + " " + comp.Type); st != "" {
+			descr += " · " + st
+		}
+		fmt.Fprintf(b, "*%s*\n\n", descr)
+
+		fmt.Fprintf(b, "- **AC:** %d\n", comp.AC)
+		hp := fmt.Sprintf("%d/%d", comp.CurrentHP, comp.MaxHP)
+		if comp.TempHP > 0 {
+			hp += fmt.Sprintf(" (+%d temp)", comp.TempHP)
+		}
+		fmt.Fprintf(b, "- **HP:** %s\n", hp)
+		if comp.Speed != "" {
+			fmt.Fprintf(b, "- **Speed:** %s\n", comp.Speed)
+		}
+
+		var abils []string
+		for j := 0; j < 6; j++ {
+			abils = append(abils, fmt.Sprintf("%s %d (%s)",
+				models.CompanionAbilityLabel(j), comp.Abilities[j],
+				models.FormatModifier(comp.Modifier(j))))
+		}
+		fmt.Fprintf(b, "- **Abilities:** %s\n", strings.Join(abils, ", "))
+
+		if len(comp.Attacks) > 0 {
+			b.WriteString("\n**Attacks:**\n\n")
+			for _, a := range comp.Attacks {
+				line := fmt.Sprintf("- %s: %s to hit", a.Name, models.FormatModifier(a.Bonus))
+				if a.Damage != "" {
+					line += fmt.Sprintf(", %s", a.Damage)
+				}
+				b.WriteString(line + "\n")
+			}
+		}
+
+		if len(comp.Traits) > 0 {
+			b.WriteString("\n**Traits:**\n\n")
+			for _, t := range comp.Traits {
+				if t.Text != "" {
+					fmt.Fprintf(b, "- **%s.** %s\n", t.Name, t.Text)
+				} else {
+					fmt.Fprintf(b, "- %s\n", t.Name)
+				}
+			}
+		}
+
+		if comp.Notes != "" {
+			fmt.Fprintf(b, "\n%s\n", comp.Notes)
+		}
+		b.WriteString("\n")
+	}
 }
