@@ -46,6 +46,11 @@ type MainSheetModel struct {
 	resourceMode   bool
 	resourceCursor int
 
+	// Pending concentration save (Constitution save prompted after taking
+	// damage while concentrating). concentrationSaveDC is 0 when none pending.
+	concentrationSaveDC    int
+	concentrationSaveSpell string
+
 	// Action type selection (for Actions panel)
 	selectedActionType ActionType
 	actionCursor       int // Cursor for selecting actions within the current type
@@ -215,6 +220,7 @@ type mainSheetKeyMap struct {
 	RemCondition   key.Binding
 	WeaponMastery  key.Binding
 	Resources      key.Binding
+	Concentration  key.Binding
 	NextActionType key.Binding
 	PrevActionType key.Binding
 	AddXP          key.Binding
@@ -308,6 +314,10 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		Resources: key.NewBinding(
 			key.WithKeys("u"),
 			key.WithHelp("u", "use resource"),
+		),
+		Concentration: key.NewBinding(
+			key.WithKeys("C"),
+			key.WithHelp("C", "break concentration"),
 		),
 		NextActionType: key.NewBinding(
 			key.WithKeys("right", "l"),
@@ -428,6 +438,25 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			m.restResult = result.String()
 			m.restMode = RestModeResult
 			m.restHitDice = 0
+			return m, nil
+		}
+
+		// Adjudicate a pending concentration saving throw.
+		if m.concentrationSaveDC > 0 && strings.HasPrefix(msg.Entry.Label, "Concentration:") {
+			dc := m.concentrationSaveDC
+			spell := m.concentrationSaveSpell
+			total := msg.Entry.Total
+			m.concentrationSaveDC = 0
+			m.concentrationSaveSpell = ""
+			if total >= dc {
+				m.statusMessage = fmt.Sprintf("Concentration held: rolled %d vs DC %d (%s)", total, dc, spell)
+			} else {
+				if m.character.Concentration == spell {
+					m.character.BreakConcentration()
+				}
+				m.statusMessage = fmt.Sprintf("Concentration broken: rolled %d vs DC %d (%s)", total, dc, spell)
+			}
+			m.saveCharacter()
 			return m, nil
 		}
 		return m, nil
@@ -689,6 +718,19 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 				m.resourceCursor = 0
 				return m, nil
 			}
+		case key.Matches(msg, m.keys.Concentration):
+			if m.focusArea == FocusCombat {
+				if m.character.IsConcentrating() {
+					dropped := m.character.BreakConcentration()
+					m.concentrationSaveDC = 0
+					m.concentrationSaveSpell = ""
+					m.statusMessage = fmt.Sprintf("Ended concentration on %s", dropped)
+					m.saveCharacter()
+				} else {
+					m.statusMessage = "Not concentrating on any spell"
+				}
+				return m, nil
+			}
 		case key.Matches(msg, m.keys.NextActionType):
 			if m.focusArea == FocusActions {
 				m.selectedActionType = (m.selectedActionType + 1) % numActionTypes
@@ -861,10 +903,12 @@ func (m *MainSheetModel) handleHPInput(msg tea.KeyPressMsg) (*MainSheetModel, te
 		}
 
 		// Apply the HP change
+		var cmd tea.Cmd
 		switch m.hpInputMode {
 		case HPInputDamage:
 			m.character.CombatStats.HitPoints.TakeDamage(amount)
 			m.statusMessage = fmt.Sprintf("Took %d damage", amount)
+			cmd = m.handleConcentrationAfterDamage(amount)
 		case HPInputHeal:
 			m.character.CombatStats.HitPoints.Heal(amount)
 			m.statusMessage = fmt.Sprintf("Healed %d HP", amount)
@@ -888,7 +932,7 @@ func (m *MainSheetModel) handleHPInput(msg tea.KeyPressMsg) (*MainSheetModel, te
 
 		m.hpInputMode = HPInputNone
 		m.hpInputBuffer = ""
-		return m, nil
+		return m, cmd
 
 	case tea.KeyBackspace:
 		if len(m.hpInputBuffer) > 0 {
@@ -1134,7 +1178,8 @@ func (m *MainSheetModel) handleCastingInput(msg tea.KeyPressMsg) (*MainSheetMode
 	case tea.KeyEnter:
 		// Cast cantrip (no slot needed)
 		if m.castingSpell.Level == 0 {
-			m.statusMessage = fmt.Sprintf("Cast %s (cantrip)", m.castingSpell.Name)
+			note := m.concentrationNote(m.castingSpell)
+			m.statusMessage = fmt.Sprintf("Cast %s (cantrip)%s", m.castingSpell.Name, note)
 			m.castingSpell = nil
 			m.availableCastLevels = nil
 			return m, nil
@@ -1142,7 +1187,8 @@ func (m *MainSheetModel) handleCastingInput(msg tea.KeyPressMsg) (*MainSheetMode
 
 		// Cast as ritual (no slot needed)
 		if m.castingSpell.Ritual && len(m.availableCastLevels) == 0 {
-			m.statusMessage = fmt.Sprintf("Cast %s as ritual (10 minutes, no slot)", m.castingSpell.Name)
+			note := m.concentrationNote(m.castingSpell)
+			m.statusMessage = fmt.Sprintf("Cast %s as ritual (10 minutes, no slot)%s", m.castingSpell.Name, note)
 			m.castingSpell = nil
 			m.availableCastLevels = nil
 			return m, nil
@@ -2157,6 +2203,22 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		}
 	}
 
+	// Concentration (spellcasters, or anyone currently concentrating)
+	if char.Spellcasting != nil || char.IsConcentrating() {
+		lines = append(lines, "")
+		lines = append(lines, titleStyle.Render("Concentration"))
+		if char.IsConcentrating() {
+			concStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+			lines = append(lines, concStyle.Render("● "+char.Concentration))
+			if m.focusArea == FocusCombat {
+				hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Italic(true)
+				lines = append(lines, hintStyle.Render("C: break concentration"))
+			}
+		} else {
+			lines = append(lines, labelStyle.Render("None"))
+		}
+	}
+
 	// Active conditions (always show section with hint when focused)
 	lines = append(lines, "")
 	lines = append(lines, titleStyle.Render("Conditions"))
@@ -2973,7 +3035,7 @@ func (m *MainSheetModel) castSpellAtLevel(spell *data.SpellData, slotLevel int) 
 			if slotLevel > spell.Level {
 				upcastMsg = fmt.Sprintf(" (upcast to level %d)", slotLevel)
 			}
-			m.statusMessage = fmt.Sprintf("Cast %s%s using pact magic", spell.Name, upcastMsg)
+			m.statusMessage = fmt.Sprintf("Cast %s%s using pact magic%s", spell.Name, upcastMsg, m.concentrationNote(spell))
 			m.castingSpell = nil
 			m.availableCastLevels = nil
 			m.saveCharacter()
@@ -2987,7 +3049,7 @@ func (m *MainSheetModel) castSpellAtLevel(spell *data.SpellData, slotLevel int) 
 		if slotLevel > spell.Level {
 			upcastMsg = fmt.Sprintf(" (upcast to level %d)", slotLevel)
 		}
-		m.statusMessage = fmt.Sprintf("Cast %s%s using level %d slot", spell.Name, upcastMsg, slotLevel)
+		m.statusMessage = fmt.Sprintf("Cast %s%s using level %d slot%s", spell.Name, upcastMsg, slotLevel, m.concentrationNote(spell))
 		m.castingSpell = nil
 		m.availableCastLevels = nil
 		m.saveCharacter()
@@ -2996,6 +3058,55 @@ func (m *MainSheetModel) castSpellAtLevel(spell *data.SpellData, slotLevel int) 
 
 	m.statusMessage = "Failed to use spell slot"
 	return nil
+}
+
+// concentrationNote begins concentration if the spell requires it and returns a
+// short status suffix describing the change (empty when the spell needs no
+// concentration). Persists the character when concentration changes.
+func (m *MainSheetModel) concentrationNote(spell *data.SpellData) string {
+	if spell == nil || !spell.RequiresConcentration() {
+		return ""
+	}
+	dropped := m.character.StartConcentration(spell.Name)
+	m.saveCharacter()
+	if dropped != "" {
+		return fmt.Sprintf(" — concentrating (dropped %s)", dropped)
+	}
+	return " — concentrating"
+}
+
+// handleConcentrationAfterDamage reacts to the character taking damage while
+// concentrating: dropping to 0 HP breaks concentration outright, otherwise a
+// Constitution saving throw (DC = max(10, damage/2)) is prompted. The returned
+// command animates the save roll; its result is adjudicated in the
+// RollCompleteMsg handler.
+func (m *MainSheetModel) handleConcentrationAfterDamage(amount int) tea.Cmd {
+	if m.character == nil || !m.character.IsConcentrating() {
+		return nil
+	}
+
+	if m.character.CombatStats.HitPoints.Current <= 0 {
+		dropped := m.character.BreakConcentration()
+		m.concentrationSaveDC = 0
+		m.concentrationSaveSpell = ""
+		m.statusMessage = fmt.Sprintf("Took %d damage — concentration on %s broken (dropped to 0 HP)", amount, dropped)
+		return nil
+	}
+
+	dc := models.ConcentrationSaveDC(amount)
+	m.concentrationSaveDC = dc
+	m.concentrationSaveSpell = m.character.Concentration
+	conMod := m.character.GetSavingThrowModifier(models.AbilityConstitution)
+	m.statusMessage = fmt.Sprintf("Took %d damage — DC %d CON save to keep concentrating on %s", amount, dc, m.character.Concentration)
+	return func() tea.Msg {
+		return components.RequestRollMsg{
+			Label:     fmt.Sprintf("Concentration: %s (DC %d)", m.concentrationSaveSpell, dc),
+			DiceExpr:  "1d20",
+			Modifier:  conMod,
+			RollType:  components.RollSavingThrow,
+			AdvPrompt: true,
+		}
+	}
 }
 
 // spellRollCmd returns a tea.Cmd for dice rolls triggered by casting a damage spell.

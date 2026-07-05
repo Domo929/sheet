@@ -34,6 +34,11 @@ type Character struct {
 	// Resources holds limited-use class resource pools (Rage, Focus Points,
 	// Channel Divinity, etc.), kept in sync with class and level.
 	Resources []ResourcePool `json:"resources,omitempty"`
+
+	// Concentration is the name of the spell the character is currently
+	// concentrating on, or "" when not concentrating. Only one concentration
+	// spell can be active at a time (2024 rules).
+	Concentration string `json:"concentration,omitempty"`
 }
 
 // NewCharacter creates a new character with the given basic information.

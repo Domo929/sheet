@@ -1,6 +1,8 @@
 package data
 
 import (
+	"strings"
+
 	"github.com/Domo929/sheet/internal/domain"
 )
 
@@ -249,6 +251,13 @@ type SpellData struct {
 	SavingThrow string            `json:"savingThrow,omitempty"`
 	Scaling     map[string]string `json:"scaling,omitempty"`
 	Upcast      string            `json:"upcast,omitempty"`
+}
+
+// RequiresConcentration reports whether maintaining this spell requires
+// concentration, derived from its duration (e.g. "Concentration, up to 1
+// minute").
+func (s SpellData) RequiresConcentration() bool {
+	return strings.HasPrefix(strings.ToLower(s.Duration), "concentration")
 }
 
 // Background represents a character background.

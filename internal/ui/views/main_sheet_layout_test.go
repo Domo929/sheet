@@ -11,6 +11,7 @@ import (
 
 	"github.com/Domo929/sheet/internal/domain"
 	"github.com/Domo929/sheet/internal/models"
+	"github.com/Domo929/sheet/internal/ui/components"
 )
 
 // findLineContaining returns the first ANSI-stripped rendered line that contains sub.
@@ -232,4 +233,81 @@ func TestClassResourceOverlayFlow(t *testing.T) {
 	assert.False(t, model.resourceMode)
 
 	assert.LessOrEqual(t, maxLineWidth(model.View()), 100)
+}
+
+func TestConcentrationDisplayAndManualBreak(t *testing.T) {
+	char := models.NewCharacter("cid", "Wren", "Human", "Wizard")
+	char.Info.Level = 5
+	char.StartConcentration("Bless")
+
+	model := NewMainSheetModel(char, nil)
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
+
+	line, ok := findLineContaining(model.View(), "Concentration")
+	require.True(t, ok, "Combat panel should show a Concentration section")
+	assert.NotEmpty(t, line)
+	_, ok = findLineContaining(model.View(), "Bless")
+	assert.True(t, ok, "should display the concentrated spell")
+
+	// Manual break with capital C in the Combat panel.
+	model.focusArea = FocusCombat
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'C', Text: "C"})
+	assert.False(t, model.character.IsConcentrating(), "C should end concentration")
+}
+
+func TestConcentrationSaveOnDamage(t *testing.T) {
+	char := models.NewCharacter("cid", "Wren", "Human", "Wizard")
+	char.Info.Level = 5
+	char.CombatStats.HitPoints.Maximum = 40
+	char.CombatStats.HitPoints.Current = 40
+	char.StartConcentration("Bless")
+
+	model := NewMainSheetModel(char, nil)
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
+	model.focusArea = FocusCombat
+
+	// Take 20 damage -> DC 10 CON save prompted.
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '2', Text: "2"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '0', Text: "0"})
+	model, cmd := model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	require.NotNil(t, cmd, "damage while concentrating should prompt a save roll")
+	assert.Equal(t, 10, model.concentrationSaveDC)
+	assert.True(t, model.character.IsConcentrating(), "still concentrating until the save resolves")
+
+	// A failing save breaks concentration.
+	model, _ = model.Update(components.RollCompleteMsg{Entry: components.RollHistoryEntry{
+		Label: "Concentration: Bless (DC 10)", Total: 7,
+	}})
+	assert.False(t, model.character.IsConcentrating(), "failed save breaks concentration")
+
+	// Re-establish and pass a save: concentration holds.
+	model.character.StartConcentration("Bless")
+	model.concentrationSaveDC = 10
+	model.concentrationSaveSpell = "Bless"
+	model, _ = model.Update(components.RollCompleteMsg{Entry: components.RollHistoryEntry{
+		Label: "Concentration: Bless (DC 10)", Total: 18,
+	}})
+	assert.True(t, model.character.IsConcentrating(), "passed save keeps concentration")
+}
+
+func TestConcentrationBreaksAtZeroHP(t *testing.T) {
+	char := models.NewCharacter("cid", "Wren", "Human", "Wizard")
+	char.Info.Level = 5
+	char.CombatStats.HitPoints.Maximum = 10
+	char.CombatStats.HitPoints.Current = 6
+	char.StartConcentration("Bless")
+
+	model := NewMainSheetModel(char, nil)
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
+	model.focusArea = FocusCombat
+
+	// Massive damage drops to 0 -> concentration broken outright, no save roll.
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '9', Text: "9"})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '9', Text: "9"})
+	model, cmd := model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	assert.Nil(t, cmd, "no save roll when dropping to 0 HP")
+	assert.False(t, model.character.IsConcentrating())
+	assert.Equal(t, 0, model.character.CombatStats.HitPoints.Current)
 }
