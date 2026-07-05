@@ -337,7 +337,7 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 // NewMainSheetModel creates a new main sheet model.
 func NewMainSheetModel(character *models.Character, storage *storage.CharacterStorage) *MainSheetModel {
 	// Load spell database
-	loader := data.NewLoader("./data")
+	loader := data.NewEmbeddedLoader()
 	spellDB, _ := loader.GetSpells() // Ignore error for now, spells optional
 
 	return &MainSheetModel{
@@ -1210,8 +1210,11 @@ func (m *MainSheetModel) View() string {
 	// Render sections
 	header := m.renderHeader(width)
 	
-	// Width breakpoint: compact (<80) vs standard (≥80)
-	const compactBreakpoint = 80
+	// Width breakpoint: compact single-column (<90) vs standard two-column (≥90).
+	// The abilities/saves table needs a 38-column left panel (see below), so
+	// two-column mode only engages once the terminal is wide enough to also leave
+	// a usable right column.
+	const compactBreakpoint = 90
 
 	var mainContent string
 
@@ -1234,14 +1237,11 @@ func (m *MainSheetModel) View() string {
 		)
 	} else {
 		// Standard two-column layout
-		// Left column: proportional, capped at 38
-		leftWidth := width / 3
-		if leftWidth > 38 {
-			leftWidth = 38
-		}
-		if leftWidth < 28 {
-			leftWidth = 28
-		}
+		// The left column holds the fixed-width abilities/saves table, which needs 37
+		// columns to render a full row (cursor, name, score, mod, prof icon, save)
+		// inside its border and padding. Pin it to 38 so the table never wraps or
+		// truncates the save column; the right column absorbs the remaining width.
+		leftWidth := 38
 
 		historyReserved := 0
 		if m.rollHistoryVisible {

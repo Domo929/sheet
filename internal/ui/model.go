@@ -78,8 +78,8 @@ func NewModel() (Model, error) {
 		return Model{}, err
 	}
 
-	// Initialize data loader
-	loader := data.NewLoader("./data")
+	// Initialize data loader (reads game data embedded in the binary)
+	loader := data.NewEmbeddedLoader()
 
 	// Initialize character selection model
 	charSelectionModel := views.NewCharacterSelectionModel(store)

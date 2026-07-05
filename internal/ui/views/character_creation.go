@@ -1807,6 +1807,36 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 		m.character.Personality.Backstory = strings.TrimSpace(m.personalityBackstory)
 	}
 
+	// Add racial traits from the selected species (and chosen lineage/subtype)
+	if m.selectedRace != nil {
+		for _, trait := range m.selectedRace.Traits {
+			m.character.Features.AddRacialTrait(trait.Name, m.selectedRace.Name, trait.Description)
+		}
+		if m.selectedSubtype >= 0 && m.selectedSubtype < len(m.selectedRace.Subtypes) {
+			subtype := m.selectedRace.Subtypes[m.selectedSubtype]
+			source := fmt.Sprintf("%s (%s)", m.selectedRace.Name, subtype.Name)
+			for _, trait := range subtype.Traits {
+				m.character.Features.AddRacialTrait(trait.Name, source, trait.Description)
+			}
+		}
+	}
+
+	// Add level 1 class features from the selected class
+	if m.selectedClass != nil {
+		for _, feature := range m.selectedClass.Features {
+			if feature.Level == 1 {
+				source := fmt.Sprintf("%s %d", m.selectedClass.Name, feature.Level)
+				m.character.Features.AddClassFeature(feature.Name, source, feature.Description, feature.Level, feature.Activation)
+			}
+		}
+	}
+
+	// Apply the Origin Feat granted by the background (2024 rules)
+	m.applyBackgroundFeat()
+
+	// Initialize spellcasting: spell slots and Warlock pact magic at level 1
+	m.initializeSpellcasting()
+
 	// Save character
 	path, err := m.storage.Save(m.character)
 	if err != nil {
@@ -1820,6 +1850,98 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 			Path:      path,
 		}
 	}
+}
+
+// applyBackgroundFeat grants the Origin Feat from the selected background and
+// applies its mechanical effects. Background feats may carry a parenthetical
+// variant (e.g. "Magic Initiate (Cleric)"); the parenthetical is stripped for the
+// data lookup but preserved on the character sheet.
+func (m *CharacterCreationModel) applyBackgroundFeat() {
+	if m.selectedBackground == nil {
+		return
+	}
+	featName := strings.TrimSpace(m.selectedBackground.Feat)
+	if featName == "" {
+		return
+	}
+
+	lookupName := featName
+	if idx := strings.Index(lookupName, " ("); idx != -1 {
+		lookupName = strings.TrimSpace(lookupName[:idx])
+	}
+
+	feat, err := m.loader.FindFeatByName(lookupName)
+	if err != nil {
+		// Unknown feat: still record the name so the sheet reflects the background.
+		m.character.Features.AddFeat(featName, "")
+		return
+	}
+
+	m.character.Features.AddFeat(featName, feat.Description)
+
+	// Apply the feat's mechanical effects (mirrors level-up feat application).
+	effects := feat.Effects
+	if effects.AbilityScoreIncrease != nil && len(effects.AbilityScoreIncrease.Options) > 0 {
+		// No creation-time UI to choose the ability, so apply the first option.
+		ability := models.Ability(strings.ToLower(effects.AbilityScoreIncrease.Options[0]))
+		current := m.character.AbilityScores.Get(ability)
+		newBase := current.Base + effects.AbilityScoreIncrease.Amount
+		if newBase > 20 {
+			newBase = 20
+		}
+		m.character.AbilityScores.SetBase(ability, newBase)
+	}
+	if effects.InitiativeBonus != 0 {
+		m.character.CombatStats.Initiative += effects.InitiativeBonus
+	}
+	if effects.SpeedBonus != 0 {
+		m.character.CombatStats.Speed += effects.SpeedBonus
+	}
+	if effects.ACBonus != 0 {
+		m.character.CombatStats.ArmorClass += effects.ACBonus
+	}
+	if effects.HPPerLevel > 0 {
+		hpBonus := effects.HPPerLevel * m.character.Info.Level
+		m.character.CombatStats.HitPoints.Maximum += hpBonus
+		m.character.CombatStats.HitPoints.Current += hpBonus
+	}
+}
+
+// initializeSpellcasting sets up the Spellcasting block for spellcasting classes,
+// populating level 1 spell slots (or Warlock pact magic slots) so freshly created
+// casters can actually cast.
+func (m *CharacterCreationModel) initializeSpellcasting() {
+	if m.selectedClass == nil || !m.selectedClass.Spellcaster {
+		return
+	}
+
+	ability := models.Ability(strings.ToLower(m.selectedClass.SpellcastingAbility))
+	sc := models.NewSpellcasting(ability)
+	sc.RitualCaster = m.selectedClass.RitualCaster
+	sc.RitualCasterUnprepared = m.selectedClass.RitualCasterUnprepared
+
+	// Regular spell slots at level 1
+	for _, ss := range m.selectedClass.SpellSlots {
+		if ss.Level == 1 {
+			for lvl := 1; lvl <= 9; lvl++ {
+				if count := getSpellSlotCount(ss, lvl); count > 0 {
+					sc.SpellSlots.SetSlots(lvl, count)
+				}
+			}
+			break
+		}
+	}
+
+	// Warlock pact magic slots at level 1
+	for _, pms := range m.selectedClass.PactMagicSlots {
+		if pms.Level == 1 && pms.Slots > 0 {
+			pm := models.NewPactMagic(pms.SlotLevel, pms.Slots)
+			sc.PactMagic = &pm
+			break
+		}
+	}
+
+	m.character.Spellcasting = &sc
 }
 
 // categoryToItemType converts equipment category to ItemType.

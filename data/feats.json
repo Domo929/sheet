@@ -7,10 +7,6 @@
       "repeatable": false,
       "description": "You gain a +5 bonus to Initiative. You can't be surprised, and creatures you can't see don't gain Advantage on attack rolls against you. You can swap your Initiative with a willing ally at the start of combat.",
       "effects": {
-        "abilityScoreIncrease": {
-          "options": ["Dexterity", "Charisma", "Wisdom"],
-          "amount": 1
-        },
         "initiativeBonus": 5
       }
     },
@@ -20,12 +16,7 @@
       "prerequisite": "",
       "repeatable": false,
       "description": "You gain proficiency with three Artisan's Tools of your choice. Whenever you buy a nonmagical item, you pay 20% less for it. When you craft an item using a tool you have proficiency with, the required crafting time is reduced by 20%.",
-      "effects": {
-        "abilityScoreIncrease": {
-          "options": ["Intelligence", "Wisdom", "Charisma"],
-          "amount": 1
-        }
-      }
+      "effects": {}
     },
     {
       "name": "Healer",
@@ -33,12 +24,7 @@
       "prerequisite": "",
       "repeatable": false,
       "description": "You gain proficiency with the Medicine skill if you don't already have it. When you use a Healer's Kit to stabilize a dying creature, that creature regains 1d4 Hit Points. As a Utilize action, you can spend a use of a Healer's Kit to tend to a creature within 5 feet, restoring 2d4 + the creature's number of Hit Dice HP. A creature can benefit from this only once per Short or Long Rest.",
-      "effects": {
-        "abilityScoreIncrease": {
-          "options": ["Wisdom"],
-          "amount": 1
-        }
-      }
+      "effects": {}
     },
     {
       "name": "Lucky",
@@ -46,12 +32,7 @@
       "prerequisite": "",
       "repeatable": false,
       "description": "You have a number of Luck Points equal to your Proficiency Bonus. When you or a creature you can see makes a d20 Test, you can spend a Luck Point to give Advantage or Disadvantage on the roll. You regain all Luck Points when you finish a Long Rest.",
-      "effects": {
-        "abilityScoreIncrease": {
-          "options": ["Dexterity", "Constitution", "Charisma", "Intelligence", "Wisdom", "Strength"],
-          "amount": 1
-        }
-      }
+      "effects": {}
     },
     {
       "name": "Magic Initiate",
@@ -59,12 +40,7 @@
       "prerequisite": "",
       "repeatable": true,
       "description": "You learn two cantrips and one 1st-level spell from the Cleric, Druid, or Wizard spell list (chosen when you select this feat). You can cast the 1st-level spell once without a spell slot per Long Rest, or using any spell slots you have. You can replace one of these spells whenever you gain a level. Your spellcasting ability for these spells is Intelligence, Wisdom, or Charisma (chosen when you select this feat).",
-      "effects": {
-        "abilityScoreIncrease": {
-          "options": ["Intelligence", "Wisdom", "Charisma"],
-          "amount": 1
-        }
-      }
+      "effects": {}
     },
     {
       "name": "Musician",
@@ -72,12 +48,7 @@
       "prerequisite": "",
       "repeatable": false,
       "description": "You gain proficiency with three Musical Instruments of your choice. After you finish a Short or Long Rest, you can play a musical instrument and give Heroic Inspiration to a number of allies who hear the performance equal to your Proficiency Bonus.",
-      "effects": {
-        "abilityScoreIncrease": {
-          "options": ["Charisma", "Dexterity", "Intelligence"],
-          "amount": 1
-        }
-      }
+      "effects": {}
     },
     {
       "name": "Savage Attacker",
@@ -85,12 +56,7 @@
       "prerequisite": "",
       "repeatable": false,
       "description": "Once per turn when you hit with a weapon or Unarmed Strike, you can roll the damage dice twice and use either roll against the target.",
-      "effects": {
-        "abilityScoreIncrease": {
-          "options": ["Strength", "Dexterity", "Constitution"],
-          "amount": 1
-        }
-      }
+      "effects": {}
     },
     {
       "name": "Skilled",
@@ -98,12 +64,7 @@
       "prerequisite": "",
       "repeatable": false,
       "description": "You gain proficiency in any combination of three skills or tools of your choice.",
-      "effects": {
-        "abilityScoreIncrease": {
-          "options": ["Intelligence", "Wisdom", "Charisma", "Dexterity", "Strength", "Constitution"],
-          "amount": 1
-        }
-      }
+      "effects": {}
     },
     {
       "name": "Tavern Brawler",
@@ -113,7 +74,7 @@
       "description": "When you hit with an Unarmed Strike as part of the Attack action, you can deal damage and also push the target 5 feet away. You can also use your Bonus Action to grapple a creature you hit. You are proficient with Improvised Weapons, and when you roll a 1 on a damage die for an Unarmed Strike, you can reroll the die.",
       "effects": {
         "abilityScoreIncrease": {
-          "options": ["Strength", "Dexterity", "Constitution"],
+          "options": ["Strength", "Constitution"],
           "amount": 1
         }
       }
@@ -125,10 +86,6 @@
       "repeatable": false,
       "description": "Your Hit Point maximum increases by an amount equal to twice your character level when you gain this feat and by 2 whenever you gain a level thereafter.",
       "effects": {
-        "abilityScoreIncrease": {
-          "options": ["Constitution"],
-          "amount": 1
-        },
         "hpPerLevel": 2
       }
     },

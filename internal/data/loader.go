@@ -40,14 +40,24 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sync"
+
+	sheet "github.com/Domo929/sheet"
 )
 
 // Loader handles loading and caching of game data from JSON files.
 type Loader struct {
 	dataDir string
+
+	// fsys, when non-nil, is the filesystem the loader reads data files from
+	// (for example, the game data embedded into the binary at build time). When
+	// it is set, dataDir is ignored. When it is nil, data is read from disk
+	// relative to dataDir.
+	fsys fs.FS
 
 	// Cached data
 	races       *RaceData
@@ -62,8 +72,13 @@ type Loader struct {
 	mu sync.RWMutex
 }
 
-// NewLoader creates a new data loader with the specified data directory.
-// If dataDir is empty, it defaults to "./data".
+// NewLoader creates a new data loader that reads game data from disk, relative
+// to the specified data directory. If dataDir is empty, it defaults to "./data".
+//
+// For production use, prefer NewEmbeddedLoader, which reads the game data bundled
+// into the binary and therefore does not depend on the process's working
+// directory. NewLoader remains useful for tests and for overriding the bundled
+// data with files on disk.
 func NewLoader(dataDir string) *Loader {
 	if dataDir == "" {
 		dataDir = "./data"
@@ -71,6 +86,26 @@ func NewLoader(dataDir string) *Loader {
 	return &Loader{
 		dataDir: dataDir,
 	}
+}
+
+// NewEmbeddedLoader creates a data loader that reads the game data files
+// embedded into the binary at build time. The resulting loader is independent
+// of the current working directory, so the compiled executable can be run from
+// anywhere without a separate data/ folder.
+func NewEmbeddedLoader() *Loader {
+	return &Loader{
+		fsys: sheet.DataFS(),
+	}
+}
+
+// openDataFile opens the named data file (e.g. "races.json") from the loader's
+// embedded filesystem when one is configured, or from disk relative to dataDir
+// otherwise. The caller is responsible for closing the returned reader.
+func (l *Loader) openDataFile(name string) (io.ReadCloser, error) {
+	if l.fsys != nil {
+		return l.fsys.Open(name)
+	}
+	return os.Open(filepath.Join(l.dataDir, name))
 }
 
 // LoadAll loads all game data files at once.
@@ -374,8 +409,7 @@ func (l *Loader) ClearCache() {
 // Internal unsafe methods (must be called with lock held)
 
 func (l *Loader) loadRacesUnsafe() error {
-	path := filepath.Join(l.dataDir, "races.json")
-	f, err := os.Open(path)
+	f, err := l.openDataFile("races.json")
 	if err != nil {
 		return fmt.Errorf("failed to open races.json: %w", err)
 	}
@@ -395,8 +429,7 @@ func (l *Loader) loadRacesUnsafe() error {
 }
 
 func (l *Loader) loadClassesUnsafe() error {
-	path := filepath.Join(l.dataDir, "classes.json")
-	f, err := os.Open(path)
+	f, err := l.openDataFile("classes.json")
 	if err != nil {
 		return fmt.Errorf("failed to open classes.json: %w", err)
 	}
@@ -416,8 +449,7 @@ func (l *Loader) loadClassesUnsafe() error {
 }
 
 func (l *Loader) loadSpellsUnsafe() error {
-	path := filepath.Join(l.dataDir, "spells.json")
-	f, err := os.Open(path)
+	f, err := l.openDataFile("spells.json")
 	if err != nil {
 		return fmt.Errorf("failed to open spells.json: %w", err)
 	}
@@ -437,8 +469,7 @@ func (l *Loader) loadSpellsUnsafe() error {
 }
 
 func (l *Loader) loadBackgroundsUnsafe() error {
-	path := filepath.Join(l.dataDir, "backgrounds.json")
-	f, err := os.Open(path)
+	f, err := l.openDataFile("backgrounds.json")
 	if err != nil {
 		return fmt.Errorf("failed to open backgrounds.json: %w", err)
 	}
@@ -458,8 +489,7 @@ func (l *Loader) loadBackgroundsUnsafe() error {
 }
 
 func (l *Loader) loadConditionsUnsafe() error {
-	path := filepath.Join(l.dataDir, "conditions.json")
-	f, err := os.Open(path)
+	f, err := l.openDataFile("conditions.json")
 	if err != nil {
 		return fmt.Errorf("failed to open conditions.json: %w", err)
 	}
@@ -509,8 +539,7 @@ func (l *Loader) loadEquipmentUnsafe() error {
 		return nil
 	}
 
-	path := filepath.Join(l.dataDir, "equipment.json")
-	f, err := os.Open(path)
+	f, err := l.openDataFile("equipment.json")
 	if err != nil {
 		return fmt.Errorf("failed to open equipment.json: %w", err)
 	}
@@ -532,8 +561,7 @@ func (l *Loader) loadFeatsUnsafe() error {
 		return nil
 	}
 
-	path := filepath.Join(l.dataDir, "feats.json")
-	f, err := os.Open(path)
+	f, err := l.openDataFile("feats.json")
 	if err != nil {
 		return fmt.Errorf("failed to open feats.json: %w", err)
 	}
