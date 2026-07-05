@@ -226,6 +226,22 @@ func (sc *Spellcasting) GetPreparedSpells() []KnownSpell {
 	return prepared
 }
 
+// PreparedSpellCount reports whether a class prepares spells from its list and,
+// if so, how many it may prepare. Uses the 2024 prepared-caster progression:
+// the spellcasting ability modifier plus full class level for full casters, or
+// half level for half casters, with a minimum of 1. Non-preparing casters
+// (Bard, Sorcerer, Warlock) return false and are left ungated.
+func PreparedSpellCount(className string, level, abilityMod int) (prepares bool, maxPrepared int) {
+	switch className {
+	case "Cleric", "Druid", "Wizard":
+		return true, max(1, abilityMod+level)
+	case "Paladin", "Ranger", "Artificer":
+		return true, max(1, abilityMod+level/2)
+	default:
+		return false, 0
+	}
+}
+
 // CalculateSpellSaveDC calculates the spell save DC.
 func CalculateSpellSaveDC(abilityMod, proficiencyBonus int) int {
 	return 8 + abilityMod + proficiencyBonus

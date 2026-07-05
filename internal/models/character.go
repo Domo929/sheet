@@ -166,6 +166,19 @@ func (c *Character) IsSpellcaster() bool {
 	return c.Spellcasting != nil
 }
 
+// RecomputePreparedLimit refreshes the prepared-spell flag and limit from the
+// character's class, level, and spellcasting ability modifier. Non-preparing
+// casters are left ungated (PreparesSpells stays false).
+func (c *Character) RecomputePreparedLimit() {
+	if c.Spellcasting == nil {
+		return
+	}
+	mod := c.AbilityScores.GetModifier(c.Spellcasting.Ability)
+	prepares, maxPrep := PreparedSpellCount(c.Info.Class, c.Info.Level, mod)
+	c.Spellcasting.PreparesSpells = prepares
+	c.Spellcasting.MaxPrepared = maxPrep
+}
+
 // TakeDamage applies damage to the character.
 func (c *Character) TakeDamage(damage int) {
 	c.CombatStats.HitPoints.TakeDamage(damage)
@@ -216,6 +229,9 @@ func (c *Character) LongRest() {
 
 	// Restore all class resource pools
 	c.RestoreResources(true)
+
+	// Refresh the prepared-spell limit (2024: re-prepare on a long rest).
+	c.RecomputePreparedLimit()
 
 	c.TurnState.ResetTurn()
 	c.MarkUpdated()

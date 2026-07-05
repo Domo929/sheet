@@ -131,6 +131,9 @@ func (m *SpellbookModel) SetRollHistoryState(visible bool, width int) {
 
 // NewSpellbookModel creates a new spellbook model.
 func NewSpellbookModel(char *models.Character, storage *storage.CharacterStorage, loader *data.Loader) *SpellbookModel {
+	if char != nil {
+		char.RecomputePreparedLimit()
+	}
 	return &SpellbookModel{
 		character:     char,
 		storage:       storage,

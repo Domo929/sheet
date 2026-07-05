@@ -1104,6 +1104,7 @@ func (m *LevelUpModel) applyLevelUp() {
 	}
 
 	// 8. Mark updated and save
+	char.RecomputePreparedLimit()
 	char.MarkUpdated()
 	if m.storage != nil {
 		_ = m.storage.AutoSave(char)

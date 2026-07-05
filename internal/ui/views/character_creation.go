@@ -2009,6 +2009,7 @@ func (m *CharacterCreationModel) initializeSpellcasting() {
 	}
 
 	m.character.Spellcasting = &sc
+	m.character.RecomputePreparedLimit()
 }
 
 // categoryToItemType converts equipment category to ItemType.
