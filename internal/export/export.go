@@ -133,7 +133,11 @@ func writeHeader(b *strings.Builder, c *models.Character) {
 	if info.Subclass != "" {
 		class = fmt.Sprintf("%s (%s)", info.Class, info.Subclass)
 	}
-	fmt.Fprintf(b, "**Level %d %s %s**\n\n", info.Level, race, class)
+	if c.IsMulticlass() {
+		fmt.Fprintf(b, "**Level %d %s — %s**\n\n", c.TotalLevel(), race, c.ClassSummary())
+	} else {
+		fmt.Fprintf(b, "**Level %d %s %s**\n\n", info.Level, race, class)
+	}
 
 	var meta []string
 	if info.Background != "" {

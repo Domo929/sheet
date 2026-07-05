@@ -34,6 +34,7 @@ const (
 	ViewRest
 	ViewNotes
 	ViewCompanions
+	ViewMulticlass
 )
 
 // minRollHistoryWidth is the minimum terminal width required to show the roll history column.
@@ -66,6 +67,7 @@ type Model struct {
 	notesEditorModel        *views.NotesEditorModel
 	characterInfoModel      *views.CharacterInfoModel
 	companionsModel         *views.CompanionsModel
+	multiclassModel         *views.MulticlassModel
 
 	// Roll engine and history (shared across views)
 	rollEngine  *components.RollEngine
@@ -203,6 +205,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.currentView = ViewCompanions
 		return m, m.companionsModel.Init()
+
+	case views.OpenMulticlassMsg:
+		// Navigate to multiclass management view
+		m.multiclassModel = views.NewMulticlassModel(m.character, m.storage, m.loader)
+		if msg := m.sizeMsg(); msg != nil {
+			m.multiclassModel, _ = m.multiclassModel.Update(*msg)
+		}
+		m.currentView = ViewMulticlass
+		return m, m.multiclassModel.Init()
 
 	case views.OpenLevelUpMsg:
 		// Navigate to level-up wizard
@@ -386,6 +397,12 @@ func (m Model) updateCurrentView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.companionsModel = updatedModel
 			cmd = c
 		}
+	case ViewMulticlass:
+		if m.multiclassModel != nil {
+			updatedModel, c := m.multiclassModel.Update(msg)
+			m.multiclassModel = updatedModel
+			cmd = c
+		}
 	case ViewLevelUp:
 		if m.levelUpModel != nil {
 			updatedModel, c := m.levelUpModel.Update(msg)
@@ -449,6 +466,10 @@ func (m Model) currentCursor() *tea.Cursor {
 		if cp, ok := interface{}(m.companionsModel).(CursorProvider); ok {
 			return cp.CursorInfo()
 		}
+	case ViewMulticlass:
+		if cp, ok := interface{}(m.multiclassModel).(CursorProvider); ok {
+			return cp.CursorInfo()
+		}
 	}
 	return nil
 }
@@ -508,6 +529,8 @@ func (m Model) View() tea.View {
 		return m.newView(m.renderNotes())
 	case ViewCompanions:
 		return m.newView(m.renderCompanions())
+	case ViewMulticlass:
+		return m.newView(m.renderMulticlass())
 	default:
 		return m.newView("Unknown view")
 	}
@@ -605,4 +628,11 @@ func (m Model) renderCompanions() string {
 		return m.companionsModel.View()
 	}
 	return "Companions View (loading...)"
+}
+
+func (m Model) renderMulticlass() string {
+	if m.multiclassModel != nil {
+		return m.multiclassModel.View()
+	}
+	return "Multiclass View (loading...)"
 }

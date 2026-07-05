@@ -239,6 +239,7 @@ type mainSheetKeyMap struct {
 	MoveStep       key.Binding // ] (spend 5 ft movement)
 	MoveBack       key.Binding // [ (refund 5 ft movement)
 	Export         key.Binding // E (export sheet to Markdown + JSON)
+	Multiclass     key.Binding // M (manage classes / multiclassing)
 }
 
 func defaultMainSheetKeyMap() mainSheetKeyMap {
@@ -390,6 +391,10 @@ func defaultMainSheetKeyMap() mainSheetKeyMap {
 		Export: key.NewBinding(
 			key.WithKeys("E"),
 			key.WithHelp("E", "export sheet"),
+		),
+		Multiclass: key.NewBinding(
+			key.WithKeys("M"),
+			key.WithHelp("M", "multiclass"),
 		),
 	}
 }
@@ -790,6 +795,8 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 		case key.Matches(msg, m.keys.Export):
 			m.exportSheet()
 			return m, nil
+		case key.Matches(msg, m.keys.Multiclass):
+			return m, func() tea.Msg { return OpenMulticlassMsg{} }
 		case key.Matches(msg, m.keys.ToggleSlot):
 			if m.focusArea == FocusActions {
 				switch m.selectedActionType {
@@ -1704,10 +1711,13 @@ func (m *MainSheetModel) renderHeader(width int) string {
 	name := titleStyle.Render(char.Info.Name)
 
 	// Race and class line
-	raceClass := fmt.Sprintf("%s %s %d",
+	classText := fmt.Sprintf("%s %d", char.Info.Class, char.Info.Level)
+	if char.IsMulticlass() {
+		classText = char.ClassSummary()
+	}
+	raceClass := fmt.Sprintf("%s %s",
 		char.Info.Race,
-		char.Info.Class,
-		char.Info.Level,
+		classText,
 	)
 
 	// XP or Milestone
@@ -3284,7 +3294,7 @@ func (m *MainSheetModel) renderFooter(width int) string {
 		Foreground(lipgloss.Color("244")).
 		Width(width)
 
-	help := "tab: panels • i: inventory • s: spellbook • c: char info • n: notes • o: companions • /: roll dice • `: luck • H: history • r: rest • E: export • esc: back • q: quit"
+	help := "tab: panels • i: inventory • s: spellbook • c: char info • n: notes • o: companions • M: multiclass • /: roll dice • `: luck • H: history • r: rest • E: export • esc: back • q: quit"
 
 	// Show condition selection if in condition mode
 	if m.conditionMode {

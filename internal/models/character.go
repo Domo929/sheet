@@ -47,6 +47,10 @@ type Character struct {
 	// Companions holds the stat blocks of pets, familiars, summoned creatures,
 	// mounts, and active Wild Shape forms associated with the character.
 	Companions []Companion `json:"companions,omitempty"`
+
+	// Classes holds the per-class level breakdown for multiclassed characters.
+	// When empty, the character is single-class and Info.Class/Info.Level apply.
+	Classes []ClassLevel `json:"classes,omitempty"`
 }
 
 // NewCharacter creates a new character with the given basic information.
