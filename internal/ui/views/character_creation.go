@@ -60,6 +60,11 @@ type CharacterCreationModel struct {
 	// Background step
 	backgroundList       components.List
 	selectedBackground   *data.Background
+
+	// Origin feat ability-score choice (only used when the background's origin
+	// feat grants an ASI with more than one option, e.g. Tavern Brawler's
+	// +1 Strength or Constitution). Index into the feat's ASI options.
+	originFeatASIChoice  int
 	
 	// Ability Score step
 	abilityScoreMode         AbilityScoreMode // Manual, Standard Array, or Point Buy
@@ -961,12 +966,27 @@ func (m *CharacterCreationModel) handleReviewKeys(msg tea.KeyPressMsg) (*Charact
 	case "enter":
 		// Save character
 		return m.finalizeCharacter()
-		
+
+	case "left", "h", "right", "l":
+		// Toggle the origin feat ASI ability choice, when the background's
+		// origin feat offers one (e.g. Tavern Brawler: Strength or Constitution).
+		if opts, _ := m.originFeatASIOptions(); len(opts) > 1 {
+			if m.originFeatASIChoice < 0 || m.originFeatASIChoice >= len(opts) {
+				m.originFeatASIChoice = 0
+			}
+			if msg.String() == "left" || msg.String() == "h" {
+				m.originFeatASIChoice = (m.originFeatASIChoice - 1 + len(opts)) % len(opts)
+			} else {
+				m.originFeatASIChoice = (m.originFeatASIChoice + 1) % len(opts)
+			}
+		}
+		return m, nil
+
 	case "esc":
 		// Go back to personality
 		return m.moveToStep(StepPersonality)
 	}
-	
+
 	return m, nil
 }
 
@@ -1861,6 +1881,33 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 	}
 }
 
+// originFeatASIOptions returns the ability options offered by the selected
+// background's origin feat when that feat grants a choosable ASI (more than one
+// option), along with the resolved feat display name. It returns nil when there
+// is no such choice (the feat has no ASI, only one option, or is unknown).
+func (m *CharacterCreationModel) originFeatASIOptions() ([]string, string) {
+	if m.selectedBackground == nil || m.loader == nil {
+		return nil, ""
+	}
+	featName := strings.TrimSpace(m.selectedBackground.Feat)
+	if featName == "" {
+		return nil, ""
+	}
+	lookupName := featName
+	if idx := strings.Index(lookupName, " ("); idx != -1 {
+		lookupName = strings.TrimSpace(lookupName[:idx])
+	}
+	feat, err := m.loader.FindFeatByName(lookupName)
+	if err != nil || feat.Effects.AbilityScoreIncrease == nil {
+		return nil, ""
+	}
+	opts := feat.Effects.AbilityScoreIncrease.Options
+	if len(opts) < 2 {
+		return nil, ""
+	}
+	return opts, featName
+}
+
 // applyBackgroundFeat grants the Origin Feat from the selected background and
 // applies its mechanical effects. Background feats may carry a parenthetical
 // variant (e.g. "Magic Initiate (Cleric)"); the parenthetical is stripped for the
@@ -1891,8 +1938,14 @@ func (m *CharacterCreationModel) applyBackgroundFeat() {
 	// Apply the feat's mechanical effects (mirrors level-up feat application).
 	effects := feat.Effects
 	if effects.AbilityScoreIncrease != nil && len(effects.AbilityScoreIncrease.Options) > 0 {
-		// No creation-time UI to choose the ability, so apply the first option.
-		ability := models.Ability(strings.ToLower(effects.AbilityScoreIncrease.Options[0]))
+		// Use the player's chosen option when the feat offers a choice
+		// (selectable on the Review step); otherwise the sole option.
+		opts := effects.AbilityScoreIncrease.Options
+		choice := m.originFeatASIChoice
+		if choice < 0 || choice >= len(opts) {
+			choice = 0
+		}
+		ability := models.Ability(strings.ToLower(opts[choice]))
 		current := m.character.AbilityScores.Get(ability)
 		newBase := current.Base + effects.AbilityScoreIncrease.Amount
 		if newBase > 20 {
@@ -2757,7 +2810,25 @@ func (m *CharacterCreationModel) renderReview() string {
 	if m.selectedBackground != nil {
 		content.WriteString(labelStyle.Render("Background: "))
 		content.WriteString(m.selectedBackground.Name)
-		content.WriteString("\n\n")
+		content.WriteString("\n")
+	}
+
+	// Origin feat ability-score choice (e.g. Tavern Brawler: Strength or
+	// Constitution). Only shown when the origin feat offers a choice.
+	if opts, featName := m.originFeatASIOptions(); len(opts) > 1 {
+		choice := m.originFeatASIChoice
+		if choice < 0 || choice >= len(opts) {
+			choice = 0
+		}
+		choiceStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
+		content.WriteString(labelStyle.Render(fmt.Sprintf("%s ASI (+1): ", featName)))
+		content.WriteString(choiceStyle.Render("◀ " + opts[choice] + " ▶"))
+		content.WriteString(helpStyle.Render("  (←/→ to change)"))
+		content.WriteString("\n")
+	}
+
+	if m.selectedBackground != nil {
+		content.WriteString("\n")
 	}
 	
 	// Ability Scores

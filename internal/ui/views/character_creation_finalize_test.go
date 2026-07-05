@@ -146,3 +146,43 @@ func TestFinalizePopulatesTraitsAndClassFeatures(t *testing.T) {
 	}
 	assert.Contains(t, names, "Second Wind", "Fighter should gain Second Wind at level 1")
 }
+
+// TestFinalizeOriginFeatASIChoiceConstitution verifies that when the origin feat
+// offers an ability choice (Tavern Brawler: Strength or Constitution), the
+// player's Review-step selection is applied instead of the default first option.
+func TestFinalizeOriginFeatASIChoiceConstitution(t *testing.T) {
+	model, loader := newFinalizeTestModel(t)
+	fighter, err := loader.FindClassByName("Fighter")
+	require.NoError(t, err)
+	model.selectedClass = fighter
+	model.selectedBackground = &data.Background{Name: "Test", Feat: "Tavern Brawler"}
+
+	// Player toggled the choice to the second option (Constitution).
+	opts, featName := model.originFeatASIOptions()
+	require.Equal(t, "Tavern Brawler", featName)
+	require.Equal(t, []string{"Strength", "Constitution"}, opts)
+	model.originFeatASIChoice = 1
+
+	model.finalizeCharacter()
+
+	// CON started at 13 in the deterministic array (index 2); +1 from the feat.
+	assert.Equal(t, 14, model.character.AbilityScores.Constitution.Base,
+		"the chosen ability (Constitution) should get the feat ASI")
+	assert.Equal(t, 15, model.character.AbilityScores.Strength.Base,
+		"Strength should be unchanged when Constitution is chosen")
+}
+
+// TestOriginFeatASIOptionsNoneForSingleOption confirms the Review toggle is not
+// offered for feats whose ASI has a single fixed ability, nor for feats with no
+// ASI at all.
+func TestOriginFeatASIOptionsNoneForSingleOption(t *testing.T) {
+	model, _ := newFinalizeTestModel(t)
+
+	model.selectedBackground = &data.Background{Name: "Test", Feat: "Actor"} // +1 Charisma only
+	opts, _ := model.originFeatASIOptions()
+	assert.Empty(t, opts, "single-option feat ASI should not present a choice")
+
+	model.selectedBackground = &data.Background{Name: "Test", Feat: "Alert"} // no ASI
+	opts, _ = model.originFeatASIOptions()
+	assert.Empty(t, opts, "feat without ASI should not present a choice")
+}

@@ -790,3 +790,78 @@ func TestLevelUpModel_CasterConfirmAppliesSpellSlots(t *testing.T) {
 	assert.Equal(t, 2, char.Info.Level, "Wizard should be level 2")
 	require.NotNil(t, char.Spellcasting, "Wizard should have spellcasting after level up")
 }
+
+// TestLevelUpModel_FeatASIApplied locks in that a half-feat's ability score
+// increase is applied to the chosen ability when a level-up feat is confirmed.
+func TestLevelUpModel_FeatASIApplied(t *testing.T) {
+	char := newTestFighter()
+	char.Info.Level = 3 // leveling to 4 (ASI/feat available)
+	char.Info.Subclass = "Champion"
+	char.AbilityScores.SetBase(models.AbilityDexterity, 14)
+
+	store := newTestStore(t)
+	loader := newTestLoader()
+	model := NewLevelUpModel(char, store, loader)
+
+	// Athlete is a half-feat granting +1 Strength or Dexterity.
+	athlete, err := loader.FindFeatByName("Athlete")
+	require.NoError(t, err)
+	model.stagedFeat = athlete
+	model.featASIAbility = "dexterity"
+
+	model.applyLevelUp()
+
+	assert.Equal(t, 15, char.AbilityScores.Dexterity.Base, "chosen feat ASI ability should gain +1")
+	var found bool
+	for _, f := range char.Features.Feats {
+		if f.Name == "Athlete" {
+			found = true
+		}
+	}
+	assert.True(t, found, "feat should be recorded on the sheet")
+}
+
+// TestLevelUpModel_FeatASIClampsAt20 ensures a feat ASI never pushes an ability
+// above the hard cap of 20.
+func TestLevelUpModel_FeatASIClampsAt20(t *testing.T) {
+	char := newTestFighter()
+	char.Info.Level = 3
+	char.Info.Subclass = "Champion"
+	char.AbilityScores.SetBase(models.AbilityStrength, 20)
+
+	store := newTestStore(t)
+	loader := newTestLoader()
+	model := NewLevelUpModel(char, store, loader)
+
+	gwm, err := loader.FindFeatByName("Great Weapon Master") // +1 Strength
+	require.NoError(t, err)
+	model.stagedFeat = gwm
+	model.featASIAbility = "strength"
+
+	model.applyLevelUp()
+
+	assert.Equal(t, 20, char.AbilityScores.Strength.Base, "feat ASI must not exceed 20")
+}
+
+// TestLevelUpModel_NoASIFeatLeavesScores ensures a feat without an ASI (e.g.
+// Alert) does not alter any ability score.
+func TestLevelUpModel_NoASIFeatLeavesScores(t *testing.T) {
+	char := newTestFighter()
+	char.Info.Level = 3
+	char.Info.Subclass = "Champion"
+	before := char.AbilityScores
+
+	store := newTestStore(t)
+	loader := newTestLoader()
+	model := NewLevelUpModel(char, store, loader)
+
+	alert, err := loader.FindFeatByName("Alert")
+	require.NoError(t, err)
+	model.stagedFeat = alert
+
+	model.applyLevelUp()
+
+	assert.Equal(t, before.Strength.Base, char.AbilityScores.Strength.Base)
+	assert.Equal(t, before.Dexterity.Base, char.AbilityScores.Dexterity.Base)
+	assert.Equal(t, before.Constitution.Base, char.AbilityScores.Constitution.Base)
+}
