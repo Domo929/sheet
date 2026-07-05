@@ -1,6 +1,10 @@
 package models
 
-import "github.com/Domo929/sheet/internal/domain"
+import (
+	"fmt"
+
+	"github.com/Domo929/sheet/internal/domain"
+)
 
 // HitPoints tracks the character's hit points.
 type HitPoints struct {
@@ -222,6 +226,38 @@ func AllConditions() []Condition {
 	}
 }
 
+// Senses holds the ranges (in feet) of a character's special senses. A zero
+// value means the character lacks that sense.
+type Senses struct {
+	Darkvision  int `json:"darkvision,omitempty"`
+	Blindsight  int `json:"blindsight,omitempty"`
+	Tremorsense int `json:"tremorsense,omitempty"`
+	Truesight   int `json:"truesight,omitempty"`
+}
+
+// IsEmpty reports whether the character has no special senses.
+func (s Senses) IsEmpty() bool {
+	return s.Darkvision == 0 && s.Blindsight == 0 && s.Tremorsense == 0 && s.Truesight == 0
+}
+
+// List returns human-readable "Sense N ft" labels for each non-zero sense.
+func (s Senses) List() []string {
+	var out []string
+	if s.Darkvision > 0 {
+		out = append(out, fmt.Sprintf("Darkvision %d ft", s.Darkvision))
+	}
+	if s.Blindsight > 0 {
+		out = append(out, fmt.Sprintf("Blindsight %d ft", s.Blindsight))
+	}
+	if s.Tremorsense > 0 {
+		out = append(out, fmt.Sprintf("Tremorsense %d ft", s.Tremorsense))
+	}
+	if s.Truesight > 0 {
+		out = append(out, fmt.Sprintf("Truesight %d ft", s.Truesight))
+	}
+	return out
+}
+
 // CombatStats contains all combat-related statistics.
 type CombatStats struct {
 	HitPoints       HitPoints   `json:"hitPoints"`
@@ -229,6 +265,11 @@ type CombatStats struct {
 	ArmorClass      int         `json:"armorClass"`
 	Initiative      int         `json:"initiative"`
 	Speed           int         `json:"speed"`
+	FlySpeed        int         `json:"flySpeed,omitempty"`
+	SwimSpeed       int         `json:"swimSpeed,omitempty"`
+	ClimbSpeed      int         `json:"climbSpeed,omitempty"`
+	BurrowSpeed     int         `json:"burrowSpeed,omitempty"`
+	Senses          Senses      `json:"senses,omitempty"`
 	DeathSaves      DeathSaves  `json:"deathSaves"`
 	Conditions      []Condition `json:"conditions,omitempty"`
 	ExhaustionLevel int         `json:"exhaustionLevel,omitempty"`

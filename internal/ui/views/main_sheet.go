@@ -372,6 +372,7 @@ func NewMainSheetModel(character *models.Character, storage *storage.CharacterSt
 	// existing saved characters gain any newly-defined pools.
 	if character != nil {
 		character.SyncResources()
+		character.SyncSenses()
 	}
 
 	return &MainSheetModel{
@@ -2084,11 +2085,32 @@ func (m *MainSheetModel) renderCombatStats(width int) string {
 		valueStyle.Render(formatModifier(init)),
 	))
 
-	// Speed
-	lines = append(lines, fmt.Sprintf("%s %s ft",
+	// Speed (walking, plus any special movement modes)
+	speedParts := []string{fmt.Sprintf("%d ft", char.GetEffectiveSpeed())}
+	if char.CombatStats.FlySpeed > 0 {
+		speedParts = append(speedParts, fmt.Sprintf("Fly %d", char.CombatStats.FlySpeed))
+	}
+	if char.CombatStats.SwimSpeed > 0 {
+		speedParts = append(speedParts, fmt.Sprintf("Swim %d", char.CombatStats.SwimSpeed))
+	}
+	if char.CombatStats.ClimbSpeed > 0 {
+		speedParts = append(speedParts, fmt.Sprintf("Climb %d", char.CombatStats.ClimbSpeed))
+	}
+	if char.CombatStats.BurrowSpeed > 0 {
+		speedParts = append(speedParts, fmt.Sprintf("Burrow %d", char.CombatStats.BurrowSpeed))
+	}
+	lines = append(lines, fmt.Sprintf("%s %s",
 		labelStyle.Render("Speed:"),
-		valueStyle.Render(fmt.Sprintf("%d", char.GetEffectiveSpeed())),
+		valueStyle.Render(strings.Join(speedParts, ", ")),
 	))
+
+	// Senses (Darkvision, Blindsight, etc.)
+	if senses := char.CombatStats.Senses.List(); len(senses) > 0 {
+		lines = append(lines, fmt.Sprintf("%s %s",
+			labelStyle.Render("Senses:"),
+			valueStyle.Render(strings.Join(senses, ", ")),
+		))
+	}
 
 	// Hit Dice
 	hd := char.CombatStats.HitDice

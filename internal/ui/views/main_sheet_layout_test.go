@@ -311,3 +311,23 @@ func TestConcentrationBreaksAtZeroHP(t *testing.T) {
 	assert.False(t, model.character.IsConcentrating())
 	assert.Equal(t, 0, model.character.CombatStats.HitPoints.Current)
 }
+
+func TestSpeedsAndSensesDisplay(t *testing.T) {
+	char := models.NewCharacter("sid", "Aria", "Aasimar", "Cleric")
+	char.CombatStats.Senses.Darkvision = 60
+	char.CombatStats.FlySpeed = 30
+	char.CombatStats.SwimSpeed = 20
+
+	model := NewMainSheetModel(char, nil)
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
+	render := model.View()
+
+	speedLine, ok := findLineContaining(render, "Speed:")
+	require.True(t, ok)
+	assert.Contains(t, speedLine, "Fly 30")
+	assert.Contains(t, speedLine, "Swim 20")
+
+	sensesLine, ok := findLineContaining(render, "Senses:")
+	require.True(t, ok, "should show a Senses line when the character has special senses")
+	assert.Contains(t, sensesLine, "Darkvision 60 ft")
+}

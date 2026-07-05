@@ -1821,6 +1821,13 @@ func (m *CharacterCreationModel) finalizeCharacter() (*CharacterCreationModel, t
 				m.character.Features.AddRacialTrait(trait.Name, source, trait.Description)
 			}
 		}
+
+		// Derive special senses (Darkvision, etc.) and any permanent
+		// walking-speed override (e.g. Wood Elf) from the trait text.
+		m.character.SyncSenses()
+		if override := models.DeriveWalkSpeedOverride(m.character.Features.RacialTraits); override > m.character.CombatStats.Speed {
+			m.character.CombatStats.Speed = override
+		}
 	}
 
 	// Add level 1 class features from the selected class
