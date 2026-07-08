@@ -17,6 +17,11 @@ type ClassResource struct {
 	Name     string
 	Max      int
 	Recharge ResourceRecharge
+	// ShortRestRecovery is the number of expended uses regained on a Short
+	// Rest for a long-recharge pool that partially recovers (e.g. 2024 Rage
+	// and Channel Divinity regain one use per Short Rest). Zero for pools with
+	// no partial short-rest recovery.
+	ShortRestRecovery int
 }
 
 // ClassResources returns the limited-use resource pools granted by a class at
@@ -34,10 +39,23 @@ func ClassResources(class string, level, chaMod int) []ClassResource {
 			out = append(out, ClassResource{Name: name, Max: max, Recharge: r})
 		}
 	}
+	// addPartial adds a long-recharge pool that regains a limited number of
+	// uses on a Short Rest (2024 Rage and Channel Divinity: one use per Short
+	// Rest, all on a Long Rest).
+	addPartial := func(name string, max, shortRecovery int) {
+		if max > 0 {
+			out = append(out, ClassResource{
+				Name:              name,
+				Max:               max,
+				Recharge:          RechargeLongRest,
+				ShortRestRecovery: shortRecovery,
+			})
+		}
+	}
 
 	switch strings.ToLower(strings.TrimSpace(class)) {
 	case "barbarian":
-		add("Rage", rageUses(level), RechargeLongRest)
+		addPartial("Rage", rageUses(level), 1)
 	case "bard":
 		bardic := chaMod
 		if bardic < 1 {
@@ -45,7 +63,7 @@ func ClassResources(class string, level, chaMod int) []ClassResource {
 		}
 		add("Bardic Inspiration", bardic, RechargeShortRest)
 	case "cleric":
-		add("Channel Divinity", clericChannelDivinity(level), RechargeShortRest)
+		addPartial("Channel Divinity", clericChannelDivinity(level), 1)
 	case "druid":
 		add("Wild Shape", wildShapeUses(level), RechargeShortRest)
 	case "fighter":
@@ -57,7 +75,7 @@ func ClassResources(class string, level, chaMod int) []ClassResource {
 		}
 	case "paladin":
 		add("Lay on Hands", 5*level, RechargeLongRest)
-		add("Channel Divinity", paladinChannelDivinity(level), RechargeShortRest)
+		addPartial("Channel Divinity", paladinChannelDivinity(level), 1)
 	case "sorcerer":
 		if level >= 2 {
 			add("Sorcery Points", level, RechargeLongRest)

@@ -10,6 +10,10 @@ type ResourcePool struct {
 	Current  int    `json:"current"`
 	Max      int    `json:"max"`
 	Recharge string `json:"recharge"` // "short" or "long"
+	// ShortRestRecovery is the number of expended uses regained on a short rest
+	// for a long-recharge pool with partial recovery (2024 Rage, Channel
+	// Divinity). Zero means no short-rest recovery.
+	ShortRestRecovery int `json:"shortRestRecovery,omitempty"`
 }
 
 // SyncResources rebuilds the character's class resource pools from the 2024
@@ -37,21 +41,31 @@ func (c *Character) SyncResources() {
 			}
 		}
 		out = append(out, ResourcePool{
-			Name:     d.Name,
-			Current:  current,
-			Max:      d.Max,
-			Recharge: string(d.Recharge),
+			Name:              d.Name,
+			Current:           current,
+			Max:               d.Max,
+			Recharge:          string(d.Recharge),
+			ShortRestRecovery: d.ShortRestRecovery,
 		})
 	}
 	c.Resources = out
 }
 
 // RestoreResources refills class resource pools for a rest. A long rest refills
-// every pool; a short rest refills only pools that recharge on a short rest.
+// every pool. A short rest refills pools that recharge on a short rest, and
+// grants partial recovery (ShortRestRecovery uses, capped at Max) to
+// long-recharge pools that recover some uses on a short rest (2024 Rage and
+// Channel Divinity).
 func (c *Character) RestoreResources(longRest bool) {
 	for i := range c.Resources {
-		if longRest || c.Resources[i].Recharge == string(domain.RechargeShortRest) {
+		switch {
+		case longRest || c.Resources[i].Recharge == string(domain.RechargeShortRest):
 			c.Resources[i].Current = c.Resources[i].Max
+		case c.Resources[i].ShortRestRecovery > 0:
+			c.Resources[i].Current += c.Resources[i].ShortRestRecovery
+			if c.Resources[i].Current > c.Resources[i].Max {
+				c.Resources[i].Current = c.Resources[i].Max
+			}
 		}
 	}
 }

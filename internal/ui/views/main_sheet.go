@@ -457,6 +457,7 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			hp.Heal(healing)
 
 			// Call short rest for other effects (warlock slots, etc)
+			resBefore, pactBefore := m.resourceSnapshot()
 			m.character.ShortRest()
 			m.saveCharacter()
 
@@ -472,6 +473,8 @@ func (m *MainSheetModel) Update(msg tea.Msg) (*MainSheetModel, tea.Cmd) {
 			result.WriteString(fmt.Sprintf("\nHit Dice Remaining: %d/%d",
 				m.character.CombatStats.HitDice.Remaining,
 				m.character.CombatStats.HitDice.Total))
+
+			result.WriteString(m.restResourceSummary(resBefore, pactBefore))
 
 			m.restResult = result.String()
 			m.restMode = RestModeResult
@@ -1406,6 +1409,40 @@ func (m *MainSheetModel) handleRestInput(msg tea.KeyPressMsg) (*MainSheetModel, 
 	return m, nil
 }
 
+// resourceSnapshot captures the current values of class resource pools and pact
+// magic slots before a rest, so restoration can be reported afterward.
+func (m *MainSheetModel) resourceSnapshot() (map[string]int, int) {
+	before := make(map[string]int, len(m.character.Resources))
+	for _, p := range m.character.Resources {
+		before[p.Name] = p.Current
+	}
+	pact := -1
+	if m.character.Spellcasting != nil && m.character.Spellcasting.PactMagic != nil {
+		pact = m.character.Spellcasting.PactMagic.Remaining
+	}
+	return before, pact
+}
+
+// restResourceSummary returns lines describing class resource and pact magic
+// pools that changed between the pre-rest snapshot and the current state.
+func (m *MainSheetModel) restResourceSummary(before map[string]int, pactBefore int) string {
+	var b strings.Builder
+	for _, p := range m.character.Resources {
+		if prev, ok := before[p.Name]; ok && p.Current != prev {
+			b.WriteString(fmt.Sprintf("  %s: %d → %d\n", p.Name, prev, p.Current))
+		}
+	}
+	if pactBefore >= 0 && m.character.Spellcasting != nil && m.character.Spellcasting.PactMagic != nil {
+		if pm := m.character.Spellcasting.PactMagic; pm.Remaining != pactBefore {
+			b.WriteString(fmt.Sprintf("  Pact Magic slots: %d → %d\n", pactBefore, pm.Remaining))
+		}
+	}
+	if b.Len() == 0 {
+		return ""
+	}
+	return "\nResources Restored:\n" + b.String()
+}
+
 // performShortRest executes a short rest with hit dice spending.
 func (m *MainSheetModel) performShortRest() {
 	char := m.character
@@ -1433,6 +1470,7 @@ func (m *MainSheetModel) performShortRest() {
 	}
 
 	// Call character's short rest method for other effects (warlock slots, etc)
+	resBefore, pactBefore := m.resourceSnapshot()
 	char.ShortRest()
 
 	m.saveCharacter()
@@ -1458,6 +1496,8 @@ func (m *MainSheetModel) performShortRest() {
 	}
 	
 	result.WriteString(fmt.Sprintf("\nHit Dice Remaining: %d/%d", hd.Remaining, hd.Total))
+
+	result.WriteString(m.restResourceSummary(resBefore, pactBefore))
 
 	m.restResult = result.String()
 	m.restMode = RestModeResult
@@ -1509,6 +1549,7 @@ func (m *MainSheetModel) performLongRest() {
 	oldHP := hp.Current
 	oldHitDice := hd.Remaining
 
+	resBefore, pactBefore := m.resourceSnapshot()
 	char.LongRest()
 
 	newHP := hp.Current
@@ -1537,6 +1578,8 @@ func (m *MainSheetModel) performLongRest() {
 	result.WriteString("\nAll spell slots restored\n")
 	result.WriteString("Death saves reset\n")
 	result.WriteString("Exhaustion reduced by 1 level")
+
+	result.WriteString(m.restResourceSummary(resBefore, pactBefore))
 
 	// Prompt level-up if XP threshold reached
 	if m.character.Info.CanLevelUp() {
