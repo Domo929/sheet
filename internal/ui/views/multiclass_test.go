@@ -31,6 +31,9 @@ func newMulticlassTestModel(t *testing.T, class string, level int) (*MulticlassM
 	t.Helper()
 	char := models.NewCharacter("mc-1", "Hero", "Human", class)
 	char.Info.Level = level
+	// Give qualifying ability scores so multiclass prerequisites are met; these
+	// tests exercise the add/adjust/remove mechanics, not the prereq gate.
+	char.AbilityScores = models.NewAbilityScoresFromValues(13, 13, 13, 13, 13, 13)
 	store, _ := storage.NewCharacterStorage(t.TempDir())
 	loader := data.NewLoader("../../../data")
 	m := NewMulticlassModel(char, store, loader)
@@ -163,4 +166,65 @@ func TestMulticlassViewRenders(t *testing.T) {
 	out := m.View()
 	assert.Contains(t, out, "Classes & Multiclassing")
 	assert.Contains(t, out, "Wizard")
+}
+
+func TestMulticlassPrereqBlocksAdd(t *testing.T) {
+	// A Wizard with only Int 13 (all else 8) cannot multiclass into Cleric
+	// (needs Wisdom 13).
+	char := models.NewCharacter("mc-1", "Hero", "Human", "Wizard")
+	char.Info.Level = 5
+	char.AbilityScores = models.NewAbilityScoresFromValues(8, 8, 8, 15, 8, 8)
+	store, _ := storage.NewCharacterStorage(t.TempDir())
+	loader := data.NewLoader("../../../data")
+	m := NewMulticlassModel(char, store, loader)
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 150, Height: 40})
+
+	m = mcKey(m, 'a')
+	m = selectClassInPicker(m, "Cleric")
+	m = mcEnter(m) // class -> level
+	m = mcEnter(m) // level -> subclass
+	m = mcEnter(m) // attempt create
+
+	assert.Len(t, char.Classes, 1, "Cleric add should be blocked by prerequisite")
+	assert.False(t, char.IsMulticlass())
+	assert.Contains(t, m.statusMessage, "Wisdom")
+}
+
+func TestMulticlassAddGrantsProficienciesAndFeatures(t *testing.T) {
+	m, char := newMulticlassTestModel(t, "Wizard", 5)
+	featuresBefore := len(char.Features.ClassFeatures)
+
+	// Wizard -> Fighter (qualifying scores are all 13).
+	m = mcKey(m, 'a')
+	m = selectClassInPicker(m, "Fighter")
+	m = mcEnter(m) // class -> level
+	m = mcEnter(m) // default level 1 -> subclass
+	m = mcEnter(m) // empty subclass -> create
+
+	assert.Len(t, char.Classes, 2)
+	// Multiclass proficiencies granted.
+	assert.True(t, char.Proficiencies.HasArmor("Light Armor"))
+	assert.True(t, char.Proficiencies.HasArmor("Shields"))
+	assert.True(t, char.Proficiencies.HasWeapon("Martial Weapons"))
+	// Level-1 Fighter features granted.
+	assert.Greater(t, len(char.Features.ClassFeatures), featuresBefore,
+		"adding Fighter should grant its level-1 features")
+	assert.Contains(t, m.statusMessage, "gained")
+}
+
+func TestMulticlassPrereqHintRendered(t *testing.T) {
+	// Wizard with low Wisdom: opening the add form and highlighting Cleric shows
+	// an unmet-prerequisite hint.
+	char := models.NewCharacter("mc-1", "Hero", "Human", "Wizard")
+	char.Info.Level = 5
+	char.AbilityScores = models.NewAbilityScoresFromValues(8, 8, 8, 15, 8, 8)
+	store, _ := storage.NewCharacterStorage(t.TempDir())
+	loader := data.NewLoader("../../../data")
+	m := NewMulticlassModel(char, store, loader)
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 150, Height: 40})
+
+	m = mcKey(m, 'a')
+	m = selectClassInPicker(m, "Cleric")
+	out := m.View()
+	assert.Contains(t, out, "Prerequisite")
 }

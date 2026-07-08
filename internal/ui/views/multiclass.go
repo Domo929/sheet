@@ -321,6 +321,13 @@ func (m *MulticlassModel) finalizeAdd() {
 	}
 	class := m.addAvail[m.addClassIdx]
 
+	// Enforce 2024 multiclassing ability prerequisites.
+	if ok, reason := m.character.CanMulticlassInto(class); !ok {
+		m.mode = multiclassModeList
+		m.statusMessage = reason
+		return
+	}
+
 	level, _ := strconv.Atoi(m.addLevelBuf)
 	if level < 1 {
 		level = 1
@@ -341,10 +348,52 @@ func (m *MulticlassModel) finalizeAdd() {
 		Level:    level,
 		HitDie:   m.dieFor(class),
 	})
+
+	// Gain the reduced multiclass proficiencies and the new class's level-1
+	// features (2024: taking your first level in a class grants some of its
+	// starting proficiencies and its level-1 features).
+	grant := m.character.GrantMulticlassProficiencies(class)
+	m.grantFirstLevelFeatures(class)
+
 	m.recomputeDerived()
 	m.cursor = len(m.character.Classes) - 1
 	m.mode = multiclassModeList
-	m.statusMessage = fmt.Sprintf("Added %s %d", class, level)
+	m.statusMessage = m.addSummary(class, level, grant)
+}
+
+// grantFirstLevelFeatures adds the named class's level-1 features to the
+// character, mirroring what character creation grants for a starting class.
+func (m *MulticlassModel) grantFirstLevelFeatures(class string) {
+	if m.loader == nil {
+		return
+	}
+	cd, err := m.loader.FindClassByName(class)
+	if err != nil || cd == nil {
+		return
+	}
+	for _, f := range cd.Features {
+		if f.Level == 1 {
+			source := fmt.Sprintf("%s 1", cd.Name)
+			m.character.Features.AddClassFeature(f.Name, source, f.Description, f.Level, f.Activation)
+		}
+	}
+}
+
+// addSummary builds the status line shown after adding a class, noting the
+// proficiencies gained and any manual choices the player still needs to make.
+func (m *MulticlassModel) addSummary(class string, level int, grant models.MulticlassProficiencyGrant) string {
+	msg := fmt.Sprintf("Added %s %d", class, level)
+	var gained []string
+	gained = append(gained, grant.Armor...)
+	gained = append(gained, grant.Weapons...)
+	gained = append(gained, grant.Tools...)
+	if len(gained) > 0 {
+		msg += " · gained " + strings.Join(gained, ", ")
+	}
+	if len(grant.Notes) > 0 {
+		msg += " · choose: " + strings.Join(grant.Notes, ", ")
+	}
+	return msg
 }
 
 // adjustLevel changes the selected class's level by delta, keeping each class in
@@ -679,6 +728,9 @@ func (m *MulticlassModel) renderAddForm(width int) string {
 	lines = append(lines, field(mcAddStepLevel, "Level", m.addLevelBuf))
 	lines = append(lines, field(mcAddStepSubclass, "Subclass", m.addSubclass))
 	lines = append(lines, "")
+	if hint := m.prereqHint(); hint != "" {
+		lines = append(lines, hint)
+	}
 	lines = append(lines, dimStyle.Render("Subclass matters for casters (e.g. Eldritch Knight, Arcane Trickster)."))
 	lines = append(lines, dimStyle.Render("↑/↓: pick class • Enter: next/create • Esc: cancel"))
 
@@ -688,6 +740,36 @@ func (m *MulticlassModel) renderAddForm(width int) string {
 		Padding(0, 1).
 		Width(width - 4).
 		Render(strings.Join(lines, "\n"))
+}
+
+// prereqHint returns a colored line describing whether the highlighted class in
+// the add form meets the 2024 multiclass ability prerequisites.
+func (m *MulticlassModel) prereqHint() string {
+	if m.addClassIdx >= len(m.addAvail) {
+		return ""
+	}
+	class := m.addAvail[m.addClassIdx]
+	req, ok := models.MulticlassPrerequisite(class)
+	if !ok {
+		return ""
+	}
+	labels := make([]string, 0, len(req.Abilities))
+	for _, ab := range req.Abilities {
+		s := string(ab)
+		if len(s) >= 3 {
+			labels = append(labels, strings.ToUpper(s[:3]))
+		}
+	}
+	joiner := " or "
+	if req.RequireAll {
+		joiner = " & "
+	}
+	reqText := fmt.Sprintf("needs %s 13", strings.Join(labels, joiner))
+
+	if ok, _ := m.character.CanMulticlassInto(class); ok {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("✓ Prerequisite met (" + reqText + ")")
+	}
+	return lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("✗ Prerequisite not met (" + reqText + ")")
 }
 
 func (m *MulticlassModel) renderFooter(width int) string {
