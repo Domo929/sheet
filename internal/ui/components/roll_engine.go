@@ -41,6 +41,14 @@ var dieTypes = []int{4, 6, 8, 10, 12, 20, 100}
 
 // --- Message Types ---
 
+// ConditionEffect carries condition-driven advantage/disadvantage for a roll,
+// along with a reason describing the contributing conditions.
+type ConditionEffect struct {
+	Advantage    bool
+	Disadvantage bool
+	Reason       string
+}
+
 // RequestRollMsg is sent by views to request a dice roll.
 type RequestRollMsg struct {
 	Label     string
@@ -48,6 +56,7 @@ type RequestRollMsg struct {
 	Modifier  int
 	RollType  RollType
 	AdvPrompt bool
+	Cond      ConditionEffect
 	FollowUp  *RequestRollMsg
 }
 
@@ -89,6 +98,9 @@ type RollEngine struct {
 	rollEntry    RollHistoryEntry
 	advantage    bool
 	disadvantage bool
+
+	// Condition-driven advantage/disadvantage for the pending roll
+	condEffect ConditionEffect
 
 	// Error display
 	lastError string
@@ -155,13 +167,27 @@ func (e *RollEngine) handleRequestRoll(msg RequestRollMsg) tea.Cmd {
 	e.followUp = msg.FollowUp
 	e.advantage = false
 	e.disadvantage = false
+	e.condEffect = msg.Cond
 
 	if msg.AdvPrompt {
 		e.state = rollStateAdvPrompt
 		return nil
 	}
 
-	return e.executeAndAnimate(msg.DiceExpr, msg.Modifier, false, false)
+	adv, disadv := e.combineAdv(false, false)
+	return e.executeAndAnimate(msg.DiceExpr, msg.Modifier, adv, disadv)
+}
+
+// combineAdv merges a user-selected advantage/disadvantage choice with the
+// condition-driven effect for the pending roll using the 5e stacking rule:
+// holding both advantage and disadvantage from any sources cancels to normal.
+func (e *RollEngine) combineAdv(userAdv, userDisadv bool) (adv, disadv bool) {
+	hasAdv := userAdv || e.condEffect.Advantage
+	hasDisadv := userDisadv || e.condEffect.Disadvantage
+	if hasAdv && hasDisadv {
+		return false, false
+	}
+	return hasAdv, hasDisadv
 }
 
 // handleKey processes key input based on current state.
@@ -181,11 +207,14 @@ func (e *RollEngine) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 func (e *RollEngine) handleAdvPromptKey(msg tea.KeyPressMsg) tea.Cmd {
 	switch msg.String() {
 	case "n", "N":
-		return e.executeAndAnimate(e.pendingRoll.DiceExpr, e.pendingRoll.Modifier, false, false)
+		adv, disadv := e.combineAdv(false, false)
+		return e.executeAndAnimate(e.pendingRoll.DiceExpr, e.pendingRoll.Modifier, adv, disadv)
 	case "a", "A":
-		return e.executeAndAnimate(e.pendingRoll.DiceExpr, e.pendingRoll.Modifier, true, false)
+		adv, disadv := e.combineAdv(true, false)
+		return e.executeAndAnimate(e.pendingRoll.DiceExpr, e.pendingRoll.Modifier, adv, disadv)
 	case "d", "D":
-		return e.executeAndAnimate(e.pendingRoll.DiceExpr, e.pendingRoll.Modifier, false, true)
+		adv, disadv := e.combineAdv(false, true)
+		return e.executeAndAnimate(e.pendingRoll.DiceExpr, e.pendingRoll.Modifier, adv, disadv)
 	case "esc":
 		e.resetToIdle()
 		return nil
@@ -454,6 +483,7 @@ func (e *RollEngine) resetToIdle() {
 	e.colorIndex = 0
 	e.advantage = false
 	e.disadvantage = false
+	e.condEffect = ConditionEffect{}
 	e.rollEntry = RollHistoryEntry{}
 }
 
@@ -490,7 +520,27 @@ func (e *RollEngine) renderAdvPrompt(width, height int) string {
 	content.WriteString("\n")
 	content.WriteString("  " + highlightStyle.Render("[D]") + optionStyle.Render("isadvantage"))
 
+	if e.condEffect.Reason != "" {
+		noteStyle := lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("214"))
+		content.WriteString("\n\n")
+		content.WriteString("  " + noteStyle.Render(e.conditionNote()))
+	}
+
 	return e.renderModal(content.String(), width, height)
+}
+
+// conditionNote describes the net condition-driven effect on the pending roll.
+func (e *RollEngine) conditionNote() string {
+	switch {
+	case e.condEffect.Advantage && e.condEffect.Disadvantage:
+		return e.condEffect.Reason + ": advantage & disadvantage cancel"
+	case e.condEffect.Disadvantage:
+		return e.condEffect.Reason + ": disadvantage"
+	case e.condEffect.Advantage:
+		return e.condEffect.Reason + ": advantage"
+	default:
+		return e.condEffect.Reason
+	}
 }
 
 // renderAnimating renders the dice animation.
@@ -578,6 +628,11 @@ func (e *RollEngine) renderShowing(width, height int) string {
 				formatIntSlice(e.finalResult.Kept),
 				formatIntSlice(e.finalResult.Dropped))
 			content.WriteString(dimStyle.Render(disDetail))
+			content.WriteString("\n")
+		}
+
+		if e.condEffect.Reason != "" && (e.advantage || e.disadvantage) {
+			content.WriteString(dimStyle.Render("  (" + e.condEffect.Reason + ")"))
 			content.WriteString("\n")
 		}
 

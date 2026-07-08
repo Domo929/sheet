@@ -923,12 +923,14 @@ func (m *MainSheetModel) handleActionSelection() (*MainSheetModel, tea.Cmd) {
 			}
 
 			return m, func() tea.Msg {
+				cond := m.conditionEffect(models.RollCatAttack, "")
 				return components.RequestRollMsg{
 					Label:     w.Name + " Attack",
 					DiceExpr:  "1d20",
 					Modifier:  attackBonus,
 					RollType:  components.RollAttack,
 					AdvPrompt: true,
+					Cond:      cond,
 					FollowUp: &components.RequestRollMsg{
 						Label:    w.Name + " Damage (" + string(w.DamageType) + ")",
 						DiceExpr: damageExpr,
@@ -942,12 +944,14 @@ func (m *MainSheetModel) handleActionSelection() (*MainSheetModel, tea.Cmd) {
 		strMod := m.character.AbilityScores.Strength.Modifier()
 		profBonus := m.character.GetProficiencyBonus()
 		return m, func() tea.Msg {
+			cond := m.conditionEffect(models.RollCatAttack, "")
 			return components.RequestRollMsg{
 				Label:     "Unarmed Strike Attack",
 				DiceExpr:  "1d20",
 				Modifier:  strMod + profBonus,
 				RollType:  components.RollAttack,
 				AdvPrompt: true,
+				Cond:      cond,
 				FollowUp: &components.RequestRollMsg{
 					Label:    "Unarmed Strike Damage (bludgeoning)",
 					DiceExpr: "1d1",
@@ -3721,6 +3725,18 @@ func (m *MainSheetModel) getAvailableCastLevels(spellLevel int) []int {
 	return available
 }
 
+// conditionEffect computes the advantage/disadvantage imposed by the
+// character's active conditions for a d20 roll of the given category, ready to
+// attach to a RequestRollMsg. The ability argument only matters for saving
+// throws.
+func (m *MainSheetModel) conditionEffect(cat models.RollCategory, ability models.Ability) components.ConditionEffect {
+	if m.character == nil {
+		return components.ConditionEffect{}
+	}
+	adv, disadv, reason := models.ConditionRollEffect(m.character.CombatStats.Conditions, cat, ability)
+	return components.ConditionEffect{Advantage: adv, Disadvantage: disadv, Reason: reason}
+}
+
 func (m *MainSheetModel) handleSkillRoll() (*MainSheetModel, tea.Cmd) {
 	if m.skillCursor == 0 {
 		// Luck: d20, no modifier, no advantage prompt
@@ -3743,12 +3759,14 @@ func (m *MainSheetModel) handleSkillRoll() (*MainSheetModel, tea.Cmd) {
 	mod := m.character.GetSkillModifier(skillName)
 
 	return m, func() tea.Msg {
+		cond := m.conditionEffect(models.RollCatAbilityCheck, "")
 		return components.RequestRollMsg{
 			Label:     string(skillName) + " Check",
 			DiceExpr:  "1d20",
 			Modifier:  mod,
 			RollType:  components.RollSkillCheck,
 			AdvPrompt: true,
+			Cond:      cond,
 		}
 	}
 }
@@ -3768,12 +3786,14 @@ func (m *MainSheetModel) handleSaveRoll() (*MainSheetModel, tea.Cmd) {
 	mod := m.character.GetSavingThrowModifier(ability)
 
 	return m, func() tea.Msg {
+		cond := m.conditionEffect(models.RollCatSavingThrow, ability)
 		return components.RequestRollMsg{
 			Label:     abilityNames[m.saveCursor] + " Saving Throw",
 			DiceExpr:  "1d20",
 			Modifier:  mod,
 			RollType:  components.RollSavingThrow,
 			AdvPrompt: true,
+			Cond:      cond,
 		}
 	}
 }
