@@ -29,6 +29,7 @@ const (
 	LevelUpStepFeatures                     // Review new class/subclass features
 	LevelUpStepSpellSlots                   // Review spell slot changes
 	LevelUpStepConfirm                      // Confirm and apply
+	LevelUpStepClass                        // (multiclass) choose which class to advance
 )
 
 // HPMethod represents how HP is gained on level up.
@@ -129,6 +130,14 @@ type LevelUpModel struct {
 	oldLevel int
 	newLevel int
 
+	// Multiclass bookkeeping. When multiclass is true, oldLevel/newLevel are the
+	// per-class levels of the class being advanced (levelClass) rather than the
+	// character's total level.
+	multiclass    bool
+	levelClass    string
+	levelClassIdx int
+	classCursor   int
+
 	// Steps
 	steps       []LevelUpStep
 	stepIndex   int
@@ -209,6 +218,18 @@ func NewLevelUpModel(character *models.Character, store *storage.CharacterStorag
 	featData, _ := loader.GetFeats()
 	m.featData = featData
 
+	// Multiclass: advance a chosen class (default: the primary). The per-class
+	// level drives features, subclass triggers, ASI, and hit die; the combined
+	// spell slots and total level are recomputed on apply.
+	if character.IsMulticlass() {
+		m.multiclass = true
+		m.levelClassIdx = 0
+		m.classCursor = 0
+		m.levelClass = character.Classes[0].Class
+		m.oldLevel = character.Classes[0].Level
+		m.newLevel = m.oldLevel + 1
+	}
+
 	// Determine which steps are needed
 	m.determineSteps()
 
@@ -236,11 +257,17 @@ func NewLevelUpModel(character *models.Character, store *storage.CharacterStorag
 func (m *LevelUpModel) determineSteps() {
 	m.steps = nil
 
+	// 0. Multiclass: choose which class to advance.
+	if m.multiclass {
+		m.steps = append(m.steps, LevelUpStepClass)
+	}
+
 	// 1. Always HP
 	m.steps = append(m.steps, LevelUpStepHP)
 
-	// 2. Subclass: if class has subclasses, character has none, and this is the first subclass level
-	if m.classData != nil && len(m.classData.Subclasses) > 0 && m.character.Info.Subclass == "" {
+	// 2. Subclass: if class has subclasses, the class being advanced has none
+	//    yet, and this is the first subclass level.
+	if m.classData != nil && len(m.classData.Subclasses) > 0 && m.leveledSubclass() == "" {
 		firstSubLevel := m.firstSubclassLevel()
 		if firstSubLevel > 0 && m.newLevel == firstSubLevel {
 			m.steps = append(m.steps, LevelUpStepSubclass)
@@ -258,13 +285,36 @@ func (m *LevelUpModel) determineSteps() {
 		m.steps = append(m.steps, LevelUpStepFeatures)
 	}
 
-	// 5. Spell slots: if class is a spellcaster and slots change
-	if m.classData != nil && m.classData.Spellcaster && m.spellSlotsChanged() {
+	// 5. Spell slots: if the class is a spellcaster and slots change. For a
+	//    multiclass character the combined (shared) slot table is used.
+	if m.multiclass {
+		if m.classData != nil && m.classData.Spellcaster && m.multiclassSlotsChanged() {
+			m.steps = append(m.steps, LevelUpStepSpellSlots)
+		}
+	} else if m.classData != nil && m.classData.Spellcaster && m.spellSlotsChanged() {
 		m.steps = append(m.steps, LevelUpStepSpellSlots)
 	}
 
 	// 6. Always Confirm
 	m.steps = append(m.steps, LevelUpStepConfirm)
+}
+
+// leveledSubclass returns the subclass of the class currently being advanced:
+// the chosen class entry's subclass for a multiclass character, otherwise the
+// character's single-class subclass.
+func (m *LevelUpModel) leveledSubclass() string {
+	if m.multiclass && m.levelClassIdx >= 0 && m.levelClassIdx < len(m.character.Classes) {
+		return m.character.Classes[m.levelClassIdx].Subclass
+	}
+	return m.character.Info.Subclass
+}
+
+// leveledClassName returns the name of the class being advanced.
+func (m *LevelUpModel) leveledClassName() string {
+	if m.multiclass && m.levelClass != "" {
+		return m.levelClass
+	}
+	return m.character.Info.Class
 }
 
 // firstSubclassLevel returns the level at which the first subclass feature appears.
@@ -523,6 +573,8 @@ func (m *LevelUpModel) Update(msg tea.Msg) (*LevelUpModel, tea.Cmd) {
 // handleKey dispatches key events based on current step.
 func (m *LevelUpModel) handleKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
 	switch m.currentStep {
+	case LevelUpStepClass:
+		return m.handleClassStepKey(msg)
 	case LevelUpStepHP:
 		return m.handleHPStepKey(msg)
 	case LevelUpStepSubclass:
@@ -559,6 +611,8 @@ func (m *LevelUpModel) retreatStep() {
 
 func (m *LevelUpModel) stepName(s LevelUpStep) string {
 	switch s {
+	case LevelUpStepClass:
+		return "Class"
 	case LevelUpStepHP:
 		return "Hit Points"
 	case LevelUpStepSubclass:
@@ -696,6 +750,85 @@ func (m *LevelUpModel) handleSubclassStepKey(msg tea.KeyPressMsg) (*LevelUpModel
 		return m, nil
 	}
 	return m, nil
+}
+
+// ---------------------------------------------------------------------------
+// Class step handler (multiclass)
+// ---------------------------------------------------------------------------
+
+func (m *LevelUpModel) handleClassStepKey(msg tea.KeyPressMsg) (*LevelUpModel, tea.Cmd) {
+	n := len(m.character.Classes)
+	switch {
+	case key.Matches(msg, m.keys.Up):
+		if m.classCursor > 0 {
+			m.classCursor--
+		}
+		return m, nil
+
+	case key.Matches(msg, m.keys.Down):
+		if m.classCursor < n-1 {
+			m.classCursor++
+		}
+		return m, nil
+
+	case key.Matches(msg, m.keys.Select):
+		m.applyChosenClass(m.classCursor)
+		m.advanceStep()
+		return m, nil
+
+	case key.Matches(msg, m.keys.Back):
+		return m, func() tea.Msg { return BackToSheetMsg{} }
+	}
+	return m, nil
+}
+
+// applyChosenClass switches the wizard to advance the class at the given index
+// in the character's class breakdown, recomputing per-class levels, class data,
+// the step list, and staged features/slots.
+func (m *LevelUpModel) applyChosenClass(idx int) {
+	if idx < 0 || idx >= len(m.character.Classes) {
+		return
+	}
+	entry := m.character.Classes[idx]
+	m.levelClassIdx = idx
+	m.levelClass = entry.Class
+	if cd, err := m.loader.FindClassByName(entry.Class); err == nil && cd != nil {
+		m.classData = cd
+	}
+	m.oldLevel = entry.Level
+	m.newLevel = entry.Level + 1
+
+	// The class changed, so any previously staged subclass no longer applies.
+	m.stagedSubclass = nil
+	m.stagedSubclassFeats = nil
+
+	m.determineSteps()
+	m.stagedNewFeatures = m.classFeaturesAtLevel(m.newLevel)
+	m.stagedSpellSlots = m.spellSlotRowForLevel(m.newLevel)
+	m.oldSpellSlots = m.spellSlotRowForLevel(m.oldLevel)
+}
+
+// multiclassSlotsBefore returns the combined spell slots for the character's
+// current class breakdown.
+func (m *LevelUpModel) multiclassSlotsBefore() [9]int {
+	return models.MulticlassSpellSlots(models.MulticlassCasterLevel(m.character.Classes))
+}
+
+// multiclassSlotsAfter returns the combined spell slots after advancing the
+// chosen class by one level.
+func (m *LevelUpModel) multiclassSlotsAfter() [9]int {
+	classes := make([]models.ClassLevel, len(m.character.Classes))
+	copy(classes, m.character.Classes)
+	if m.levelClassIdx >= 0 && m.levelClassIdx < len(classes) {
+		classes[m.levelClassIdx].Level++
+	}
+	return models.MulticlassSpellSlots(models.MulticlassCasterLevel(classes))
+}
+
+// multiclassSlotsChanged reports whether the combined slot table changes when
+// the chosen class is advanced.
+func (m *LevelUpModel) multiclassSlotsChanged() bool {
+	return m.multiclassSlotsBefore() != m.multiclassSlotsAfter()
 }
 
 // ---------------------------------------------------------------------------
@@ -1004,6 +1137,11 @@ func (m *LevelUpModel) handleConfirmStepKey(msg tea.KeyPressMsg) (*LevelUpModel,
 // ---------------------------------------------------------------------------
 
 func (m *LevelUpModel) applyLevelUp() {
+	if m.multiclass {
+		m.applyMulticlassLevelUp()
+		return
+	}
+
 	char := m.character
 
 	// 1. Increment level and update hit dice total
@@ -1111,6 +1249,121 @@ func (m *LevelUpModel) applyLevelUp() {
 	}
 }
 
+// applyMulticlassLevelUp advances the chosen class by one level for a
+// multiclass character: it increments that class's entry, applies HP, a chosen
+// subclass, ASI/feat, and the class's features at its new per-class level, then
+// re-syncs the primary class, hit dice, and combined spell slots.
+func (m *LevelUpModel) applyMulticlassLevelUp() {
+	char := m.character
+	if m.levelClassIdx < 0 || m.levelClassIdx >= len(char.Classes) {
+		return
+	}
+
+	// 1. Increment the chosen class's level.
+	char.Classes[m.levelClassIdx].Level++
+
+	// 2. HP increase.
+	char.CombatStats.HitPoints.Maximum += m.stagedHPIncrease
+	char.CombatStats.HitPoints.Current += m.stagedHPIncrease
+
+	// 3. Subclass (recorded on the advanced class entry).
+	if m.stagedSubclass != nil {
+		char.Classes[m.levelClassIdx].Subclass = m.stagedSubclass.Name
+		for _, f := range m.stagedSubclassFeats {
+			char.Features.AddClassFeature(
+				f.Name,
+				fmt.Sprintf("%s (%s)", m.levelClass, m.stagedSubclass.Name),
+				f.Description,
+				f.Level,
+				f.Activation,
+			)
+		}
+	}
+
+	// 4. ASI changes.
+	for i, delta := range m.stagedASIChanges {
+		if delta > 0 {
+			ability := abilityOrder[i]
+			current := char.AbilityScores.Get(ability)
+			newBase := current.Base + delta
+			if newBase > 20 {
+				newBase = 20
+			}
+			char.AbilityScores.SetBase(ability, newBase)
+		}
+	}
+
+	// 5. Feat.
+	if m.stagedFeat != nil {
+		char.Features.AddFeat(m.stagedFeat.Name, m.stagedFeat.Description)
+		if m.featASIAbility != "" && m.stagedFeat.Effects.AbilityScoreIncrease != nil {
+			ability := models.Ability(m.featASIAbility)
+			current := char.AbilityScores.Get(ability)
+			amount := m.stagedFeat.Effects.AbilityScoreIncrease.Amount
+			newBase := current.Base + amount
+			if newBase > 20 {
+				newBase = 20
+			}
+			char.AbilityScores.SetBase(ability, newBase)
+		}
+		effects := m.stagedFeat.Effects
+		if effects.InitiativeBonus != 0 {
+			char.CombatStats.Initiative += effects.InitiativeBonus
+		}
+		if effects.SpeedBonus != 0 {
+			char.CombatStats.Speed += effects.SpeedBonus
+		}
+		if effects.ACBonus != 0 {
+			char.CombatStats.ArmorClass += effects.ACBonus
+		}
+		if effects.HPPerLevel > 0 {
+			hpBonus := effects.HPPerLevel * char.TotalLevel()
+			char.CombatStats.HitPoints.Maximum += hpBonus
+			char.CombatStats.HitPoints.Current += hpBonus
+		}
+	}
+
+	// 6. Re-sync primary class fields and hit dice to the new total level.
+	char.SyncPrimaryClass()
+	hd := &char.CombatStats.HitDice
+	used := hd.Total - hd.Remaining
+	if used < 0 {
+		used = 0
+	}
+	hd.Total = char.TotalLevel()
+	hd.Remaining = hd.Total - used
+	if hd.Remaining < 0 {
+		hd.Remaining = 0
+	}
+	if hd.Remaining > hd.Total {
+		hd.Remaining = hd.Total
+	}
+	if len(char.Classes) > 0 && char.Classes[0].HitDie > 0 {
+		hd.DieType = char.Classes[0].HitDie
+	}
+
+	// 7. Recompute combined multiclass spell slots.
+	char.ApplyMulticlassSpellSlots()
+
+	// 8. Class features for the advanced class at its new per-class level.
+	for _, f := range m.displayableFeaturesAtLevel(m.newLevel) {
+		char.Features.AddClassFeature(
+			f.Name,
+			fmt.Sprintf("%s %d", m.levelClass, m.newLevel),
+			f.Description,
+			m.newLevel,
+			f.Activation,
+		)
+	}
+
+	// 9. Mark updated and save.
+	char.RecomputePreparedLimit()
+	char.MarkUpdated()
+	if m.storage != nil {
+		_ = m.storage.AutoSave(char)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // View
 // ---------------------------------------------------------------------------
@@ -1129,7 +1382,15 @@ func (m *LevelUpModel) View() string {
 	errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Bold(true)
 
 	// Title
-	b.WriteString(titleStyle.Render(fmt.Sprintf("Level Up: Level %d → %d", m.oldLevel, m.newLevel)))
+	if m.multiclass {
+		total := m.character.TotalLevel()
+		b.WriteString(titleStyle.Render(fmt.Sprintf(
+			"Level Up: %s %d → %d  (total %d → %d)",
+			m.leveledClassName(), m.oldLevel, m.newLevel, total, total+1,
+		)))
+	} else {
+		b.WriteString(titleStyle.Render(fmt.Sprintf("Level Up: Level %d → %d", m.oldLevel, m.newLevel)))
+	}
 	b.WriteString("\n")
 
 	// Progress
@@ -1159,6 +1420,8 @@ func (m *LevelUpModel) View() string {
 
 	// Step content
 	switch m.currentStep {
+	case LevelUpStepClass:
+		b.WriteString(m.viewClass())
 	case LevelUpStepHP:
 		b.WriteString(m.viewHP())
 	case LevelUpStepSubclass:
@@ -1172,6 +1435,46 @@ func (m *LevelUpModel) View() string {
 	case LevelUpStepConfirm:
 		b.WriteString(m.viewConfirm())
 	}
+
+	return b.String()
+}
+
+// ---------------------------------------------------------------------------
+// View: Class step (multiclass)
+// ---------------------------------------------------------------------------
+
+func (m *LevelUpModel) viewClass() string {
+	var b strings.Builder
+
+	headerStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("11"))
+	selectedStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("13"))
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+
+	b.WriteString(headerStyle.Render("Choose a Class to Advance"))
+	b.WriteString("\n\n")
+	b.WriteString(dimStyle.Render("Multiclass character — pick which class gains this level."))
+	b.WriteString("\n\n")
+
+	for i, cl := range m.character.Classes {
+		prefix := "  "
+		style := lipgloss.NewStyle()
+		if i == m.classCursor {
+			prefix = "▶ "
+			style = selectedStyle
+		}
+		label := fmt.Sprintf("%s %d → %d", cl.Class, cl.Level, cl.Level+1)
+		if cl.Subclass != "" {
+			label += fmt.Sprintf("  (%s)", cl.Subclass)
+		}
+		b.WriteString(prefix)
+		b.WriteString(style.Render(label))
+		b.WriteString("\n")
+	}
+
+	b.WriteString("\n")
+	b.WriteString(dimStyle.Render("To take a level in a brand-new class, add it in the Classes (M) manager first."))
+	b.WriteString("\n")
+	b.WriteString(dimStyle.Render("↑/↓: Navigate | Enter: Select | Esc: Cancel"))
 
 	return b.String()
 }
@@ -1553,7 +1856,7 @@ func (m *LevelUpModel) viewFeatures() string {
 		allFeatures = append(allFeatures, struct {
 			name, desc, source string
 			level              int
-		}{f.Name, f.Description, m.character.Info.Class, f.Level})
+		}{f.Name, f.Description, m.leveledClassName(), f.Level})
 	}
 
 	for _, f := range m.stagedSubclassFeats {
@@ -1617,6 +1920,40 @@ func (m *LevelUpModel) viewSpellSlots() string {
 	// Header
 	b.WriteString(fmt.Sprintf("  %-8s  %5s  %5s\n", "Level", "Old", "New"))
 	b.WriteString("  ────────  ─────  ─────\n")
+
+	// Multiclass characters use the combined (shared) slot table.
+	if m.multiclass {
+		before := m.multiclassSlotsBefore()
+		after := m.multiclassSlotsAfter()
+		hasChanges := false
+		for lvl := 1; lvl <= 9; lvl++ {
+			oldCount := before[lvl-1]
+			newCount := after[lvl-1]
+			if oldCount == 0 && newCount == 0 {
+				continue
+			}
+			changed := oldCount != newCount
+			oldStr := fmt.Sprintf("%d", oldCount)
+			newStr := fmt.Sprintf("%d", newCount)
+			if changed {
+				hasChanges = true
+				b.WriteString(fmt.Sprintf("  %-8s  %5s  %5s", levelNames[lvl], oldStr, changeStyle.Render(newStr)))
+				b.WriteString(valueStyle.Render(fmt.Sprintf("  (+%d)", newCount-oldCount)))
+			} else {
+				b.WriteString(fmt.Sprintf("  %-8s  %5s  %5s", levelNames[lvl], oldStr, dimStyle.Render(newStr)))
+			}
+			b.WriteString("\n")
+		}
+		if !hasChanges {
+			b.WriteString(dimStyle.Render("  No spell slot changes at this level."))
+			b.WriteString("\n")
+		}
+		b.WriteString("\n")
+		b.WriteString(dimStyle.Render("Combined multiclass slots. Warlock Pact Magic is tracked separately."))
+		b.WriteString("\n")
+		b.WriteString(dimStyle.Render("Enter: Continue | Esc: Back"))
+		return b.String()
+	}
 
 	hasChanges := false
 	for lvl := 1; lvl <= 9; lvl++ {
