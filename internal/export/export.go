@@ -1,5 +1,6 @@
-// Package export renders a character to shareable, read-only formats (Markdown
-// and JSON) suitable for printing or posting alongside a game.
+// Package export renders a character to shareable, read-only formats (Markdown,
+// JSON, and a printable HTML sheet) suitable for printing or posting alongside
+// a game.
 package export
 
 import (
@@ -29,8 +30,10 @@ func SanitizeFilename(name string) string {
 	return name
 }
 
-// WriteFiles writes "<name>.md" and "<name>.json" into dir, creating dir if
-// necessary, and returns the two paths.
+// WriteFiles writes "<name>.md", "<name>.json", and a printable "<name>.html"
+// into dir, creating dir if necessary, and returns the Markdown and JSON paths.
+// The HTML file is a self-contained, print-ready sheet (open in a browser and
+// Save as PDF).
 func WriteFiles(c *models.Character, dir string) (mdPath, jsonPath string, err error) {
 	if c == nil {
 		return "", "", fmt.Errorf("character is nil")
@@ -41,6 +44,7 @@ func WriteFiles(c *models.Character, dir string) (mdPath, jsonPath string, err e
 	base := SanitizeFilename(c.Info.Name)
 	mdPath = filepath.Join(dir, base+".md")
 	jsonPath = filepath.Join(dir, base+".json")
+	htmlPath := filepath.Join(dir, base+".html")
 
 	if err = os.WriteFile(mdPath, []byte(ToMarkdown(c)), 0o644); err != nil {
 		return "", "", fmt.Errorf("write markdown: %w", err)
@@ -51,6 +55,9 @@ func WriteFiles(c *models.Character, dir string) (mdPath, jsonPath string, err e
 	}
 	if err = os.WriteFile(jsonPath, jsonBytes, 0o644); err != nil {
 		return "", "", fmt.Errorf("write json: %w", err)
+	}
+	if err = os.WriteFile(htmlPath, []byte(ToHTML(c)), 0o644); err != nil {
+		return "", "", fmt.Errorf("write html: %w", err)
 	}
 	return mdPath, jsonPath, nil
 }

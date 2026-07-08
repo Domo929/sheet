@@ -840,8 +840,8 @@ func (m *MainSheetModel) saveCharacter() {
 	}
 }
 
-// exportSheet writes the character to Markdown and JSON files and reports the
-// destination via the status message.
+// exportSheet writes the character to Markdown, JSON, and printable HTML files
+// and reports the destination via the status message.
 func (m *MainSheetModel) exportSheet() {
 	if m.character == nil {
 		return
@@ -855,7 +855,7 @@ func (m *MainSheetModel) exportSheet() {
 		m.statusMessage = "Export failed: " + err.Error()
 		return
 	}
-	m.statusMessage = "Exported sheet to " + filepath.Dir(mdPath)
+	m.statusMessage = "Exported sheet (md, json, html) to " + filepath.Dir(mdPath)
 }
 
 // handleActionSelection handles when user presses Enter on an action
